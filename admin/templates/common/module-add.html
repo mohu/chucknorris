@@ -1,0 +1,328 @@
+        <style type="text/css">
+          .actions {
+            margin-right: 20px;
+          }
+          span[rel="tooltip"] {
+            border-bottom: 1px dotted #CCC;
+          }
+        </style>
+        <script type="text/javascript">
+        $(document).ready(function() {
+
+          $("[rel=tooltip]").tooltip({title: 'Required',delay: { show: 100, hide: 500 }});
+          
+          $("form").validate({
+            errorPlacement: function(error, element) {
+              $(element).parent('div').parent('div').addClass('error');
+              $(element).parent('label').parent('div').parent('div').addClass('error');
+              error.insertAfter(element.parent('div'));
+              error.insertAfter(element.parent('label').parent('div'));
+              error.css('margin', '10px 0px 0px 160px');
+            },
+            success: function(element){
+              $(element).parent('div').removeClass('error');
+              $(element).remove();
+            }
+          });
+
+          $('form').submit(function(event) {
+            tinyMCE.triggerSave();
+            var status = [];
+            $('form .textarea').each(function() {
+              valid = $("#" + this.id).valid(); //Validate again
+              status.push(valid);
+            });
+
+            var textarea_validate = $.inArray(0, status);
+
+            if (textarea_validate) {
+            } else { event.preventDefault() }
+          });
+
+          var updateDatepickers = function () {
+            $('input.datepick').each(function() {
+              var id = $(this).parent('div').attr('id');
+              $('#' + id).datepicker({
+                format: 'yyyy-mm-dd'
+              });
+            });
+          };
+
+          updateDatepickers();
+          
+          var regex = /\[\d+\](?!.*\[\d+\])/i;
+          var regex2 = /\d+(?!.*\d+)/i;
+          
+          $(".own").each(function() {
+            $(this).find("a.remove").eq(0).hide();
+          });
+
+          $("a.clone").live("click", function() {
+            var id = $(this).parents(".own").attr('id');
+            var dataid = $(this).parents(".own").data('id');
+              $(this).parents(".own").clone().insertAfter("#" + id + "[data-id='" + dataid +"']").attr("id", (id)).attr("data-id", (dataid + 1)).find("input").each(function() {
+                $(this).parents(".own").find("a.remove").show();
+                  var name = this.name || "";
+                  var match = name.match(regex) || [];
+                  var index = String(match).match(regex2) || [];
+                  var index = parseInt(index) + 1;
+                  if (match.length > 0) {
+                    this.name = (this.name).replace(regex, "[" + index + "]");
+                    if ($(this).filter(":text").length > 0) {
+                      $(this).val('');
+                    }
+                    if ($(this).filter(":file").length > 0) {
+                      $(this).attr("value","");
+                    }
+                    if ($(this).filter(".datepick").length > 0) {
+                      var id = this.id || "";
+                      var match = id.match(regex2) || [];
+                      if (match.length > 0) {
+                        this.id = (this.id).replace(regex2, Math.floor(Math.random() * 1001));
+                      }
+                    }
+                    if ($(this).filter(":radio").length > 0) {
+                      $(this).prop('checked', false);
+                    }
+                  }
+              });
+              $(this).hide();
+              updateDatepickers();
+          });
+
+          $("a.remove").live("click", function() {
+            $("a.clone:hidden:last").show();
+            $(this).parents(".own").remove();
+          })
+
+        });
+        </script>
+        <div class="span9">
+          <div class="page-header">
+            <h1>
+              Add
+              <small>{{ module|title }}</small>
+            </h1>
+          </div>
+
+          <form class="form-horizontal" method="post" enctype="multipart/form-data">
+            <fieldset>
+            {% for key, field in fields %}
+            {% if field.type != 'foreignkey' %}
+            {% if field.type == 'text' %}
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                  <input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}" {% if field.equalto %}equalto="#{{ field.equalto }}"{% endif %} id="{{ key }}" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>
+                  {% if field.help %}
+                  <span class="help-inline">{{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% elseif field.type == 'textarea' %}
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|lower|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <textarea class="input-xlarge textarea{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]"></textarea>
+                  {% if field.help %}
+                  <p class="help-block">{{ field.help|raw }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% elseif field.type == 'date' %}
+              <div class="control-group input-append" data-date="{{ "now"|date("Y-m-d") }}" data-date-format="yyyy-mm-dd">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                <div class="controls date" id="date{{ loop.index }}">
+                  <input type="text" id="date{{ loop.index }}" class="input-small datepick{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}]" readonly><span class="add-on"><i class="icon-th"></i></span>
+                  {% if field.help %}
+                  <span class="help-inline">{{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% elseif field.type == 'file' %}
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <input type="hidden" id="{{ key }}" name="{{ module }}[type]" value="{{ module }}">
+                  <input type="file" class="input-file input-xlarge{% if field.required %} required{% endif %}" accept="{{ field.validate }}" id="{{ key }}" name="{{ module }}[{{ key }}|{{ field.path }}|{{ field.accept }}]">
+                  {% if field.help %}
+                  <span class="help-inline" style="margin-left:42px;">{{ field.help|raw }}</span>
+                  {% endif %}
+                  <br /><span class="label">Allowed file types: {{ field.accept }}</span>
+                </div>
+              </div>
+            {% elseif field.type == 'select' %}
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>                
+                <div class="controls">
+                  <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                  <select id="{{ key }}" class="input-xlarge{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}]">
+                    <option value="">-- Select --</option>
+                    {% for key, item in field.values %}
+                    <option value="{{ key }}">{{ item }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if field.help %}
+                  <span class="help-inline">{{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% elseif field.type == 'radio' %}
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>                
+                <div class="controls">
+                  <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                  {% for key2, item in field.values %}
+                  <label class="radio">
+                    <input type="radio" class="{% if field.required and loop.first %}required{% endif %}" name="{{ module }}[{{ key }}]" value="{{ key2 }}">
+                    {{ item|capitalize }}
+                  </label>
+                  {% endfor %}
+                  {% if field.help %}
+                  <span class="help-inline">{{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% endif %}
+            {% endfor %}
+
+            {% for key, field in fields %}
+            {% if field.type == 'foreignkey' %}
+            {% if field.relation == 'own' %}
+              <div class="page-header">
+                <h1>
+                  <small>{{ key|slice(3, 100)|capitalize }}{% if field.required %} *{% endif %}</small>
+                </h1>
+              </div>
+              <div id="own{{ loop.index }}" class="own" data-id="{{ loop.index }}">
+                <div class="actions pull-right">
+                  <a class="btn btn-mini btn-primary clone"><i class="icon-plus-sign icon-white"></i> Add</a> 
+                  <a class="btn btn-mini btn-primary remove"><i class="icon-remove-sign icon-white"></i> Remove</a>
+                </div>
+              {% for fkkey, fkfield in field.fields %}
+                {% if fkfield.type == 'text' %}
+                  <div class="control-group">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                      <input type="text" class="input-xlarge{% if fkfield.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>
+                      {% if fkfield.help %}
+                      <span class="help-inline">{{ fkfield.help|raw }}</span>
+                      {% endif %}
+                      </div>
+                   </div>
+                {% elseif fkfield.type == 'textarea' %}
+                  <div class="control-group">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                      <textarea class="input-xlarge textarea{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"></textarea>
+                      {% if fkfield.help %}
+                      <p class="help-block">{{ fkfield.help|raw }}</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% elseif fkfield.type == 'date' %}
+                  <div class="control-group input-append" data-date="{{ "now"|date("Y-m-d") }}" data-date-format="yyyy-mm-dd">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                    <div class="controls date" id="date{{ loop.index }}">
+                      <input type="text" class="input-small datepick{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]" readonly><span class="add-on"><i class="icon-th"></i></span>
+                      {% if fkfield.help %}
+                      <span class="help-inline">{{ fkfield.help|raw }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% elseif fkfield.type == 'file' %}
+                  <div class="control-group">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                      <input type="file" class="input-file{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ key|slice(3, 100)|lower }}|{{ fkfield.path }}|{{ fkfield.accept }}|{{ fkkey|lower }}]">
+                      {% if fkfield.help %}
+                      <span class="help-inline" style="margin-left:42px;">{{ fkfield.help|raw }}</span>
+                      {% endif %}
+                      <br /><span class="label">Allowed file types: {{ fkfield.accept }}</span>
+                    </div>
+                  </div>
+                {% elseif fkfield.type == 'select' %}
+                <div class="control-group">
+                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>                
+                  <div class="controls">
+                    <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                    {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                    <select id="{{ key }}" class="input-xlarge{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]">
+                      <option value="">-- Select --</option>
+                      {% for key, item in fkfield.values %}
+                      <option value="{{ key }}">{{ item }}</option>
+                      {% endfor %}
+                    </select>
+                    {% if field.help %}
+                    <span class="help-inline">{{ field.help|raw }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% elseif fkfield.type == 'radio' %}
+                <div class="control-group">
+                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>                
+                  <div class="controls">
+                    <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                    {% for key2, item in fkfield.values %}
+                    <label class="radio">
+                      <input type="radio" class="{% if fkfield.required %}required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]" value="{{ key2 }}">
+                      {{ item|capitalize }}
+                    </label>
+                    {% endfor %}
+                    {% if field.help %}
+                    <span class="help-inline">{{ field.help|raw }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+
+              {% endfor %}
+              <hr>
+              </div>
+              {% elseif field.relation == 'shared' %}
+              <div class="page-header">
+                <h1>
+                  <small>{{ key|slice(6, 100)|capitalize }}{% if field.required %} *{% endif %}</small>
+                </h1>
+              </div>
+              <div class="actions pull-right">
+                  <a href="/admin/{{ key|slice(6, 100)|lower }}" class="btn btn-mini btn-primary" target="_blank"><i class="icon-plus-sign icon-white"></i> Add</a> 
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <select multiple="multiple" name="{{ key }}[]" id="{{ key }}">
+                  {% for fkfield in field.fields %}
+                    <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
+                  {% endfor %}
+                  </select>
+                  {% if field.help %}
+                    <span class="help-inline">{{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+              {% endif %}
+              {% endfor %}
+              <div class="form-actions">
+                {% if session.region %}<input type="hidden" id="region" name="{{ module }}[region]" value="{{ session.region }}">{% endif %}
+                
+                <input type="hidden" id="modulename" name="modulename" value="{{ module }}">
+                <button type="submit" name="save" class="btn btn-primary"><i class="icon-pencil icon-white"></i> Save</button>
+                <a class="btn" href="/admin/{{ module }}">Cancel</a>
+              </div>
+            </fieldset>
+          </form>
+
+        </div>

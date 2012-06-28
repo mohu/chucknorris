@@ -1,0 +1,81 @@
+        <div class="span9">
+          <div class="page-header">
+            <h1>
+              Settings
+            </h1>
+          </div>
+
+          <form class="form-horizontal" method="post">
+            <fieldset>
+
+              <div class="page-header">
+                <h1>
+                  <small>General settings</small>
+                </h1>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="pagination">Pagination</label>               
+                <div class="controls">
+                  
+                  <select id="pagination" class="input-xlarge" name="settings[pagination]">
+                    {% for key, value in settings.pagination.values %}
+                    <option value="{{ value }}"{% if value == settings.pagination.value %} selected{% endif %}>{{ key }}</option>
+                    {% endfor %}
+                  </select>
+                  <p class="help-block">{{ settings.pagination.help }}</p>
+                </div>
+              </div>
+
+              <div class="page-header">
+                <h1>
+                  <small>Social accounts</small>
+                </h1>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="twitter">Twitter username</label>               
+                <div class="controls">
+                  <input type="text" id="twitter" class="input-xlarge" name="settings[twitter]" value="{{ settings.twitter.value }}">
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="facebook">Facebook URL</label>               
+                <div class="controls">
+                  <input type="text" id="facebook" class="input-xlarge" name="settings[facebook]" value="{{ settings.facebook.value }}">
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="linkedin">Linkedin URL</label>               
+                <div class="controls">
+                  <input type="text" id="linkedin" class="input-xlarge" name="settings[linkedin]" value="{{ settings.linkedin.value }}">
+                </div>
+              </div>
+
+              <div class="page-header">
+                <h1>
+                  <small>Contact us email address</small>
+                </h1>
+              </div>
+
+              <div class="control-group">
+                <label class="control-label" for="pagination">Email address</label>               
+                <div class="controls">
+                  <input type="text" id="pagination" class="input-xlarge" name="settings[contact]" value="{{ settings.contact.value }}">
+                  <p class="help-block">{{ settings.contact.help }}</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <input type="hidden" name="settings[id]" value="1">
+                <input type="hidden" name="settings[type]" value="settings">
+                <input type="hidden" id="modulename" name="modulename" value="settings">
+                <button type="submit" name="update" class="btn btn-primary"><i class="icon-pencil icon-white"></i> Save</button>
+                <a class="btn" href="/admin">Cancel</a>
+              </div>
+            </fieldset>
+          </form>
+
+        </div>

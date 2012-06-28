@@ -1,0 +1,272 @@
+        <script type="text/javascript">
+
+        /* Default class modification */
+        $.extend( $.fn.dataTableExt.oStdClasses, {
+          sSortAsc: 'sort sort-up',
+          sSortDesc: 'sort sort-down',
+          sSortable: 'sort',
+          sSortableAsc: 'sort sort-up',
+          sSortableDesc: 'sort sort-down',
+          sSortableNone: 'sort sort-none'
+        });
+
+        /* Table initialisation */
+        $(document).ready(function() {
+          $('#table').dataTable( {
+            "sDom": "<'row-fluid'<'span12'f>r>t<'span9'p>>",
+            "bPaginate": false,
+            "bSort": true,
+            "bInfo": false,
+            "bAutoWidth": false,
+          });
+
+          // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
+
+          $('#table > tbody > tr > td:not(:last-child)').click(function() {
+            var id = $(this).parent('tr').data('id');
+            $(location).attr("href", "/admin/{{ module }}/edit/"+id+"?start={{ pagination.start }}");
+          });
+
+          $('a.delete').click(function() {
+            var id = $(this).attr('id');
+            if(id) {
+              $('#delete-confirm.alert').show().animate({opacity: 1.0}, 3000);
+              $('#delete-confirm a.delete-confirm').data('id', id);
+            }
+          });
+
+          $('#delete-confirm a.cancel').click(function() {
+            $('#delete-confirm.alert').hide();
+          });
+
+          $('#delete-confirm a.delete-confirm').click(function() {
+            var id = $(this).data('id');
+            window.location = '/admin/{{ module }}/delete/' + id;
+          });
+
+          $('#delete-result').bind('closed', function () {
+            window.location = '/admin/{{ module }}';
+          });
+
+          {% if settings.run.path %}
+          // Run cron script jQuery
+          $('a.run').bind('click', function(event) {
+            event.preventDefault();
+            $(this).unbind('click');
+            $(this).html('<i class="icon-refresh"></i> {{ settings.run.button_running }}')
+            $.get('{{ settings.run.path }}', function(data) {
+              $('#run.modal').modal({show: true, backdrop: 'static'});
+              $('#run.modal .modal-body').html(data);
+              console.log('Success');
+            });
+          });
+          $('#run.modal').on('hidden', function () {
+            window.location = '/admin/{{ module }}';
+          });
+          {% endif %}
+
+        });
+        </script>
+        <style>
+        tr:hover {
+          cursor: pointer;
+        }
+        div.dataTables_filter input {
+          display: inline !important;
+          width: 150px;
+        }
+         
+        div.dataTables_filter {
+          float: right;
+        }
+
+        table.dataTable thead th.sort {
+          position: relative;
+          padding-right: 16px;
+          cursor: pointer;
+        }
+        table.dataTable thead th.sort .sort {
+          position: absolute;
+          right: 4px;
+          top: 50%;
+          height: 100%;
+          margin-top: -5px;
+          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+          filter: alpha(opacity=20);
+          -moz-opacity:0.2;
+          -khtml-opacity: 0.2;
+          opacity: 0.2;
+
+          -webkit-transition:opacity 0.25s ease-in;  
+          -moz-transition:opacity 0.25s ease-in;  
+          -o-transition:opacity 0.25s ease-in;  
+          transition:opacity 0.25s ease-in;
+        }
+        table.dataTable thead th.sort .sort .sort-up,
+        table.dataTable thead th.sort .sort .sort-down {
+          display: block;
+          width: 0;
+          height: 0;
+          vertical-align: top;
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
+          content: "";
+        }
+        table.dataTable thead th.sort .sort .sort-up {
+          border-bottom: 4px solid #000;
+          margin-bottom: 2px;
+        }
+        table.dataTable thead th.sort .sort .sort-down {
+          border-top: 4px solid #000;
+          margin-top: 2px;
+        }
+        table.dataTable thead th.sort.sort-none {
+          cursor: default;
+        }
+        table.dataTable thead th.sort.sort-none .sort {
+          display: none;
+        }
+        table.dataTable thead th.sort.sort-up .sort,
+        table.dataTable thead th.sort.sort-down .sort {
+          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
+          filter: alpha(opacity=60);
+          -moz-opacity:0.6;
+          -khtml-opacity: 0.6;
+          opacity: 0.6;
+        }
+        table.dataTable thead th.sort.sort-up .sort-down {
+          visibility: hidden;
+        }
+        table.dataTable thead th.sort.sort-down .sort-up {
+          visibility: hidden;
+        }
+        table.dataTable thead th.sort:hover .sort {
+          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+          filter: alpha(opacity=100);
+          -moz-opacity:1.0;
+          -khtml-opacity: 1.0;
+          opacity: 1.0;
+        }
+        .actions.both {
+            width: 125px;
+        }
+        .actions.delete {
+            width: 60px;
+        }
+        .actions.edit {
+            width: 48px;
+        }
+        </style>
+        <div class="span9">
+          <div class="page-header">
+            {% if settings.add == 'true' or settings.add > pagination.total %}
+            <a class="btn btn-small pull-right" href="/admin/{{ module }}/add"><i class="icon-plus"></i> Add new {{ module }}</a>
+            {% endif %}
+            {% if settings.run.path %}
+            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:10px;"{% endif %}><i class="icon-refresh"></i> {{ settings.run.button }}</a>
+            {% endif %}
+            <h1>
+              View
+              <small>{{ module|title }}</small>
+            </h1>
+          </div>
+          <div id="delete-confirm" class="alert alert-block alert-error hide fade in">
+            <h4 class="alert-heading">Confirm deletion...</h4>
+            <p>Are you sure you want to delete this item?</p>
+            <p>
+              <a class="btn btn-small btn-danger delete-confirm" href="#" data-id="" ><i class="icon-trash icon-white"></i> Delete</a> <a class="btn btn-small cancel" href="#">Cancel</a>
+            </p>
+          </div>
+          {% if result %}
+          <div id="delete-result" class="alert alert-block alert-error fade in" id="modal">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            <strong>{{ result.title }}</strong> {{ result.message }}
+          </div>
+          {% endif %}
+          
+          {% if data %}
+          <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="table">
+            <colgroup>
+            {% for item in data %}
+            {% if loop.first %}
+            {% for param in item %}
+            {% if loop.first %}
+              <col class="span1">
+            {% else %}
+              <col>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+            {% if settings.edit == 1 or settings.delete == 1 %}
+              <col style="width:{% if settings.edit + settings.delete == 2 %}150px{% elseif settings.edit == 1 %}75px{% else %}85px{% endif %};">
+            {% endif %}
+            </colgroup>
+            <thead>
+              <tr class="header">
+            {% for item in data %}
+            {% if loop.first %}
+            {% for param in item|keys %}
+                <th>
+                  <div class="sort">
+                      <div class="sort-up"></div>
+                      <div class="sort-down"></div>
+                  </div>
+                  {{ param|capitalize }}
+                </th>
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+            {% if settings.edit == 1 or settings.delete == 1 %}
+                <th class="actions {% if settings.edit == 1 and settings.delete == 1 %}both{% elseif settings.edit == 1 and settings.delete == 0 %}edit{% else %}delete{% endif %}">Actions</th>
+            {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+            {% for item in data %}
+              <tr data-id="{{ item.id }}" rel="tooltip">
+              {% for info in item %}
+                <td>{{ info|slice(0, 100)|striptags|raw }}{% if info|length > 100 %}&hellip;{% endif %}</td>
+              {% endfor %}
+                <td>
+            {% if data %}
+            {% if settings.edit == 1 %}
+            <a class="btn btn-small" href="/admin/{{ module }}/edit/{{ item.id }}?start={{ pagination.start }}"{% if settings.delete == 1 %} style="margin-right:5px;"{% endif %}><i class="icon-edit"></i> Edit</a>
+            {% endif %}
+            {% if settings.delete == 1 %}
+            <a class="btn btn-small delete" id="{{ item.id }}" href="#"><i class="icon-trash"></i> Delete</a>
+            {% endif %}
+            {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+
+          {% if pagination.total > pagination.limit %}
+          <div class="pagination pagination-centered">
+            <ul>
+              <li{% if pagination.start == 0 %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start - pagination.limit }}">&larr;</a></li>
+            {% for i in 1..pagination.tabs %}
+              <li{% if pagination.start == ((i - 1) * pagination.limit) %} class="active"{% endif %}><a href="/admin/{{ module }}/?start={{ (i - 1) * pagination.limit }}">{{ i }}</a></li>
+            {% endfor %}
+              <li{% if pagination.total - pagination.start <= pagination.limit %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start + pagination.limit }}">&rarr;</a></li>
+            </ul>
+          </div>
+          {% endif %}
+
+        {% if settings.run.path %}
+        <div class="modal fade hide" id="run">
+          <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>Fetch results</h3>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <a href="#" class="btn btn-primary" data-dismiss="modal">Close</a>
+          </div>
+        </div>
+        {% endif %}
+
+        </div>

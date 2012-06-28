@@ -1,0 +1,19 @@
+
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              {% for key, menugroup in menu %}
+              <li class="nav-header">{{ key }}</li>
+              <!--<li class="divider"></li>-->
+              {% for key, item in menugroup %}
+              <li class="{{ key }}">
+                  <a href="/admin/{{ key }}">
+                      <i class="icon-list"></i>
+                      {{ item|raw }}
+                  </a>
+              </li>
+              {% endfor %}
+              {% endfor %}
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->

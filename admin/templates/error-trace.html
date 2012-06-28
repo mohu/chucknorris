@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "common/nav.html" %}
+<div class="row-fluid">
+    <div class="span12">
+            <div class="hero-unit">
+                <h1>Debug <small>Backtrace</small></h1>
+            </div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span12">
+        <div class="row-fluid">
+            <div class="span6">
+                <div class="well">
+                    <h3>Request method <small>{{ backtrace.0.context._SERVER.REQUEST_METHOD }}</small></h3>
+                    <h3>Request address <small>{{ backtrace.0.context._SERVER.SERVER_NAME }}{{ backtrace.0.context._SERVER.REQUEST_URI }}</small></h3>
+                    <h3>Server time <small>{{ backtrace.0.context._SERVER.REQUEST_TIME|date("r") }}</small></h3>
+                </div>
+            </div>
+            <div class="span6">
+                <div class="well">
+                    <h3>Host <small>{{ backtrace.0.context.host }}</small></h3>
+                    <h3>Database <small>{{ backtrace.0.context.db }}</small></h3>
+                    <h3>PHP version <small>{{ phpversion }}</small></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span12">
+    {% for trace in backtrace %}
+        <div class="page-header">
+            <h1>Error <small>{{ trace.type }}</small></h1>
+        </div>
+        <blockquote>
+            <p>{{ trace.message|raw }}</p>
+            <small>In {{ trace.file }} <strong>on line {{ trace.line }}</strong></small>
+        </blockquote>
+        <h3>Backtrace</h3>
+        {% for trace in trace.trace %}
+            <p>{{ trace.file }} <strong>on line {{ trace.line }} in <em>{{ trace.function }}</em></strong></p>
+        {% if trace.output %}
+        <pre class="prettyprint linenum linenums:{{ trace.line }}"><code>{{ trace.output }}</code></pre>
+        {% endif %}
+        {% endfor %}
+        {% if not loop.last %}
+        <hr>
+        {% endif %}
+    {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
