@@ -186,7 +186,7 @@ class App {
    */
   public static function removeHidden($dict, $model, $class) {
     $fields = App::getFields($model, $class);
-    
+
     $i = 0;
     foreach($dict as $key => $value) {
       foreach($value as $key2 => $value2) {

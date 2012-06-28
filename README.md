@@ -2,17 +2,19 @@
 
 Update the template folder files to reflect the latest html5boilerplate release (if required)
 
-Don't forget to move the _404.html_ file to /templates
+Don't forget to move the __*404.html*__ file to /templates
 
 ## Database
 
-Create an empty MySQL database for the project and add the name to the __*$db*__ variable in:
+Create a MySQL database for the project and add the name to the __*$db*__ variable in:
 
 /includes/common/dbconnector.php
 
 ```
 $db   = 'database_name';
 ```
+
+Install __*initial.sql*__ from /database
 
 ## Adding URLs
 
@@ -69,4 +71,18 @@ $model  = new Model_Blog();
 $dict[$module] = $model->blog();
 
 echo $twig->render('blog.html', $dict);
+```
+
+## Mobile
+
+The mobile site follows the same setup as above (but if the mobile site is hosted in the same directory as the main site, the database is shared).
+
+However, you still need to edit:
+
+/mobile/includes/common/dbconnector.php
+
+With your database name as below...
+
+```
+$db   = 'database_name';
 ```
