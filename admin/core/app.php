@@ -161,8 +161,72 @@ class App {
   }
 
   public static function createModel($view, $module, $admin) {
-    echo 'make model files here';
-    exit;
+    // Strip all but letters and numbers and make lower case then upper case first letter in module name
+    $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $module));
+    $module_upper = ucfirst($module_lower);
+
+    if ($admin) {
+
+      // Basic admin view file
+      $file  = '<?php' ."\n\n";
+      $file .= 'class Model_' . $module_upper . ' extends RedBean_SimpleModel {' . "\n\n";
+      $file .= "\t" . 'function fields() {' . "\n";
+      $file .= "\t\t" . '// Add fields here' . "\n";
+      $file .= "\t\t" . '$fields[\'title\']       = array(\'type\'=>\'text\', \'label\'=>\'title\', \'help\'=>\'This is optional help text\');' . "\n\n";
+      $file .= "\t\t" . '// Settings' . "\n";
+      $file .= "\t\t" . '$fields[\'add\']        = true;' . "\n";
+      $file .= "\t\t" . '$fields[\'edit\']       = true;' . "\n";
+      $file .= "\t\t" . '$fields[\'delete\']     = true;' . "\n";
+      $file .= "\t\t" . 'return $fields;' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= "\t" .'function settings() {' . "\n";
+      $file .= "\t\t" . '$dict = App::getSettings($this->fields());' . "\n";
+      $file .= "\t\t" . 'return $dict;' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= "\t" .'function view() {' . "\n";
+      $file .= "\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t" . '$dict = App::view($module, __CLASS__); // Region optional' . "\n";
+      $file .= "\t\t" . 'return $dict;' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= "\t" .'function count() {' . "\n";
+      $file .= "\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t" . '$dict = App::count($module); // Region optional' . "\n";
+      $file .= "\t\t" . 'return $dict;' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= "\t" .'function add() {' . "\n";
+      $file .= "\t\t" . 'return App::buildForm($this->fields());' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= "\t" .'function edit($id) {' . "\n";
+      $file .= "\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t" . 'sanitize($id);' . "\n";
+      $file .= "\t\t" . 'return App::buildEditform($this->fields(), $module, $id);' . "\n";
+      $file .= "\t" .'}' . "\n\n";
+      $file .= 'function trash($id) {' . "\n";
+      $file .= "\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t" . 'sanitize($id);' . "\n";
+      $file .= "\t\t" . 'return App::trash($id, $module);' . "\n";
+      $file .= "\t" . '}' . "\n";
+      $file .= '}';
+
+    } else {
+
+      // Basic frontend view file
+      $file  = '<?php' . "\n";
+      $file .= 'class Model_' . $module_upper . ' extends RedBean_SimpleModel {' . "\n\n";
+      $file .= "\t" . 'function ' . $module_lower . '() {' . "\n";
+      $file .= "\t\t" . '$dict = array();' . "\n";
+      $file .= "\t\t" . '// Add database calls here' . "\n";
+      $file .= "\t\t" . 'return $dict;' . "\n";
+      $file .= "\t" . '}' . "\n";
+      $file .= '}';
+
+    }
+
+    $fp = fopen($view, 'w');
+    fwrite($fp, $file);
+    fclose($fp);
+
+    App::includeView($view, $admin);
   }
 
   /**

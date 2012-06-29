@@ -2,7 +2,8 @@
 class Model_Home extends RedBean_SimpleModel {
 
 	function home() {
-    $dict = array();
-	return $dict;
+		$dict = array();
+		// Add database calls here
+		return $dict;
 	}
 }
