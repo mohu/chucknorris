@@ -33,7 +33,7 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
 
 } elseif (php_uname('n') == 'camel.local') {
   $username = 'root';
-  $password = 'password';
+  $password = 'DGKmjYr4drbt8LNVNR';
 
 } else { // Live server
   $host     = '';
