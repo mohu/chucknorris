@@ -1,5 +1,5 @@
 <?php
-//error_reporting(0);
+error_reporting(0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -984,7 +984,9 @@ class App {
 
     $_POST = array_remove_empty($_POST);
 
-    //echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+//    echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+
+    $shared = null;
 
     foreach ($_POST as $key => $value) {
       if (strlen(strstr($key,'shared'))>0) {
@@ -1038,6 +1040,9 @@ class App {
       $dict['title']    = 'Error!';
       $dict['message']  = 'Record not found...';
     } else {
+      // Todo: add foreach to iterate through fields that could be files
+      // Check if file exists
+      // Unlink($file) if file_exists
       R::trash( $data );
       $dict['title']    = 'Success!';
       $dict['message']  = 'Record successfully deleted';
