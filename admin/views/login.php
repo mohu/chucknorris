@@ -6,9 +6,9 @@ if (!$app->checkSession()) {
     $_POST = sanitize($_POST);
 
     $username = isset($_POST['username']) ? $_POST['username'] : null;
-    $password = isset($_POST['password']) ? sha1($_POST['password']) : null;
+    $pass     = isset($_POST['password']) ? sha1($_POST['password']) : null;
 
-    $userquery = R::getRow( 'SELECT * FROM users WHERE username = "' . $username . '" AND password = "' . $password . '" AND `group` = "superadmin"' );
+    $userquery = R::getRow( 'SELECT * FROM users WHERE username = "' . $username . '" AND password = "' . $pass . '" AND `group` = "superadmin"' );
 
       if ($userquery) {
 

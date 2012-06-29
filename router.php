@@ -1,4 +1,7 @@
 <?php
+require_once 'admin/core/app.php';
+$app = new App();
+
 $current_path   = explode('/', $_SERVER["REQUEST_URI"]);
 //echo '<pre>' . print_r($current_path, true) . '</pre>'; exit;
 
@@ -11,13 +14,13 @@ if(!isset($current_path) || ($current_path[1] == 'index.php') || ($current_path[
 
   $module = $current_path[1];
   $dict['page'] = $module;
-  include_once 'views/'.$current_path[1].'.php';
+  App::includeView('views/'.$current_path[1].'.php', false);
 
 } elseif($current_path[1] == 'index.php' || ($current_path[1] == '') ) {
 
   $module = 'home';
   $dict['page'] = $module;
-  include_once 'views/home.php';
+  App::includeView('views/home.php', false);
 
 } else {
 

@@ -1,5 +1,5 @@
 <?php
-error_reporting(0);
+//error_reporting(0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -26,6 +26,9 @@ class App {
     }
   }
 
+  /**
+   * @return mixed
+   */
   public function coreFunctions() {
     $this->parseErrors();
     $this->log();
@@ -91,6 +94,75 @@ class App {
     if (empty($GLOBALS['bufferederrors'])) {
       echo $twig->render($template, $dict);
     }
+  }
+
+  /**
+   * @static
+   *
+   * @param      $view
+   * @param bool $admin
+   */
+  public static function includeView($view, $admin = false) {
+    global $dict, $module, $twig;
+
+    if (!file_exists($view)) {
+      App::createView($view, $module, $admin);
+    } else {
+      include_once($view);
+    }
+  }
+
+  /**
+   * @static
+   *
+   * @param $view
+   * @param $module
+   * @param $admin
+   */
+  public static function createView($view, $module, $admin) {
+    // Strip all but letters and numbers and make lower case then upper case first letter in module name
+    $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $module));
+    $module_upper = ucfirst($module_lower);
+
+    if ($admin) {
+
+      // Basic admin view file
+      $file  = '<?php' . "\n";
+      $file .= 'App::requireModel(\'models/\' . $module . \'.php\', true);' . "\n";
+      $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
+      $file .= 'include_once \'common.php\';';
+
+    } else {
+
+      // Basic frontend view file
+      $file  = '<?php' . "\n";
+      $file .= 'App::requireModel(\'models/\' . $module . \'.php\', false);' . "\n";
+      $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
+      $file .= '$dict[$module] = $model->' . $module_lower . '();' . "\n\n";
+      $file .= 'echo $twig->render(\'' . $module_lower . '.html\', $dict);';
+
+    }
+
+    $fp = fopen($view, 'w');
+    fwrite($fp, $file);
+    fclose($fp);
+
+    App::includeView($view, $admin);
+  }
+
+  public static function requireModel($model, $admin = false) {
+    global $module;
+
+    if (!file_exists($model)) {
+      App::createModel($model, $module, $admin);
+    } else {
+      require_once($model);
+    }
+  }
+
+  public static function createModel($view, $module, $admin) {
+    echo 'make model files here';
+    exit;
   }
 
   /**
@@ -941,6 +1013,9 @@ class App {
    * @return string
    */
   public static function backupDatabase() {
+
+    if (!$this->checkSession()) { return; }
+
     // Get all of the tables
     $date   = date("Y-m-d-H-i-s");
     $date2  = date("Y-m-d H:i:s");
@@ -1036,6 +1111,9 @@ class App {
     return true;
   }
 
+  /**
+   * Sets a custom error handler to override PHP's default
+   */
   function parseErrors() {
     set_error_handler(array(&$this, "process_error_backtrace"));
   }

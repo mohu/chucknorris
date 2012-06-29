@@ -1,5 +1,5 @@
 <?php
-require_once 'models/' . $module . '.php';
+App::requireModel('models/' . $module . '.php', false);
 $model  = new Model_Home();
 
 $dict[$module] = $model->home();

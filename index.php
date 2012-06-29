@@ -4,7 +4,7 @@ require_once 'includes/common/dbconnector.php';
 require_once 'includes/common/functions.php';
 require_once 'includes/Twig/Autoloader.php';
 require_once 'includes/common/twigloader.php';
-error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
+//error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
 
 $valid_paths  = array('home',
                       // Add more urls below e.g.

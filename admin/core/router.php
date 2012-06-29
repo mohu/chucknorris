@@ -15,8 +15,7 @@ if(!isset($current_path) || ($current_path[2] == 'index.php' || (isset($current_
 
   $module = $current_path[2];
   $dict['module'] = $module;
-
-  include_once 'views/'.$current_path[2].'.php';
+  $app->includeView('views/'.$current_path[2].'.php', true);
 
 } elseif($current_path[2] == 'index.php' || ($current_path[2] == '') ) {
 
