@@ -48,30 +48,9 @@ This template file should be structured as below:
 {% endblock %}
 ```
 
-Next create a model __*php*__ file and add to the /models folder. This for retrieving database information (below is an example of a file that won't get any data but will enable the site to work for a URL called __*blog*__. Note the class and function naming conventions!):
+Previously, you had to add frontend and backend model and view files when adding new URLs. Chuck Norris now auto-generates these files and installs the basic requirements to load the pages.
 
-```
-<?php
-class Model_Blog extends RedBean_SimpleModel {
-
-	function blog() {
-                $dict = array();
-		return $dict;
-	}
-}
-```
-
-Finally, a view file must me added (again, note each instance and case of __*"blog"*__):
-
-```
-<?php
-require_once 'models/' . $module . '.php';
-$model  = new Model_Blog();
-
-$dict[$module] = $model->blog();
-
-echo $twig->render('blog.html', $dict);
-```
+Models need to be built to include data to send to the template files (documentation coming soon) but this should be enough to enable the creation of static templates ready to be made dynamic by the backend team.
 
 ## Mobile
 
