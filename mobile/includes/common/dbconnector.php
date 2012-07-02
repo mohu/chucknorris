@@ -35,6 +35,10 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
   $username = 'root';
   $password = 'password';
 
+} elseif (php_uname('n') == 'ben-smiths-macbook-pro.local') {
+  $username = 'root';
+  $password = 'root';
+
 } else { // Live server
   $host     = '';
   $db       = '';
