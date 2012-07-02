@@ -1,5 +1,5 @@
 <?php
-error_reporting(0);
+//error_reporting(0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -891,6 +891,7 @@ class App {
    */
   public function update($_POST) {
 //    Todo: Add in image clearing - but remove that info from the POST?
+//    [removeimages][table][id][field] = remove
     require_once realpath(dirname(__FILE__).'/../..'). '/includes/common/imageupload.php';
     $_POST = sanitize($_POST);
     $_FILES = sanitize($_FILES);
@@ -899,6 +900,11 @@ class App {
     $ownfields = null;
 
     require_once 'models/' . $module . '.php';
+
+    if (isset($_POST['removeimages'])) {
+      App::removeImages($_POST['removeimages']);
+      unset($_POST['removeimages']);
+    }
 
     if ($_FILES) {
       $_FILES = App::organiseFiles($_FILES, $module);
@@ -980,7 +986,7 @@ class App {
         }
       }
 
-    //echo '<pre>' . print_r($_POST, true) . '</pre>';
+//    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     $_POST = array_remove_empty($_POST);
 
@@ -1022,6 +1028,30 @@ class App {
         header('Location: /admin/' . $module . '/?start=' . $start ); exit;
       } else {
         header('Location: /admin/' . $module ); exit;
+      }
+    }
+  }
+
+  /**
+   * @static
+   *
+   * @param $array
+   */
+  private static function removeImages($array) {
+    foreach ($array AS $type => $bean) {
+      foreach ($bean AS $id => $fields) {
+        /** @var $item Redbean object for the record containing the image to be removed */
+        $item = R::load($type, $id);
+        foreach ($fields AS $field => $value) {
+          if (!is_null($item->$field) && !is_null($value)) {
+            /** @var $value File name to be unlinked and unset from the database */
+            if (file_exists(LOCAL_PATH . $item->$field)) {
+              unlink(LOCAL_PATH . $item->$field);
+            }
+            $item->$field = null;
+          }
+        }
+        R::store($item);
       }
     }
   }

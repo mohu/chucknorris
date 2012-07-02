@@ -188,11 +188,10 @@
                   <br /><span class="label label-info">Current file: {{ field.value }} <i class="icon-zoom-in icon-white"></i></span>
                   <br />
                   <label class="checkbox inline">
-                    <input type="checkbox" id="" value="1"> Clear?
+                    <input type="checkbox" name="removeimages[{{ module }}][{{ fields.id }}][{{ key }}]" value="{{ field.value }}"> Remove current image?
                   </label>
                   <div class="modal fade hide" id="modal">
                     <div class="modal-header">
-                      <!-- <a class="close" data-dismiss="modal">×</a> -->
                       <button type="button" class="close" data-dismiss="modal">×</button>
                       <h3>Preview</h3>
                     </div>

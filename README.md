@@ -16,6 +16,10 @@ $db   = 'database_name';
 
 Install __*initial.sql*__ from /database
 
+## Folder permissions
+
+Ensure /cache, admin/cache and /mobile/cache all have write permissions.
+
 ## Adding URLs
 
 By default __*"home"*__ is ready to use and edit.
