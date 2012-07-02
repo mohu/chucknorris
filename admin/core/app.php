@@ -1,5 +1,5 @@
 <?php
-//error_reporting(0);
+error_reporting(0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -59,7 +59,7 @@ class App {
   /**
    * @return array
    */
-  public function loadSession() {
+  public static function loadSession() {
     $s = session_id();
     if(empty($s)) session_start();
     return $_SESSION;

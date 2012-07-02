@@ -5,6 +5,9 @@
           span[rel="tooltip"] {
             border-bottom: 1px dotted #CCC;
           }
+          .label-info, .badge-info {
+              cursor: pointer;
+          }
         </style>
         <script type="text/javascript">
         $(document).ready(function() {
@@ -39,9 +42,12 @@
             } else { event.preventDefault() }
           });
 
-          $("span.label.label-info").live("click", function() {
-            console.log('modal clicked');
-            console.log($(this).nextAll('.modal').modal('show'));
+          $(".showmodal").live("click", function(e) {
+            e.preventDefault();
+            console.log($(this).parent().parent().nextAll('.modal').modal('show'));
+          });
+          $(".showmodal2").live("click", function() {
+            console.log($(this).parent().parent().parent().nextAll('.modal').modal('show'));
           });
 
           var updateDatepickers = function () {
@@ -181,15 +187,28 @@
                   <input type="hidden" id="{{ key }}" name="{{ module }}[type]" value="{{ module }}">
                   <input type="file" class="input-file input-xlarge{% if field.required and not field.value %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}|{{ field.path }}|{{ field.accept }}]">
                   {% if field.help %}
-                  <span class="help-inline" style="margin-left:42px;">{{ field.help|raw }}</span>
+                  <span class="help-inline" style="margin-left:10px;">{{ field.help|raw }}</span>
                   {% endif %}
                   <br /><span class="label">Allowed file types: {{ field.accept }}</span>
                   {% if field.value %}
-                  <br /><span class="label label-info">Current file: {{ field.value }} <i class="icon-zoom-in icon-white"></i></span>
                   <br />
-                  <label class="checkbox inline">
-                    <input type="checkbox" name="removeimages[{{ module }}][{{ fields.id }}][{{ key }}]" value="{{ field.value }}"> Remove current image?
-                  </label>
+                  <br />
+                  <div class="row-fluid">
+                    <div class="span8 well clearfix">
+                      <div class="thumbnails span2 showmodal">
+                        <a href="#" class="thumbnail">
+                          <img src="/{{ field.value }}">
+                        </a>
+                      </div>
+                      <div class="span6">
+                        <span class="label label-info showmodal2">Current file: {{ field.value }} <i class="icon-zoom-in icon-white"></i></span>
+                        <br />
+                        <label class="checkbox inline">
+                          <input type="checkbox" name="removeimages[{{ module }}][{{ fields.id }}][{{ key }}]" value="{{ field.value }}"> Remove current file?
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                   <div class="modal fade hide" id="modal">
                     <div class="modal-header">
                       <button type="button" class="close" data-dismiss="modal">×</button>
@@ -312,6 +331,10 @@
                       <br /><span class="label">Allowed file types: {{ fkfield.accept }}</span>
                       {% if fkfield.value %}
                       <br /><span class="label label-info">Current file: {{ fkfield.value }} <i class="icon-zoom-in icon-white"></i></span>
+                      <br />
+                      <label class="checkbox inline">
+                        <input type="checkbox" name="removeimages[{{ key|slice(3, 100)|lower }}][{{ fkfield.id }}][{{ fkkey }}]" value="{{ fkfield.value }}"> Remove current image?
+                      </label>
                       <div class="modal fade hide" id="modal">
                         <div class="modal-header">
                           <a class="close" data-dismiss="modal">×</a>
@@ -424,18 +447,6 @@
                       <span class="help-inline" style="margin-left:42px;">{{ fkfield.help|raw }}</span>
                       {% endif %}
                       <br /><span class="label">Allowed file types: {{ fkfield.accept }}</span>
-                      {% if fkfield.value %}
-                      <br /><span class="label label-info">Current file: {{ fkfield.value }} <i class="icon-zoom-in icon-white"></i></span>
-                      <div class="modal fade hide" id="modal">
-                        <div class="modal-header">
-                          <a class="close" data-dismiss="modal">×</a>
-                          <h3>Preview</h3>
-                        </div>
-                        <div class="modal-body">
-                          <center><img src="/{{ fkfield.value }}" style="max-width:500px;" /></center>
-                        </div>
-                      </div>
-                      {% endif %}
                     </div>
                   </div>
                 {% elseif fkfield.type == 'select' %}
