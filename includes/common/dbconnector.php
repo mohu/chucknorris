@@ -31,7 +31,7 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
   $username = 'root';
   $password = 'n0tr00t';
 
-} elseif (php_uname('n') == 'camel.local') {
+} elseif (php_uname('n') == 'camel.lan') {
   $username = 'root';
   $password = 'DGKmjYr4drbt8LNVNR';
 
