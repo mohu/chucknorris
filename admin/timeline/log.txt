@@ -1,0 +1,3 @@
+-- 2012-07-03 14:22 | Altering table. 
+ALTER TABLE `users` ADD `test`  VARCHAR(255)  
+

@@ -337,8 +337,8 @@ class App {
 
           } elseif ($tabs - ($adjacents * 2) > $page && $page > ($adjacents * 2)) {
             // In middle; hide some front and some back
-            $template .= '<li><a href="/admin/'. $module .'/?start=1">1</a></li>';
-            $template .= '<li><a href="/admin/'. $module .'/?start=2">2</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start=0">1</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. $limit .'">2</a></li>';
             $template .= '<li class="disabled"><a href="#">...</a></li>';
             for ($counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++) {
               if ($counter == $page)
@@ -352,8 +352,8 @@ class App {
           }
           // Close to end; only hide early pages
           else {
-            $template .= '<li><a href="/admin/'. $module .'/?start=1">1</a></li>';
-            $template .= '<li><a href="/admin/'. $module .'/?start=2">2</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start=0">1</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. $limit .'">2</a></li>';
             $template .= '<li class="disabled"><a href="#">...</a></li>';
             for ($counter = $tabs - (2 + ($adjacents * 2)); $counter <= $tabs; $counter++) {
               if ($counter == $page)
@@ -610,6 +610,7 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+          $form[$key]['isimage']    = (isset($data[0][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[0][$key]))) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
         } elseif ($field['type'] == 'select') { // File fields

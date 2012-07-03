@@ -5,7 +5,7 @@
           span[rel="tooltip"] {
             border-bottom: 1px dotted #CCC;
           }
-          .label-info, .badge-info {
+          .label-info.showmodal2 {
               cursor: pointer;
           }
         </style>
@@ -195,16 +195,18 @@
                   <br />
                   <div class="row-fluid">
                     <div class="span8 well clearfix">
+                      {% if field.isimage %}
                       <div class="thumbnails span2 showmodal">
                         <a href="#" class="thumbnail">
                           <img src="/{{ field.value }}">
                         </a>
                       </div>
+                      {% endif %}
                       <div class="span6">
-                        <span class="label label-info showmodal2">Current file: {{ field.value }} <i class="icon-zoom-in icon-white"></i></span>
+                        <span class="label label-info{% if field.isimage %} showmodal2{% endif %}">Current file: {{ field.value }}{% if field.isimage %} <i class="icon-zoom-in icon-white"></i>{% endif %}</span>
                         <br />
                         <label class="checkbox inline">
-                          <input type="checkbox" name="removeimages[{{ module }}][{{ fields.id }}][{{ key }}]" value="{{ field.value }}"> Remove current file?
+                          <input type="checkbox" name="removeimages[{{ module }}][{{ fields.id }}][{{ key }}]" value="{{ field.value }}"> Remove current {% if field.isimage %}image{% else %}file{% endif %}?
                         </label>
                       </div>
                     </div>
