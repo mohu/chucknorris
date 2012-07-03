@@ -42,4 +42,4 @@ if ($action == 'add') {
 
 }
 
-//echo '<pre>' . print_r($dict, r) . '</pre>';
+echo '<pre>' . print_r($dict, r) . '</pre>';

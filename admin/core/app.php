@@ -278,17 +278,102 @@ class App {
     $limit = R::getCell('SELECT pagination FROM settings LIMIT 1');
     $limit = ($limit) ? (int)$limit : 999999;
 
-    $pagination['start'] = (isset($_GET['start'])) ? (int)$_GET['start'] : 0;
+    // How many adjacent pages should be shown on each side of the current tab?
+    $adjacents = 3;
+
+    $start = (isset($_GET['start'])) ? (int)$_GET['start'] : 0;
 
     if ($region) {
       // Region specific
-      $pagination['total'] = count(R::find($module,' region = ?', array( $region )));
+      $total = count(R::find($module,' region = ?', array( $region )));
     } else {
       // Site specific
-      $pagination['total'] = count(R::find($module));
+      $total = count(R::find($module));
     }
-      $pagination['tabs'] = ceil($pagination['total'] / $limit);
-      $pagination['limit'] = $limit;
+      $tabs = ceil($total / $limit);
+      $page = ($start / $limit) + 1;
+
+      $pagination['total']       = $total;
+      $pagination['page']        = $page;
+      $pagination['start']       = $start;
+      $pagination['tabs']        = $tabs;
+      $pagination['limit']       = $limit;
+      $pagination['previous']    = $start - $limit;
+      $pagination['next']        = $start + $limit;
+      $pagination['penultimate'] = $tabs - 1;
+
+
+      $template = "";
+
+      if ($tabs > 1) {
+        $template .= '<ul>';
+        // Previous button
+        if ($page > 1)
+          $template .= '<li><a href="/admin/'. $module .'/?start='. $pagination['previous'] .'">&larr;</a></li>';
+        else
+          $template .= '<li class="disabled"><a href="#">&larr;</a></li>';
+
+        // Pages
+        if ($tabs < 7 + ($adjacents * 2)) {	// Not enough pages to bother breaking it up
+
+          for ($counter = 1; $counter <= $tabs; $counter++) {
+            if ($counter == $page)
+              $template .= '<li class="active"><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+            else
+              $template .= '<li><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+          }
+        } elseif ($tabs > 5 + ($adjacents * 2)) { // Enough pages to hide some
+          // Close to beginning; only hide later pages
+          if($page < 1 + ($adjacents * 2)) {
+            for ($counter = 1; $counter < 4 + ($adjacents * 2); $counter++) {
+              if ($counter == $page)
+                $template .= '<li class="active"><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+              else
+                $template .= '<li><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+            }
+            $template .= '<li class="disabled"><a href="#">...</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. (($pagination['penultimate'] * $limit) - $limit) .'">'. $pagination['penultimate'] .'</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. $pagination['penultimate'] * $limit .'">'. $tabs .'</a></li>';
+
+          } elseif ($tabs - ($adjacents * 2) > $page && $page > ($adjacents * 2)) {
+            // In middle; hide some front and some back
+            $template .= '<li><a href="/admin/'. $module .'/?start=1">1</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start=2">2</a></li>';
+            $template .= '<li class="disabled"><a href="#">...</a></li>';
+            for ($counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++) {
+              if ($counter == $page)
+                $template .= '<li class="active"><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+              else
+                $template .= '<li><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+            }
+            $template .= '<li class="disabled"><a href="#">...</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. (($pagination['penultimate'] * $limit) - $limit) .'">'. $pagination['penultimate'] .'</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start='. $pagination['penultimate'] * $limit .'">'. $tabs .'</a></li>';
+          }
+          // Close to end; only hide early pages
+          else {
+            $template .= '<li><a href="/admin/'. $module .'/?start=1">1</a></li>';
+            $template .= '<li><a href="/admin/'. $module .'/?start=2">2</a></li>';
+            $template .= '<li class="disabled"><a href="#">...</a></li>';
+            for ($counter = $tabs - (2 + ($adjacents * 2)); $counter <= $tabs; $counter++) {
+              if ($counter == $page)
+                $template .= '<li class="active"><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+              else
+                $template .= '<li><a href="/admin/'. $module .'/?start='. ($counter - 1) * $limit .'">'. $counter .'</a></li>';
+            }
+          }
+        }
+
+        // Next button
+        if ($page < $counter - 1)
+          $template .= '<li><a href="/admin/'. $module .'/?start='. $pagination['next'] .'">&rarr;</a></li>';
+        else
+          $template .= '<li class="disabled"><a href="#">&rarr;</a></li>';
+          $template .= '</ul>';
+      }
+
+      $pagination['template'] = $template;
+
     return $pagination;
   }
 
@@ -524,7 +609,7 @@ class App {
           $form[$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
-          $form[$key]['value']      = $data[0][$key];
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
         } elseif ($field['type'] == 'select') { // File fields
@@ -534,7 +619,7 @@ class App {
           $form[$key]['label']      = $field['label'];
           $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['value']      = $data[0][$key];
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
         } elseif ($field['type'] == 'radio') { // Radio fields
@@ -544,7 +629,7 @@ class App {
           $form[$key]['label']      = $field['label'];
           $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['value']      = $data[0][$key];
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
         } else { // Own fields
@@ -557,7 +642,7 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
           $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
-          $form[$key]['value']      = $data[0][$key];
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
         
         }

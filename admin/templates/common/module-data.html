@@ -246,13 +246,7 @@
 
           {% if pagination.total > pagination.limit %}
           <div class="pagination pagination-centered">
-            <ul>
-              <li{% if pagination.start == 0 %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start - pagination.limit }}">&larr;</a></li>
-            {% for i in 1..pagination.tabs %}
-              <li{% if pagination.start == ((i - 1) * pagination.limit) %} class="active"{% endif %}><a href="/admin/{{ module }}/?start={{ (i - 1) * pagination.limit }}">{{ i }}</a></li>
-            {% endfor %}
-              <li{% if pagination.total - pagination.start <= pagination.limit %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start + pagination.limit }}">&rarr;</a></li>
-            </ul>
+            {{ pagination.template|raw }}
           </div>
           {% endif %}
 
