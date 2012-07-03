@@ -1,5 +1,5 @@
 <?php
-error_reporting(0);
+// error_reporting(0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -50,7 +50,7 @@ class App {
    * @return null
    */
   public function checkSession() {
-    $this->loadSession();
+    App::loadSession();
     $session = isset($_SESSION['user']) ? $_SESSION['user'] : null; // Check session exists
 
     return $session;
@@ -1199,7 +1199,7 @@ class App {
    */
   public static function backupDatabase() {
 
-    if (!$this->checkSession()) { return; }
+    if (!App::checkSession()) { return; }
 
     // Get all of the tables
     $date   = date("Y-m-d-H-i-s");
