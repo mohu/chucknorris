@@ -1340,7 +1340,7 @@ class App {
     $i = 0;
     foreach ($trace AS $traced){
       $file = $traced['file'];
-      $lines = file($file); //file in to an array
+      $lines = file($file); // File in to an array
       $trace[$i]['output'] = $lines[$traced['line']-1];
       $i++;
     }
