@@ -13,6 +13,9 @@ $GLOBALS['bufferederrors'] = array();
 
 class App {
 
+  /**
+   * Constructor, runs core functions and listens to save/update calls
+   */
   function __construct() {
 
     $this->coreFunctions(); // Run core functions
@@ -27,6 +30,8 @@ class App {
   }
 
   /**
+   * Runs core functions
+   *
    * @return mixed
    */
   public function coreFunctions() {
@@ -36,6 +41,8 @@ class App {
   }
 
   /**
+   * Displays global settings page
+   *
    * @static
    * @return array
    */
@@ -47,16 +54,20 @@ class App {
   }
 
   /**
+   * Check $_SESSION exists
+   *
    * @return null
    */
   public function checkSession() {
     App::loadSession();
-    $session = isset($_SESSION['user']) ? $_SESSION['user'] : null; // Check session exists
+    $session = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 
     return $session;
   }
 
   /**
+   * Load $_SESSION
+   *
    * @return array
    */
   public static function loadSession() {
@@ -66,6 +77,8 @@ class App {
   }
 
   /**
+   * Loads cPanel side navigation menu array
+   *
    * @param $items
    *
    * @return array
@@ -84,6 +97,8 @@ class App {
   }
 
   /**
+   * Custom Twig template rendered
+   *
    * @static
    *
    * @param $template
@@ -97,6 +112,8 @@ class App {
   }
 
   /**
+   * Custom include function for view files
+   *
    * @static
    *
    * @param      $view
@@ -113,6 +130,8 @@ class App {
   }
 
   /**
+   * Creates basic views for admin and frontend if they do not exist
+   * 
    * @static
    *
    * @param $view
@@ -150,6 +169,12 @@ class App {
     App::includeView($view, $admin);
   }
 
+  /**
+   * @static
+   *
+   * @param      $model
+   * @param bool $admin
+   */
   public static function requireModel($model, $admin = false) {
     global $module;
 
@@ -160,6 +185,15 @@ class App {
     }
   }
 
+  /**
+   * Creates basic models for admin and frontend if they do not exist
+   *
+   * @static
+   *
+   * @param $view
+   * @param $module
+   * @param $admin
+   */
   public static function createModel($view, $module, $admin) {
     // Strip all but letters and numbers and make lower case then upper case first letter in module name
     $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $module));
@@ -230,6 +264,8 @@ class App {
   }
 
   /**
+   * Displays the data table list view in the cPanel
+   *
    * @static
    *
    * @param      $module
@@ -266,6 +302,8 @@ class App {
   }
 
   /**
+   * Pagination - gets data and creates a navigation template
+   *
    * @static
    *
    * @param      $module
@@ -378,6 +416,8 @@ class App {
   }
 
   /**
+   * Function to remove foreign keys from table view in cPanel
+   *
    * @static
    *
    * @param $dict
@@ -397,6 +437,8 @@ class App {
   }
 
   /**
+   * Function to remove fields from table view in models when set to "table_hide" => true
+   *
    * @static
    *
    * @param $dict
@@ -421,6 +463,8 @@ class App {
   }
 
   /**
+   * Builds add item form
+   *
    * @static
    *
    * @param $fields
@@ -513,6 +557,8 @@ class App {
   }
 
   /**
+   * Gets fields from model - returns buildForm() with fields array
+   *
    * @static
    *
    * @param $model
@@ -551,6 +597,8 @@ class App {
   }
 
   /**
+   * Builds edit form for existing item
+   *
    * @static
    *
    * @param $fields
@@ -653,6 +701,8 @@ class App {
   }
 
   /**
+   * Builds edit form for existing o2m fields data
+   *
    * @param $fields
    *
    * @return array
@@ -686,6 +736,8 @@ class App {
   }
 
   /**
+   * Gets edit fields and existing data for showing items
+   *
    * @static
    *
    * @param $parent
@@ -769,6 +821,8 @@ class App {
   }
 
   /**
+   * Returns foreign key fields along with data - sets selected where applicable
+   *
    * @static
    *
    * @param $parent
@@ -816,6 +870,8 @@ class App {
   }
 
   /**
+   * Gets settings defined in model
+   *
    * @static
    *
    * @param $fields
@@ -853,6 +909,8 @@ class App {
   }
 
   /**
+   * Save new item to database
+   *
    * @param $_POST
    */
   public function save($_POST) {
@@ -973,6 +1031,8 @@ class App {
   }
 
   /**
+   * Updates existing item in database
+   *
    * @param $_POST
    */
   public function update($_POST) {
@@ -1119,6 +1179,8 @@ class App {
   }
 
   /**
+   * Function to remove images and files from database and server when cleared from cPanel
+   *
    * @static
    *
    * @param $array
@@ -1143,6 +1205,8 @@ class App {
   }
 
   /**
+   * Trashes item from database
+   *
    * @static
    *
    * @param $id
@@ -1172,6 +1236,8 @@ class App {
   static $IMGVARS = array('name' => 1, 'type' => 1, 'tmp_name' => 1, 'error' => 1, 'size' => 1);
 
   /**
+   * Re-orders $_FILES array to be more sensible
+   *
    * @param $files
    * @param $module
    *
@@ -1194,6 +1260,8 @@ class App {
   }
 
   /**
+   * Creates an installable MySQL backup file and saves to the server and database
+   *
    * @static
    * @return string
    */
@@ -1285,6 +1353,8 @@ class App {
   }
 
   /**
+   * Runs Redbean schema log for migrations
+   *
    * @return bool
    */
   public function log() {
@@ -1304,6 +1374,8 @@ class App {
   }
 
   /**
+   * Processes error backtrace and displays custom debug template
+   *
    * @param $errno
    * @param $errstr
    * @param $errfile
