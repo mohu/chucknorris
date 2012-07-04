@@ -131,7 +131,7 @@ class App {
 
   /**
    * Creates basic views for admin and frontend if they do not exist
-   * 
+   *
    * @static
    *
    * @param $view
@@ -170,6 +170,8 @@ class App {
   }
 
   /**
+   * Custom require_once function for model files
+   *
    * @static
    *
    * @param      $model

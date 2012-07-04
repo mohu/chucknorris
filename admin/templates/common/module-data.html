@@ -13,7 +13,7 @@
         /* Table initialisation */
         $(document).ready(function() {
           $('#table').dataTable( {
-            "sDom": "<'row-fluid'<'span12'f>r>t<'span9'p>>",
+            "sDom": "<'row-fluid'<'span12'f>r>>",
             "bPaginate": false,
             "bSort": true,
             "bInfo": false,
@@ -245,10 +245,11 @@
           {% endif %}
 
           {% if pagination.total > pagination.limit %}
-          <div class="pagination pagination-centered">
+          <div class="pagination pagination-centered clearfix">
             {{ pagination.template|raw }}
           </div>
           {% endif %}
+
 
         {% if settings.run.path %}
         <div class="modal fade hide" id="run">
