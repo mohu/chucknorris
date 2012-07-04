@@ -1314,6 +1314,10 @@ class App {
    */
   function process_error_backtrace($errno, $errstr, $errfile, $errline, $errcontext) {
     global $twig;
+    if ( 0 == error_reporting () ) {
+      // Error reporting is currently turned off or suppressed with @
+      return;
+    }
     $errorTypes = Array(
       E_ERROR => 'Fatal Error',
       E_WARNING => 'Warning',
