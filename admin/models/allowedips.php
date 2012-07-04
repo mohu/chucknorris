@@ -4,7 +4,8 @@ class Model_Allowedips extends RedBean_SimpleModel {
 
   function fields() {
     // Add fields here
-    $fields['ip']      = array('type'=>'text', 'label'=>'allowed ip', 'max_length'=>'255', 'help'=>'');
+    $fields['ip']      = array('type'=>'text', 'label'=>'allowed ip', 'max_length'=>'255', 'help'=>'', 'required'=>true);
+    $fields['reference'] = array('type'=>'text', 'label'=>'reference', 'max_length'=>'255', 'help'=>'Who is this?', 'required'=>true);
     
     // Settings
     $fields['add']        = true;

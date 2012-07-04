@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-06-28 16:07:01 +0000
+# Generation Time: 2012-07-04 16:54:23 +0000
 # ************************************************************
 
 
@@ -28,15 +28,16 @@ DROP TABLE IF EXISTS `allowedips`;
 CREATE TABLE `allowedips` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `ip` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `reference` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `allowedips` WRITE;
 /*!40000 ALTER TABLE `allowedips` DISABLE KEYS */;
 
-INSERT INTO `allowedips` (`id`, `ip`)
+INSERT INTO `allowedips` (`id`, `ip`, `reference`)
 VALUES
-	(1,'127.0.0.1');
+	(1,'127.0.0.1','Local host');
 
 /*!40000 ALTER TABLE `allowedips` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -125,7 +126,7 @@ LOCK TABLES `settings` WRITE;
 
 INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`)
 VALUES
-	(1,10,'','','','');
+	(1,5,'','','','');
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -138,7 +139,7 @@ DROP TABLE IF EXISTS `tweets`;
 
 CREATE TABLE `tweets` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `tid` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `tid` bigint(20) DEFAULT NULL,
   `screen_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `time` int(11) unsigned DEFAULT NULL,
   `text` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -174,7 +175,7 @@ LOCK TABLES `users` WRITE;
 
 INSERT INTO `users` (`id`, `username`, `firstname`, `lastname`, `email`, `password`, `group`, `biography`, `image`, `twitter`, `linkedin`, `position`)
 VALUES
-	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','','','','','');
+	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','','img/43484106aston.jpeg','','','');
 
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
