@@ -1,4 +1,5 @@
 <?php
+define ('FRONTEND', 1 );
 require_once 'admin/core/app.php';
 $app = new App();
 
