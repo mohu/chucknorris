@@ -35,9 +35,20 @@ class App {
    * @return mixed
    */
   public function coreFunctions() {
+    $this->ipCheck();
     $this->parseErrors();
     $this->log();
     return;
+  }
+
+  /**
+   * Checks remote client IP address and compares to database white list
+   */
+  public function ipCheck() {
+    global $twig;
+    if (FRONTEND != 1) {
+      require_once LOCAL_PATH. 'includes/common/allowed_ips.php';
+    }
   }
 
   /**
@@ -921,6 +932,7 @@ class App {
     $_FILES = sanitize($_FILES);
     $module = $_POST['modulename'];
     $ownfields = null;
+    $owninfo = null;
     // echo '<pre>' . print_r($_FILES, true) . '</pre>'; 
     // echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
@@ -943,8 +955,9 @@ class App {
             $path = $info[1];
             $path = rtrim($path, '/');
             $path = ltrim($path, '/');
-            $ext = explode(',', $info[2]);
-            foreach ($ext as $ext) {
+            $extensions = explode(',', $info[2]);
+            $accept = array();
+            foreach ($extensions as $ext) {
               $ext = str_replace("'", '', $ext);
               $ext = str_replace(" ", '', $ext);
               $accept[] = $ext;
@@ -979,8 +992,9 @@ class App {
                     $path = $info[1];
                     $path = rtrim($path, '/');
                     $path = ltrim($path, '/');
-                    $ext = explode(',', $info[2]);
-                    foreach ($ext as $ext) {
+                    $extensions = explode(',', $info[2]);
+                    $accept = array();
+                    foreach ($extensions as $ext) {
                       $ext = str_replace("'", '', $ext);
                       $ext = str_replace(" ", '', $ext);
                       $accept[] = $ext;
@@ -1008,6 +1022,8 @@ class App {
     $_POST = array_remove_empty($_POST);
 
     // echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
+
+    $shared = null;
 
     foreach ($_POST as $key => $value) {
       if (strlen(strstr($key,'shared'))>0) {
@@ -1046,6 +1062,7 @@ class App {
     $module = $_POST['modulename'];
     $start = (isset($_POST['start'])) ? $_POST['start'] : 0;
     $ownfields = null;
+    $owninfo = null;
 
     require_once 'models/' . $module . '.php';
 
@@ -1070,8 +1087,9 @@ class App {
             $path = $info[1];
             $path = rtrim($path, '/');
             $path = ltrim($path, '/');
-            $ext = explode(',', $info[2]);
-            foreach ($ext as $ext) {
+            $extensions = explode(',', $info[2]);
+            $accept = array();
+            foreach ($extensions as $ext) {
               $ext = str_replace("'", '', $ext);
               $ext = str_replace(" ", '', $ext);
               $accept[] = $ext;
@@ -1108,8 +1126,9 @@ class App {
                     $path = $info[1];
                     $path = rtrim($path, '/');
                     $path = ltrim($path, '/');
-                    $ext = explode(',', $info[2]);
-                    foreach ($ext as $ext) {
+                    $extensions = explode(',', $info[2]);
+                    $accept = array();
+                    foreach ($extensions as $ext) {
                       $ext = str_replace("'", '', $ext);
                       $ext = str_replace(" ", '', $ext);
                       $accept[] = $ext;
