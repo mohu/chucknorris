@@ -46,7 +46,7 @@ class App {
    */
   public function ipCheck() {
     global $twig;
-    if (FRONTEND != 1) {
+    if (defined(FRONTEND) && FRONTEND != 1) {
       require_once LOCAL_PATH. 'includes/common/allowed_ips.php';
     }
   }
