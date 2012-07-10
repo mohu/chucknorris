@@ -114,7 +114,7 @@
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                  <input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}" {% if field.equalto %}equalto="#{{ field.equalto }}"{% endif %} id="{{ key }}" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>
+                  <input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>
                   {% if field.help %}
                   <span class="help-inline">{{ field.help|raw }}</span>
                   {% endif %}
@@ -124,7 +124,7 @@
               <div class="control-group">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|lower|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <textarea class="input-xlarge textarea{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]"></textarea>
+                  <textarea class="input-xlarge {% if field.rich_editor %} textarea{% endif %}{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}></textarea>
                   {% if field.help %}
                   <p class="help-block">{{ field.help|raw }}</p>
                   {% endif %}
@@ -210,7 +210,7 @@
                     <div class="controls">
                       <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
-                      <input type="text" class="input-xlarge{% if fkfield.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>
+                      <input type="text" class="input-xlarge{% if fkfield.validate %} {{ fkfield.validate }}{% endif %}" id="{{ module }}[{{ key }}][0][{{ fkkey }}]" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>
                       {% if fkfield.help %}
                       <span class="help-inline">{{ fkfield.help|raw }}</span>
                       {% endif %}
@@ -221,7 +221,7 @@
                     <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
                     <div class="controls">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
-                      <textarea class="input-xlarge textarea{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"></textarea>
+                      <textarea class="input-xlarge {% if fkfield.rich_editor %} textarea{% endif %}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if fkfield.readonly %} readonly{% endif %}></textarea>
                       {% if fkfield.help %}
                       <p class="help-block">{{ fkfield.help|raw }}</p>
                       {% endif %}

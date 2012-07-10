@@ -573,6 +573,24 @@ class App {
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
+        } elseif ($field['type'] == 'textarea') { // Textarea fields
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+          $form[$key]['rich_editor']= true;
+          if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
+            $form[$key]['rich_editor'] = true;
+          } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
+            $form[$key]['rich_editor'] = false;
+          }
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+
         } else { // Own fields
         
           $form[$key] = array();
@@ -717,6 +735,24 @@ class App {
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
+        } elseif ($field['type'] == 'textarea') { // Textarea fields
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+          $form[$key]['rich_editor']= true;
+          if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
+            $form[$key]['rich_editor'] = true;
+          } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
+            $form[$key]['rich_editor'] = false;
+          }
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+
         } else { // Own fields
         
           $form[$key] = array();
@@ -819,6 +855,7 @@ class App {
             $array[$i][$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
             $array[$i][$key]['id']         = $data[$i]['id'];
             $array[$i][$key]['value']      = $data[$i][$key];
+            $array[$i][$key]['isimage']    = (isset($data[$i][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[$i][$key]))) ? true : false;
             $array[$i][$key]['path']       = (isset($field['path'])) ? $field['path'] : false;
             $array[$i][$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
@@ -1031,7 +1068,7 @@ class App {
                     //$upload->SetMaximumFileSize(300000); // Maximum file size in bytes, if this is not set, the value in your php.ini file will be the maximum value
                     $file = $upload->UploadFile();
 
-                    if (!$_POST[$module][$owninfo[$key1]][$beanid][$info[3]]) {
+                    if (!isset($_POST[$module][$owninfo[$key1]][$beanid][$info[3]])) {
                       $_POST[$module][$owninfo[$key1]][$beanid][$info[3]] = $path . '/' . $file;
                     }
                   }
@@ -1077,8 +1114,6 @@ class App {
    * @param $_POST
    */
   public function update($_POST) {
-//    Todo: Add in image clearing - but remove that info from the POST?
-//    [removeimages][table][id][field] = remove
     require_once realpath(dirname(__FILE__).'/../..'). '/includes/common/imageupload.php';
     $_POST = sanitize($_POST);
     $_FILES = sanitize($_FILES);
@@ -1088,6 +1123,8 @@ class App {
     $owninfo = null;
 
     require_once 'models/' . $module . '.php';
+
+//    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     if (isset($_POST['removeimages'])) {
       App::removeImages($_POST['removeimages']);
@@ -1165,7 +1202,7 @@ class App {
                     //$upload->SetMaximumFileSize(300000); // Maximum file size in bytes, if this is not set, the value in your php.ini file will be the maximum value
                     $file = $upload->UploadFile();
 
-                    if (!$_POST[$module][$owninfo[$key1]][$beanid][$info[3]]) { // Make sure empty loops don't overwrite previously set images!
+                    if (!isset($_POST[$module][$owninfo[$key1]][$beanid][$info[3]])) { // Make sure empty loops don't overwrite previously set images!
                       $_POST[$module][$owninfo[$key1]][$beanid][$info[3]] = $path . '/' . $file;
                     }
                   }
@@ -1224,12 +1261,14 @@ class App {
 
   /**
    * Function to remove images and files from database and server when cleared from cPanel
+   * Array format - [removeimages][table][id][field]
    *
    * @static
    *
    * @param $array
    */
   private static function removeImages($array) {
+    /** @var $array This is the "removeimages" array for the images selected to be removed */
     foreach ($array AS $type => $bean) {
       foreach ($bean AS $id => $fields) {
         /** @var $item Redbean object for the record containing the image to be removed */

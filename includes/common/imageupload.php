@@ -100,7 +100,7 @@ class Upload {
     {
         $MaximumFileSize = $this->MaximumFileSize;
         $TempFileName = $this->GetTempName();
-        $TempFileSize = filesize($TempFileName);
+        $TempFileSize = @filesize($TempFileName);
 
         if($MaximumFileSize == "") {
             $this->SetMessage("WARNING: There is no size restriction.");

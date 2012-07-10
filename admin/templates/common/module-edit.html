@@ -32,7 +32,7 @@
             tinyMCE.triggerSave();
             var status = [];
             $('form .textarea').each(function() {
-              valid = $("#" + this.id).valid(); //Validate again
+              valid = $("#" + this.id).valid(); // Validate again
               status.push(valid);
             });
 
@@ -78,6 +78,7 @@
             var dataid = $(this).parents(".own").data('id');
               $(this).parents(".own").clone().insertAfter("#" + id + "[data-id='" + dataid +"']").attr("id", (id)).attr("data-id", (dataid + 1)).find("input").each(function() {
                 $(this).parents(".own").find("span.label.label-info").remove();
+                $(this).parents(".own").find(".imgbox").remove();
                 $(this).parents(".own").find("a.remove").show();
                   var name = this.name || "";
                   var match = name.match(regex) || [];
@@ -163,7 +164,7 @@
               <div class="control-group">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <textarea class="input-xlarge textarea{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]">{{ field.value }}</textarea>
+                  <textarea class="input-xlarge{% if field.rich_editor %} textarea{% endif %}{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>{{ field.value }}</textarea>
                   {% if field.help %}
                   <p class="help-block">{{ field.help|raw }}</p>
                   {% endif %}
@@ -191,9 +192,7 @@
                   {% endif %}
                   <br /><span class="label">Allowed file types: {{ field.accept }}</span>
                   {% if field.value %}
-                  <br />
-                  <br />
-                  <div class="row-fluid">
+                  <div class="row-fluid imgbox" style="margin-top:10px;">
                     <div class="span8 well clearfix">
                       {% if field.isimage %}
                       <div class="thumbnails span2 showmodal">
@@ -300,7 +299,7 @@
                       <input type="hidden" class="ownid" name="{{ module }}[{{ key }}][{{ index }}][id]" value="{{ fkfield.id }}">
                       <input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][type]" value="{{ key|slice(3, 100)|lower }}">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][region]" value="{{ session.region }}">{% endif %}
-                      <textarea class="input-xlarge textarea{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]">{{ fkfield.value }}</textarea>
+                      <textarea class="input-xlarge {% if fkfield.rich_editor %} textarea{% endif %}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]"{% if fkfield.readonly %} readonly{% endif %}>{{ fkfield.value }}</textarea>
                       {% if fkfield.help %}
                       <p class="help-block">{{ fkfield.help|raw }}</p>
                       {% endif %}
@@ -332,14 +331,27 @@
                       {% endif %}
                       <br /><span class="label">Allowed file types: {{ fkfield.accept }}</span>
                       {% if fkfield.value %}
-                      <br /><span class="label label-info">Current file: {{ fkfield.value }} <i class="icon-zoom-in icon-white"></i></span>
-                      <br />
-                      <label class="checkbox inline">
-                        <input type="checkbox" name="removeimages[{{ key|slice(3, 100)|lower }}][{{ fkfield.id }}][{{ fkkey }}]" value="{{ fkfield.value }}"> Remove current image?
-                      </label>
+                      <div class="row-fluid imgbox" style="margin-top:10px;">
+                        <div class="span8 well clearfix">
+                          {% if fkfield.isimage %}
+                          <div class="thumbnails span2 showmodal">
+                            <a href="#" class="thumbnail">
+                              <img src="/{{ fkfield.value }}">
+                            </a>
+                          </div>
+                          {% endif %}
+                          <div class="span6">
+                            <span class="label label-info{% if fkfield.isimage %} showmodal2{% endif %}">Current file: {{ fkfield.value }}{% if fkfield.isimage %} <i class="icon-zoom-in icon-white"></i>{% endif %}</span>
+                            <br />
+                            <label class="checkbox inline">
+                              <input type="checkbox" name="removeimages[{{ key|slice(3, 100)|lower }}][{{ fkfield.id }}][{{ fkkey }}]" value="{{ fkfield.value }}"> Remove current {% if fkfield.isimage %}image{% else %}file{% endif %}?
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                       <div class="modal fade hide" id="modal">
                         <div class="modal-header">
-                          <a class="close" data-dismiss="modal">×</a>
+                          <button type="button" class="close" data-dismiss="modal">×</button>
                           <h3>Preview</h3>
                         </div>
                         <div class="modal-body">
@@ -420,7 +432,7 @@
                     <div class="controls">
                       <input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][type]" value="{{ key|slice(3, 100)|lower }}">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][region]" value="{{ session.region }}">{% endif %}
-                      <textarea class="input-xlarge textarea{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]">{{ fkfield.value }}</textarea>
+                      <textarea class="input-xlarge {% if field.rich_editor %} textarea{% endif %}{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>{{ fkfield.value }}</textarea>
                       {% if fkfield.help %}
                       <p class="help-block">{{ fkfield.help|raw }}</p>
                       {% endif %}
