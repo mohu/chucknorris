@@ -18,6 +18,19 @@ class Model_Backup extends RedBean_SimpleModel {
     return $fields;
   }
 
+  function backup() {
+    $start = ($_GET['start']) ? (int)$_GET['start'] : 0;
+    $limit = R::getCell('SELECT pagination FROM settings LIMIT 1');
+
+    $limit = ($limit) ? (int)$limit : 999999;
+
+    $data = R::getAll( 'SELECT *
+                        FROM backup
+                        LIMIT ' . $start . ', ' . $limit );
+
+    return $data;
+  }
+
   function settings() {
     $dict = App::getSettings($this->fields());
     return $dict;

@@ -13,11 +13,18 @@
         /* Table initialisation */
         $(document).ready(function() {
           $('#table').dataTable( {
-            //"sDom": "<'row-fluid'<'span12'f>r>t<'span9'p>>",
+            "sDom": "<'row-fluid'<'span12'f>r>>",
             "bPaginate": false,
             "bSort": true,
             "bInfo": false,
             "bAutoWidth": false,
+          });
+
+          // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
+
+          $('#table > tbody > tr > td:not(:last-child)').filter(function(index){ return $('.thumbnail', this).length == 0; }).click(function() {
+            var id = $(this).parent('tr').data('id');
+            $(location).attr("href", "/admin/{{ module }}/edit/"+id+"?start={{ pagination.start }}");
           });
 
           $('a.delete').click(function() {
@@ -41,22 +48,27 @@
             window.location = '/admin/{{ module }}';
           });
 
-          {% if settings.run %}
+          {% if settings.run.path %}
           // Run cron script jQuery
           $('a.run').bind('click', function(event) {
             event.preventDefault();
             $(this).unbind('click');
-            $(this).html('<i class="icon-refresh"></i> Fetching...')
-            $.get('{{ settings.run }}', function(data) {
+            $(this).html('<i class="icon-refresh"></i> {{ settings.run.button_running }}')
+            $.get('{{ settings.run.path }}', function(data) {
               $('#run.modal').modal({show: true, backdrop: 'static'});
               $('#run.modal .modal-body').html(data);
-              console.log('Successful fetch...');
+              console.log('Success');
             });
           });
           $('#run.modal').on('hidden', function () {
             window.location = '/admin/{{ module }}';
           });
           {% endif %}
+
+          $(".thumbnail").live("click", function(e) {
+            e.preventDefault();
+            $(this).next('.modal').modal('show');
+          });
 
         });
         </script>
@@ -66,7 +78,7 @@
         }
         div.dataTables_filter input {
           display: inline !important;
-          width: 150px;
+          width: 142px;
         }
          
         div.dataTables_filter {
@@ -140,14 +152,23 @@
           -khtml-opacity: 1.0;
           opacity: 1.0;
         }
+        .actions.both {
+            width: 125px;
+        }
+        .actions.delete {
+            width: 60px;
+        }
+        .actions.edit {
+            width: 48px;
+        }
         </style>
         <div class="span9">
           <div class="page-header">
             {% if settings.add == 'true' or settings.add > pagination.total %}
             <a class="btn btn-small pull-right" href="/admin/{{ module }}/add"><i class="icon-plus"></i> Add new {{ module }}</a>
             {% endif %}
-            {% if settings.run %}
-            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:10px;"{% endif %}><i class="icon-refresh"></i> Fetch...</a>
+            {% if settings.run.path %}
+            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:10px;"{% endif %}><i class="icon-refresh"></i> {{ settings.run.button }}</a>
             {% endif %}
             <h1>
               View
@@ -170,32 +191,27 @@
           
           {% if data %}
               <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="table">
+                <colgroup>
+                  <col>
+                  <col>
+                  <col>
+                  <col style="width:85px;">
+                </colgroup>
                 <thead>
-                  <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th colspan="3">Attached CV</th>
-                    <th></th>
-                  </tr>
                   <tr>
                     <th>
                       <div class="sort">
                         <div class="sort-up"></div>
                         <div class="sort-down"></div>
                       </div>
-                      #
+                      Id
                     </th>
                     <th>
                       <div class="sort">
                         <div class="sort-up"></div>
                         <div class="sort-down"></div>
                       </div>
-                      Name
+                      File
                     </th>
                     <th>
                       <div class="sort">
@@ -203,55 +219,6 @@
                         <div class="sort-down"></div>
                       </div>
                       Date
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Email
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Telephone
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Cover Letter
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Reference
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Filename
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Type
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Size
                     </th>
                     {% if settings.edit == 1 or settings.delete == 1 %}
                       <th>Delete?</th>
@@ -262,19 +229,12 @@
                   {% for data in data %}
                   <tr>
                     <td>{{ data.id }}</td>
-                    <td>{{ data.name }}</td>
-                    <td>{{ data.date|date("j M Y") }}</td>
-                    <td><a href="mailto:{{ data.email }}">{{ data.email }}</a></td>
-                    <td>{{ data.phone }}</td>
-                    <td>{{ data.coverletter }}</td>
-                    <td>{{ data.reference }}</td>
-                    <td>{% if data.filename %}<a href="/forms/file.php?id={{ data.id }}" target="_blank">{{ data.filename }} <i class="icon-download"></i></a>{% endif %}</td>
-                    <td>{{ data.type }}</td>
-                    <td>{{ data.size }}</td>
+                    <td><a href="/admin/core/download-backup.php?id={{ data.id }}">{{ data.file }}</a></td>
+                    <td>{{ data.date|date("j M Y - H:i:s") }}</td>
                     <td>
                       {% if data %}
                       {% if settings.delete == 1 %}
-                      <a class="btn btn-small delete" id="{{ data.id }}" href="#"><i class="icon-trash"></i></a>
+                      <a class="btn btn-small delete" id="{{ item.id }}" href="#"><i class="icon-trash"></i> Delete</a>
                       {% endif %}
                       {% endif %}
                     </td>
@@ -285,22 +245,17 @@
           {% endif %}
 
           {% if pagination.total > pagination.limit %}
-          <div class="pagination pagination-centered">
-            <ul>
-              <li{% if pagination.start == 0 %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start - pagination.limit }}">&larr;</a></li>
-            {% for i in 1..pagination.tabs %}
-              <li{% if pagination.start == ((i - 1) * pagination.limit) %} class="active"{% endif %}><a href="/admin/{{ module }}/?start={{ (i - 1) * pagination.limit }}">{{ i }}</a></li>
-            {% endfor %}
-              <li{% if pagination.total - pagination.start <= pagination.limit %} class="disabled"{% endif %}><a href="/admin/{{ module }}/?start={{ pagination.start + pagination.limit }}">&rarr;</a></li>
-            </ul>
+          <div class="pagination pagination-centered clearfix">
+            {{ pagination.template|raw }}
           </div>
           {% endif %}
 
-          {% if settings.run %}
+
+        {% if settings.run.path %}
         <div class="modal fade hide" id="run">
           <div class="modal-header">
             <a class="close" data-dismiss="modal">×</a>
-            <h3>Fetch results</h3>
+            <h3>Results</h3>
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer">

@@ -334,6 +334,8 @@ class App {
     }
     $dict = App::removeForeignkeys($data);
     $dict = App::removeHidden($dict, $module, $class);
+    $dict = App::parseTabledata($dict);
+    $dict = App::parseImages($dict);
     return $dict;
   }
 
@@ -494,6 +496,42 @@ class App {
         }
       }
     $i++;
+    }
+    return $dict;
+  }
+
+  public static function parseTabledata($dict) {
+    $i = 0;
+    foreach($dict as $key => $value) {
+      foreach($value as $key2 => $value2) {
+        if (strlen($value2) > 100) {
+          $value2 = preg_replace('/\s+?(\S+)?$/', '', substr($value2, 0, 101)) . '&hellip;';
+        }
+        $dict[$i][$key2] = $value2;
+      }
+    }
+    return $dict;
+  }
+
+  public static function parseImages($dict) {
+    $replacement = '<a class="thumbnail"><img src="/${0}" /></a>
+                    <div class="modal fade hide">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">×</button>
+                        <h3>Preview</h3>
+                      </div>
+                      <div class="modal-body">
+                        <center><img src="/${0}" style="max-width:500px;" /></center>
+                      </div>
+                    </div>';
+    $i = 0;
+    foreach($dict as $key => $value) {
+      foreach($value as $key2 => $value2) {
+        $test = preg_replace('/^.*.(?:jpe?g|gif|png)$/', $replacement, $value2);
+        if ($test) {
+          $dict[$i][$key2] = $test;
+        }
+      }
     }
     return $dict;
   }

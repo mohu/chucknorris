@@ -22,7 +22,7 @@
 
           // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
 
-          $('#table > tbody > tr > td:not(:last-child)').click(function() {
+          $('#table > tbody > tr > td:not(:last-child)').filter(function(index){ return $('.thumbnail', this).length == 0; }).click(function() {
             var id = $(this).parent('tr').data('id');
             $(location).attr("href", "/admin/{{ module }}/edit/"+id+"?start={{ pagination.start }}");
           });
@@ -64,6 +64,11 @@
             window.location = '/admin/{{ module }}';
           });
           {% endif %}
+
+          $(".thumbnail").live("click", function(e) {
+            e.preventDefault();
+            $(this).next('.modal').modal('show');
+          });
 
         });
         </script>
@@ -226,7 +231,7 @@
             {% for item in data %}
               <tr data-id="{{ item.id }}" rel="tooltip">
               {% for info in item %}
-                <td>{{ info|slice(0, 100)|striptags|raw }}{% if info|length > 100 %}&hellip;{% endif %}</td>
+                <td>{{ info|raw }}</td>
               {% endfor %}
                 <td>
             {% if data %}
