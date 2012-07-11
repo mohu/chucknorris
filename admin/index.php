@@ -15,8 +15,7 @@ $valid_paths  = array( // Core
                        // Custom
                       );
 
-$dict            = array();
-$dict['session'] = $app->loadSession();
+$dict            = $app->beginDict();
 $dict['menu']    = $app->loadMenu(array('Menus'               => array( 'menu' => 'Menu', 'menuitem' => 'Menu item', ),
                                         'Twitter'             => array( 'tweets' => 'Tweets', ),
                                         'Users'               => array( 'users' => 'Users', ),

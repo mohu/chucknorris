@@ -35,7 +35,7 @@ if (!$app->checkSession()) {
   } else {
 
     // User has not posted the login form yet: display the form
-    echo $twig->render('login.html');
+    echo $twig->render('login.html', $dict);
 
   }
 } else {

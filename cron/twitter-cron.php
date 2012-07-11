@@ -15,19 +15,19 @@ foreach ($team AS $team) {
     }
 }
 
-function saveTweets($screen_name, $table) {
+function saveTweets($screenname, $table) {
     global $link;
 
-    $screen_name = sanitize(strtolower(trim($screen_name)));
+    $screenname = sanitize(strtolower(trim($screenname)));
     
-    if (!$screen_name) {
+    if (!$screenname) {
       echo '<p>Error: No screen name declared.</p>';
       return false;
     }
 
-    $last_id = R::getCell('SELECT tid FROM '.$table.' WHERE screen_name = "'. $screen_name .'" ORDER BY tid DESC LIMIT 1');
+    $last_id = R::getCell('SELECT tid FROM '.$table.' WHERE screenname = "'. $screenname .'" ORDER BY tid DESC LIMIT 1');
 
-    $url = 'http://api.twitter.com/1/statuses/user_timeline.xml?screen_name=' . $screen_name;
+    $url = 'http://api.twitter.com/1/statuses/user_timeline.xml?screenname=' . $screenname;
     if ($last_id) { $url .= '&since_id=' . $last_id; }
     $ch = curl_init($url);
     curl_setopt ($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -49,7 +49,7 @@ function saveTweets($screen_name, $table) {
             $tweet->tid           = $tid;
             $tweet->setMeta("cast.tid", "string"); // Cast to BIGINT
 
-            $tweet->screen_name   = $screen_name;
+            $tweet->screenname    = $screenname;
             $tweet->time          = $time;
             $tweet->text          = $text;
             $tweet->published     = 1;
@@ -60,5 +60,5 @@ function saveTweets($screen_name, $table) {
         $affected++;
     }
 
-    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screen_name .'</strong> saved.</p>';
+    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screenname .'</strong> saved.</p>';
 }

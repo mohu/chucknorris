@@ -30,7 +30,6 @@ class App {
 
   /**
    * Runs core functions
-   *
    * @return mixed
    */
   public function coreFunctions() {
@@ -38,6 +37,27 @@ class App {
     $this->parseErrors();
     $this->log();
     return;
+  }
+
+  /**
+   * Loads the start of the dictionary of data for the admin area
+   * @static
+   * @return array
+   */
+  public function beginDict() {
+    $dict = array();
+    $dict['session']  = App::loadSession();
+    $dict['cms']      = array('name'=>'Chuck Norris',
+                              'version'=>'0.5.0',
+                              'dependancies'=>array('RedBeanPHP'=>'3.2.3',
+                                                    'Twig'=>'1.8.3',
+                                                    'Bootstrap, from Twitter'=>'2.0.4'));
+
+    $sitename         = R::getCell('SELECT sitename FROM settings');
+    $dict['sitename'] = ($sitename) ? $sitename : 'Chuck Norris';
+    $dict['appletouchicon'] = (is_array(@getimagesize(LOCAL_PATH . 'apple-touch-icon-57x57-precomposed.png'))) ? true : false;
+
+    return $dict;
   }
 
   /**
@@ -76,7 +96,6 @@ class App {
 
   /**
    * Displays global settings page
-   *
    * @static
    * @return array
    */
@@ -89,7 +108,6 @@ class App {
 
   /**
    * Check $_SESSION exists
-   *
    * @return null
    */
   public function checkSession() {
@@ -101,7 +119,6 @@ class App {
 
   /**
    * Load $_SESSION
-   *
    * @return array
    */
   public static function loadSession() {
@@ -112,7 +129,6 @@ class App {
 
   /**
    * Loads cPanel side navigation menu array
-   *
    * @param $items
    *
    * @return array
@@ -132,7 +148,6 @@ class App {
 
   /**
    * Custom Twig template rendered
-   *
    * @static
    *
    * @param $template
@@ -147,7 +162,6 @@ class App {
 
   /**
    * Custom include function for view files
-   *
    * @static
    *
    * @param      $view
@@ -165,7 +179,6 @@ class App {
 
   /**
    * Creates basic views for admin and frontend if they do not exist
-   *
    * @static
    *
    * @param $view
@@ -205,7 +218,6 @@ class App {
 
   /**
    * Custom require_once function for model files
-   *
    * @static
    *
    * @param      $model
@@ -223,7 +235,6 @@ class App {
 
   /**
    * Creates basic models for admin and frontend if they do not exist
-   *
    * @static
    *
    * @param $view
@@ -301,7 +312,6 @@ class App {
 
   /**
    * Displays the data table list view in the cPanel
-   *
    * @static
    *
    * @param      $module
@@ -339,7 +349,6 @@ class App {
 
   /**
    * Pagination - gets data and creates a navigation template
-   *
    * @static
    *
    * @param      $module
@@ -453,7 +462,6 @@ class App {
 
   /**
    * Function to remove foreign keys from table view in cPanel
-   *
    * @static
    *
    * @param $dict
@@ -474,7 +482,6 @@ class App {
 
   /**
    * Function to remove fields from table view in models when set to "table_hide" => true
-   *
    * @static
    *
    * @param $dict
@@ -498,7 +505,14 @@ class App {
     return $dict;
   }
 
-  public static function parseTabledata($dict) {
+  /**
+   * Trims admin table view fields to 100 characters and removes html
+   * @static
+   *
+   * @param $dict
+   *
+   * @return mixed
+   */public static function parseTabledata($dict) {
     $i = 0;
     foreach($dict as $key => $value) {
       foreach($value as $key2 => $value2) {
@@ -538,7 +552,6 @@ class App {
 
   /**
    * Builds add item form
-   *
    * @static
    *
    * @param $fields
@@ -650,7 +663,6 @@ class App {
 
   /**
    * Gets fields from model - returns buildForm() with fields array
-   *
    * @static
    *
    * @param $model
@@ -690,7 +702,6 @@ class App {
 
   /**
    * Builds edit form for existing item
-   *
    * @static
    *
    * @param $fields
@@ -812,7 +823,6 @@ class App {
 
   /**
    * Builds edit form for existing o2m fields data
-   *
    * @param $fields
    *
    * @return array
@@ -847,7 +857,6 @@ class App {
 
   /**
    * Gets edit fields and existing data for showing items
-   *
    * @static
    *
    * @param $parent
@@ -933,7 +942,6 @@ class App {
 
   /**
    * Returns foreign key fields along with data - sets selected where applicable
-   *
    * @static
    *
    * @param $parent
@@ -982,7 +990,6 @@ class App {
 
   /**
    * Gets settings defined in model
-   *
    * @static
    *
    * @param $fields
@@ -1021,7 +1028,6 @@ class App {
 
   /**
    * Save new item to database
-   *
    * @param $_POST
    */
   public function save($_POST) {
@@ -1148,7 +1154,6 @@ class App {
 
   /**
    * Updates existing item in database
-   *
    * @param $_POST
    */
   public function update($_POST) {
@@ -1300,7 +1305,6 @@ class App {
   /**
    * Function to remove images and files from database and server when cleared from cPanel
    * Array format - [removeimages][table][id][field]
-   *
    * @static
    *
    * @param $array
@@ -1327,7 +1331,6 @@ class App {
 
   /**
    * Trashes item from database
-   *
    * @static
    *
    * @param $id
@@ -1358,7 +1361,6 @@ class App {
 
   /**
    * Re-orders $_FILES array to be more sensible
-   *
    * @param $files
    * @param $module
    *
@@ -1382,7 +1384,6 @@ class App {
 
   /**
    * Creates an installable MySQL backup file and saves to the server and database
-   *
    * @static
    * @return string
    */
@@ -1475,7 +1476,6 @@ class App {
 
   /**
    * Runs Redbean schema log for migrations
-   *
    * @return bool
    */
   public function log() {
@@ -1496,7 +1496,6 @@ class App {
 
   /**
    * Processes error backtrace and displays custom debug template
-   *
    * @param $errno
    * @param $errstr
    * @param $errfile
