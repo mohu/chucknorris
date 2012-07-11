@@ -15,7 +15,7 @@ class Model_Tweets extends RedBean_SimpleModel {
     $fields['delete']     = true;
 
     $fields['orderby']    = 'id';
-    $fields['order']      = 'DESC';
+    $fields['order']      = 'desc';
 
     // Cron
     $fields['run']        = array('path'=>'/cron/twitter-cron.php', 'button'=>'Fetch', 'button_running'=>'Fetching...');

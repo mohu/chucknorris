@@ -12,13 +12,39 @@
 
         /* Table initialisation */
         $(document).ready(function() {
-          $('#table').dataTable( {
-            "sDom": "<'row-fluid'<'span12'f>r>>",
-            "bPaginate": false,
-            "bSort": true,
-            "bInfo": false,
-            "bAutoWidth": false,
-          });
+          renderDataTable("#table");
+          function renderDataTable(selector) {
+            var out = [];
+            var tables = $(selector);
+            var sorting;
+
+            for ( var i=0, iLen=tables.length ; i<iLen ; i++ ) {
+              var defaultCol = $('th', tables[i]).index($(".dataTable-defaultSort",tables[i]));
+              console.log(defaultCol);
+              if(defaultCol >= 0){
+                sorting = [ defaultCol, '{{ settings.order }}' ];
+              } else {
+                sorting = [0, '{{ settings.order }}'];
+              }
+
+              var oTable2 = $(tables[i]).dataTable({
+                "aaSorting": [ sorting ],
+                "bScrollCollapse":true,
+                "sDom": "<'row-fluid'<'span12'f>r>>",
+                "bPaginate": false,
+                "bSort": true,
+                "bInfo": false,
+                "bAutoWidth": false,
+                "aoColumnDefs": [
+                  {"bSearchable": false, "bSortable": false, "aTargets": ["dataTable-exclude"]},
+                  {"bVisible":false, "aTargets" : ["dataTables_notVisible"]}
+                ]
+              } );
+
+              out.push( oTable2 );
+            }
+            return out;
+          }
 
           // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
 
@@ -212,7 +238,7 @@
             {% for item in data %}
             {% if loop.first %}
             {% for param in item|keys %}
-                <th>
+                <th {% if param == settings.orderby %}class="dataTable-defaultSort"{% endif %}>
                   <div class="sort">
                       <div class="sort-up"></div>
                       <div class="sort-down"></div>
