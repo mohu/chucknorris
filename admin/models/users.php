@@ -13,7 +13,7 @@ class Model_Users extends RedBean_SimpleModel {
     $fields['image']      = array('type'=>'file', 'label'=>'image', 'path'=>'img', 'help'=>'Profile image 200 x 200 px', 'table_hide'=>false);
     $fields['twitter']    = array('type'=>'text', 'label'=>'Twitter account', 'max_length'=>'255', 'help'=>'Enter the user\'s Twitter <strong>user name</strong> (without the @ symbol)', 'table_hide'=>true);
     $fields['linkedin']   = array('type'=>'text', 'label'=>'Linkedin account', 'max_length'=>'255', 'help'=>'Enter the user\'s Linkedin <strong>Public Profile URL</strong> (including http://)', 'table_hide'=>true);
-    $fields['group']      = array('type'=>'select', 'label'=>'group', 'max_length'=>'255', 'help'=>'', 'values'=>array('superadmin'=>'Super administrator', 'team'=>'Team'), 'required'=>true);
+    $fields['group']      = array('type'=>'select', 'label'=>'group', 'max_length'=>'255', 'help'=>'', 'values'=>array('Super administrator'=>'superadmin', 'Team'=>'team'), 'required'=>true);
 
     // Settings
     $fields['add']        = true;

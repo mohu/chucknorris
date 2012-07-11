@@ -83,11 +83,12 @@
                   var name = this.name || "";
                   var match = name.match(regex) || [];
                   var index = String(match).match(regex2) || [];
-                  var index = parseInt(index) + 1;
+                  index = parseInt(index) + 1;
                   if (match.length > 0) {
                     this.name = (this.name).replace(regex, "[" + index + "]");
                     $(this).filter('.ownid').remove();
                     if ($(this).filter(":text").length > 0) {
+                      console.log($(this));
                       $(this).val('');
                     }
                     if ($(this).filter(":file").length > 0) {
@@ -244,7 +245,7 @@
                 <div class="controls">
                   <input type="hidden" name="{{ module }}[{{ key }}][type]" value="{{ key|slice(3, 100)|lower }}">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                  {% for key2, item in field.values %}
+                  {% for item, key2 in field.values %}
                   <label class="radio">
                     <input type="radio" class="{% if field.required %}required{% endif %}" name="{{ module }}[{{ key }}]" value="{{ key2 }}"{% if key2 == field.value and field.value is not null %} checked{% endif %}>
                     {{ item|capitalize }}
@@ -388,7 +389,7 @@
                       <input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][type]" value="{{ key|slice(3, 100)|lower }}">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][region]" value="{{ session.region }}">{% endif %}
                       <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                      {% for key2, item in fkfield.values %}
+                      {% for item, key2 in fkfield.values %}
                       <label class="radio">
                         <input type="radio" class="{% if fkfield.required %}required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]" value="{{ key2 }}"{% if key2 == fkfield.value %} checked{% endif %}>
                         {{ item|capitalize }}
@@ -488,7 +489,7 @@
                     <input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][type]" value="{{ key|slice(3, 100)|lower }}">
                     {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][{{ index }}][region]" value="{{ session.region }}">{% endif %}
                     <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                    {% for key2, item in fkfield.values %}
+                    {% for item, key2 in fkfield.values %}
                     <label class="radio">
                       <input type="radio" class="{% if fkfield.required %}required{% endif %}" name="{{ module }}[{{ key }}][{{ index }}][{{ fkkey }}]" value="{{ key2 }}">
                       {{ item|capitalize }}

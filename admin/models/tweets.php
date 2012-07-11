@@ -7,7 +7,7 @@ class Model_Tweets extends RedBean_SimpleModel {
     $fields['screen_name']= array('type'=>'text', 'label'=>'screen name', 'max_length'=>'255', 'help'=>'', 'readonly'=>true);
     $fields['time']       = array('type'=>'text', 'label'=>'time stamp', 'max_length'=>'255', 'help'=>'', 'readonly'=>true);
     $fields['text']       = array('type'=>'text', 'label'=>'tweet', 'max_length'=>'255', 'help'=>'', 'readonly'=>true);
-    $fields['published']  = array('type'=>'radio', 'label'=>'publish?', 'max_length'=>'255', 'help'=>'', 'values'=>array(1=>'yes', 0=>'no'));
+    $fields['published']  = array('type'=>'radio', 'label'=>'publish?', 'max_length'=>'255', 'help'=>'', 'values'=>array('yes'=>1, 'no'=>0));
 
     // Settings
     $fields['add']        = false;

@@ -4,8 +4,8 @@ class Model_Backup extends RedBean_SimpleModel {
 
   function fields() {
     // Add fields here
-    $fields['file']      = array('type'=>'text', 'label'=>'file', 'max_length'=>'255', 'help'=>'');
-    $fields['date']      = array('type'=>'text', 'label'=>'date', 'max_length'=>'255', 'help'=>'');
+    $fields['file']       = array('type'=>'text', 'label'=>'file', 'max_length'=>'255', 'help'=>'');
+    $fields['date']       = array('type'=>'text', 'label'=>'date', 'max_length'=>'255', 'help'=>'');
     
     // Settings
     $fields['add']        = false;

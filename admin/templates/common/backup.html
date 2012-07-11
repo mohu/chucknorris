@@ -22,11 +22,6 @@
 
           // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
 
-          $('#table > tbody > tr > td:not(:last-child)').filter(function(index){ return $('.thumbnail', this).length == 0; }).click(function() {
-            var id = $(this).parent('tr').data('id');
-            $(location).attr("href", "/admin/{{ module }}/edit/"+id+"?start={{ pagination.start }}");
-          });
-
           $('a.delete').click(function() {
             var id = $(this).attr('id');
             if(id) {
@@ -73,9 +68,6 @@
         });
         </script>
         <style>
-        tr:hover {
-          cursor: pointer;
-        }
         div.dataTables_filter input {
           display: inline !important;
           width: 142px;

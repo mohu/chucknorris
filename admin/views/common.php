@@ -25,9 +25,10 @@ if ($action == 'add') {
 */
 } elseif ($action == 'delete' && $id) {
 
-  $dict['result']   = $model->trash($id);
-  $dict['data']     = $model->view();
-  $dict['settings'] = $model->settings();
+  $dict['result']     = $model->trash($id);
+  $dict['data']       = $model->view();
+  $dict['pagination'] = $model->count();
+  $dict['settings']   = $model->settings();
   App::renderTwig('module.html', $dict);
 
 /**
@@ -42,4 +43,4 @@ if ($action == 'add') {
 
 }
 
-// echo '<pre>' . print_r($dict, r) . '</pre>';
+//echo '<pre>' . print_r($dict, true) . '</pre>';

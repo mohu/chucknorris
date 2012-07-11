@@ -325,12 +325,10 @@ class App {
 
     if ($region) {
       // Region specific
-      $data  = R::getAll('SELECT SQL_CALC_FOUND_ROWS * FROM ' . $module . ' WHERE region = "' . $region . '" ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
-      $count = R::getCell('SELECT FOUND_ROWS()');
+      $data  = R::getAll('SELECT * FROM ' . $module . ' WHERE region = "' . $region . '" ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
     } else {
       // Site specific
-      $data  = R::getAll('SELECT SQL_CALC_FOUND_ROWS * FROM ' . $module . ' WHERE 1 ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
-      $count = R::getCell('SELECT FOUND_ROWS()');
+      $data  = R::getAll('SELECT * FROM ' . $module . ' WHERE 1 ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
     }
     $dict = App::removeForeignkeys($data);
     $dict = App::removeHidden($dict, $module, $class);
@@ -509,6 +507,7 @@ class App {
         }
         $dict[$i][$key2] = $value2;
       }
+    $i++;
     }
     return $dict;
   }
@@ -532,6 +531,7 @@ class App {
           $dict[$i][$key2] = $test;
         }
       }
+    $i++;
     }
     return $dict;
   }

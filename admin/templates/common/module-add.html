@@ -174,7 +174,7 @@
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>                
                 <div class="controls">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                  {% for key2, item in field.values %}
+                  {% for item, key2 in field.values %}
                   <label class="radio">
                     <input type="radio" class="{% if field.required and loop.first %}required{% endif %}" name="{{ module }}[{{ key }}]" value="{{ key2 }}">
                     {{ item|capitalize }}
@@ -274,7 +274,7 @@
                   <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>                
                   <div class="controls">
                     <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                    {% for key2, item in fkfield.values %}
+                    {% for item, key2 in fkfield.values %}
                     <label class="radio">
                       <input type="radio" class="{% if fkfield.required %}required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]" value="{{ key2 }}">
                       {{ item|capitalize }}
