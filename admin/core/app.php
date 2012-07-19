@@ -65,7 +65,7 @@ class App {
    */
   public function checkIP() {
     global $twig;
-    if (defined('FRONTEND')) {
+    if (!defined('FRONTEND')) {
       $allowed_ips = R::getAll( 'SELECT * FROM allowedips' );
 
       $allowed = false;

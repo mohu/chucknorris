@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-07-04 16:54:23 +0000
+# Generation Time: 2012-07-19 09:19:28 +0000
 # ************************************************************
 
 
@@ -118,15 +118,16 @@ CREATE TABLE `settings` (
   `facebook` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `contact` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `sitename` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 
-INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`)
+INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`, `sitename`)
 VALUES
-	(1,5,'','','','');
+	(1,5,'','','','','');
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -140,7 +141,7 @@ DROP TABLE IF EXISTS `tweets`;
 CREATE TABLE `tweets` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `tid` bigint(20) DEFAULT NULL,
-  `screen_name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `screenname` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `time` int(11) unsigned DEFAULT NULL,
   `text` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `published` set('1') COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -166,7 +167,7 @@ CREATE TABLE `users` (
   `image` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `twitter` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `position` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `position` text COLLATE utf8_unicode_ci,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -175,7 +176,7 @@ LOCK TABLES `users` WRITE;
 
 INSERT INTO `users` (`id`, `username`, `firstname`, `lastname`, `email`, `password`, `group`, `biography`, `image`, `twitter`, `linkedin`, `position`)
 VALUES
-	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','','img/43484106aston.jpeg','','','');
+	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','',NULL,'','','');
 
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
