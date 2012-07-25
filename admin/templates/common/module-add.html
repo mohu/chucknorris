@@ -29,14 +29,15 @@
             tinyMCE.triggerSave();
             var status = [];
             $('form .textarea').each(function() {
-              valid = $("#" + this.id).valid(); //Validate again
+              valid = $("#" + this.id).valid(); // Validate again
               status.push(valid);
             });
 
             var textarea_validate = $.inArray(0, status);
 
-            if (textarea_validate) {
-            } else { event.preventDefault() }
+            if (textarea_validate > 0) {
+              event.preventDefault()
+            }
           });
 
           var updateDatepickers = function () {
@@ -114,7 +115,7 @@
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                  <input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>
+                  <input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>
                   {% if field.help %}
                   <span class="help-inline">{{ field.help|raw }}</span>
                   {% endif %}
@@ -210,7 +211,7 @@
                     <div class="controls">
                       <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
-                      <input type="text" class="input-xlarge{% if fkfield.validate %} {{ fkfield.validate }}{% endif %}" id="{{ module }}[{{ key }}][0][{{ fkkey }}]" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>
+                      <input type="text" class="input-xlarge{% if fkfield.validate %} {{ fkfield.validate }}{% endif %}"{% if fkfield.maxlength %} maxlength="{{ fkfield.maxlength }}"{% endif %} id="{{ module }}[{{ key }}][0][{{ fkkey }}]" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if field.readonly %} readonly{% endif %}>
                       {% if fkfield.help %}
                       <span class="help-inline">{{ fkfield.help|raw }}</span>
                       {% endif %}
@@ -302,7 +303,10 @@
               <div class="control-group">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <select multiple="multiple" name="{{ key }}[]" id="{{ key }}">
+                  <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}">
+                  {% if field.one %}
+                    <option value="">-- Select --</option>
+                  {% endif %}
                   {% for fkfield in field.fields %}
                     <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                   {% endfor %}

@@ -51,10 +51,12 @@ class App {
                               'version'=>'0.5.0',
                               'dependancies'=>array('RedBeanPHP'=>'3.2.3',
                                                     'Twig'=>'1.8.3',
-                                                    'Bootstrap, from Twitter'=>'2.0.4'));
+                                                    'Bootstrap, from Twitter'=>'2.0.4',
+                                                    'Glyphicons'=>'1.6')
+                              );
 
     $sitename         = R::getCell('SELECT sitename FROM settings');
-    $dict['sitename'] = ($sitename) ? $sitename : 'Chuck Norris';
+    $dict['sitename'] = ($sitename) ? $sitename : $dict['cms']['name'];
     $dict['appletouchicon'] = (is_array(@getimagesize(LOCAL_PATH . 'apple-touch-icon-57x57-precomposed.png'))) ? true : false;
 
     return $dict;
@@ -282,7 +284,7 @@ class App {
       $file .= "\t\t" . 'sanitize($id);' . "\n";
       $file .= "\t\t" . 'return App::buildEditform($this->fields(), $module, $id);' . "\n";
       $file .= "\t" .'}' . "\n\n";
-      $file .= 'function trash($id) {' . "\n";
+      $file .= "\t" . 'function trash($id) {' . "\n";
       $file .= "\t\t" . 'global $module;' . "\n";
       $file .= "\t\t" . 'sanitize($id);' . "\n";
       $file .= "\t\t" . 'return App::trash($id, $module);' . "\n";
@@ -588,6 +590,7 @@ class App {
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
               $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle']);
+              $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
 
             }
@@ -629,7 +632,7 @@ class App {
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['rich_editor']= true;
@@ -647,7 +650,7 @@ class App {
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
@@ -747,6 +750,7 @@ class App {
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
               $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $id);
+              $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
 
             }
@@ -789,7 +793,7 @@ class App {
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['rich_editor']= true;
@@ -807,7 +811,7 @@ class App {
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
@@ -887,7 +891,7 @@ class App {
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
             $array[$i][$key]['label']      = $field['label'];
-            $array[$i][$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+            $array[$i][$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
             $array[$i][$key]['id']         = $data[$i]['id'];
             $array[$i][$key]['value']      = $data[$i][$key];
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
@@ -899,7 +903,7 @@ class App {
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
             $array[$i][$key]['label']      = $field['label'];
-            $array[$i][$key]['max_length'] = (isset($field['max_length'])) ? $field['max_length'] : null;
+            $array[$i][$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
             $array[$i][$key]['id']         = $data[$i]['id'];
             $array[$i][$key]['value']      = $data[$i][$key];
             $array[$i][$key]['isimage']    = (isset($data[$i][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[$i][$key]))) ? true : false;
@@ -1017,7 +1021,7 @@ class App {
       $dict['edit']    = (isset($fields['edit']) && $fields['edit'] == true) ? true : false;
       $dict['delete']  = (isset($fields['delete']) && $fields['delete'] == true) ? true : false;
       $dict['orderby'] = (isset($fields['orderby'])) ?  $fields['orderby'] : 'id';
-      $dict['order']   = (isset($fields['order'])) ?  $fields['order'] : 'ASC';
+      $dict['order']   = (isset($fields['order'])) ?  strtolower($fields['order']) : 'asc';
       $dict['run']['path'] = (isset($fields['run']['path'])) ?  $fields['run']['path'] : false;
       if ($dict['run']['path']) {
         $dict['run']['button']         = (isset($fields['run']['button'])) ?  $fields['run']['button'] : 'Run';
@@ -1142,8 +1146,10 @@ class App {
       if ($shared) {
         foreach ($shared as $model => $items) {
           foreach ($items as $id) {
-            $item = R::load($model, $id);
-            R::associate( $data, $item );
+            if ($id > 0) {
+              $item = R::load($model, $id);
+              R::associate( $data, $item );
+            }
           }
         }
       }
@@ -1266,10 +1272,10 @@ class App {
 
     foreach ($_POST as $key => $value) {
       if (strlen(strstr($key,'shared'))>0) {
-          unset($_POST[$key]);
-          $key = strtolower(str_replace('shared', '', $key));
-          $shared[$key] = $value;
-          $table = strtolower(str_replace('shared', '', $key));
+        unset($_POST[$key]);
+        $key = strtolower(str_replace('shared', '', $key));
+        $shared[$key] = $value;
+        $table = strtolower(str_replace('shared', '', $key));
       }
     }
 
@@ -1284,8 +1290,10 @@ class App {
         foreach ($shared as $model => $items) {
           if ($items) {
             foreach ($items as $id) {
-              $item = R::load($model, $id);
-              R::associate( $data, $item );
+              if ($id > 0) {
+                $item = R::load($model, $id);
+                R::associate( $data, $item );
+              }
             }
           }
         }

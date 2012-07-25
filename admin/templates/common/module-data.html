@@ -20,7 +20,6 @@
 
             for ( var i=0, iLen=tables.length ; i<iLen ; i++ ) {
               var defaultCol = $('th', tables[i]).index($(".dataTable-defaultSort",tables[i]));
-              console.log(defaultCol);
               if(defaultCol >= 0){
                 sorting = [ defaultCol, '{{ settings.order }}' ];
               } else {
@@ -40,7 +39,6 @@
                   {"bVisible":false, "aTargets" : ["dataTables_notVisible"]}
                 ]
               } );
-
               out.push( oTable2 );
             }
             return out;
@@ -249,7 +247,7 @@
             {% endif %}
             {% endfor %}
             {% if settings.edit == 1 or settings.delete == 1 %}
-                <th class="actions {% if settings.edit == 1 and settings.delete == 1 %}both{% elseif settings.edit == 1 and settings.delete == 0 %}edit{% else %}delete{% endif %}">Actions</th>
+                <th class="dataTable-exclude actions {% if settings.edit == 1 and settings.delete == 1 %}both{% elseif settings.edit == 1 and settings.delete == 0 %}edit{% else %}delete{% endif %}">Actions</th>
             {% endif %}
               </tr>
             </thead>
