@@ -27,7 +27,7 @@ function saveTweets($screenname, $table) {
 
     $last_id = R::getCell('SELECT tid FROM '.$table.' WHERE screenname = "'. $screenname .'" ORDER BY tid DESC LIMIT 1');
 
-    $url = 'http://api.twitter.com/1/statuses/user_timeline.xml?screenname=' . $screenname;
+    $url = 'http://api.twitter.com/1/statuses/user_timeline.xml?screen_name=' . $screenname;
     if ($last_id) { $url .= '&since_id=' . $last_id; }
     $ch = curl_init($url);
     curl_setopt ($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -37,7 +37,10 @@ function saveTweets($screenname, $table) {
     $affected = 0;
     $twelement = new SimpleXMLElement($xml);
 
-    foreach ($twelement->status as $status) {
+    ## Reverse XML to save oldest to newest...
+    $twelement = array_reverse($twelement->xpath('status'));
+
+    foreach ($twelement as $status) {
         $text = trim($status->text);
         $text = str_replace(array("\r\n", "\r", "\n\n", "\n", "\t"), ' ', $text);
         $time = strtotime($status->created_at);
@@ -49,7 +52,7 @@ function saveTweets($screenname, $table) {
             $tweet->tid           = $tid;
             $tweet->setMeta("cast.tid", "string"); // Cast to BIGINT
 
-            $tweet->screenname    = $screenname;
+            $tweet->screenname   = $screenname;
             $tweet->time          = $time;
             $tweet->text          = $text;
             $tweet->published     = 1;
@@ -60,5 +63,5 @@ function saveTweets($screenname, $table) {
         $affected++;
     }
 
-    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screenname .'</strong> saved.</p>';
+    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screen_name .'</strong> saved.</p>';
 }
