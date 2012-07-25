@@ -337,10 +337,10 @@ class App {
 
     if ($region) {
       // Region specific
-      $data  = R::getAll('SELECT * FROM ' . $module . ' WHERE region = "' . $region . '" ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
+      $data  = R::getAll('SELECT * FROM `' . $module . '` WHERE region = "' . $region . '" ORDER BY `' . $orderby . '` ' . $order . ' LIMIT ' . $start . ',' .$limit);
     } else {
       // Site specific
-      $data  = R::getAll('SELECT * FROM ' . $module . ' WHERE 1 ORDER BY ' . $orderby . ' ' . $order . ' LIMIT ' . $start . ',' .$limit);
+      $data  = R::getAll('SELECT * FROM `' . $module . '` WHERE 1 ORDER BY `' . $orderby . '` ' . $order . ' LIMIT ' . $start . ',' .$limit);
     }
     $dict = App::removeForeignkeys($data);
     $dict = App::removeHidden($dict, $module, $class);
