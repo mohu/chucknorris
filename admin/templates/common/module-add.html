@@ -50,6 +50,11 @@
           };
 
           updateDatepickers();
+
+          $.each($("select[multiple]"), function () {
+            var label = $(this).parent().parent().find('label').text();
+            SelectFilter.init(this.id, label);
+          });
           
           var regex = /\[\d+\](?!.*\[\d+\])/i;
           var regex2 = /\d+(?!.*\d+)/i;
@@ -305,7 +310,7 @@
                 <div class="controls">
                   <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}">
                   {% if field.one %}
-                    <option value="">-- Select --</option>
+                    <option value="0">-- Select --</option>
                   {% endif %}
                   {% for fkfield in field.fields %}
                     <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>

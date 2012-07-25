@@ -30,6 +30,7 @@
     <link href="/admin/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/admin/css/datepicker.css" rel="stylesheet">
     <link href="/admin/css/prettify.css" rel="stylesheet">
+    <link href="/admin/css/multiselect.css" rel="stylesheet">
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -43,12 +44,13 @@
     <script src="/admin/js/jquery.validate.js"></script>
     <script src="/admin/libs/dataTables/js/jquery.dataTables.min.js"></script>
     <script src="/admin/js/prettify.js"></script>
+    <script src="/admin/js/multiselect.js"></script>
 
     <!-- Load TinyMCE -->
     <script src="/admin/libs/tinymce/jscripts/tiny_mce/jquery.tinymce.js"></script>
     <script type="text/javascript">
       $().ready(function() {
-        $('.textarea').tinymce({
+        $('form .textarea').tinymce({
           // Location of TinyMCE script
           script_url : '/admin/libs/tinymce/jscripts/tiny_mce/tiny_mce.js',
 
@@ -78,6 +80,8 @@
           theme_advanced_toolbar_align : "left",
           theme_advanced_statusbar_location : "bottom",
           theme_advanced_resizing : true,
+          theme_advanced_source_editor_height: 400,
+          theme_advanced_source_editor_width: 500,
           paste_auto_cleanup_on_paste : true,
             paste_preprocess : function(pl, o) {
                 // Content string containing the HTML from the clipboard
