@@ -439,7 +439,9 @@ var SelectFilter = {
     init: function(field_id, field_name, is_stacked, admin_media_prefix) {
         var from_box = document.getElementById(field_id);
         from_box.id += '_from'; // change its ID
-        from_box.className = 'filtered';
+        // Gets original multiselect box class from CMS to add back in below
+        var original_class = from_box.className ? from_box.className + ' ' : null;
+        from_box.className = 'filtered options';
 
         // Remove <p class="info">, because it just gets in the way.
         var ps = from_box.parentNode.getElementsByTagName('p');
@@ -461,6 +463,7 @@ var SelectFilter = {
         filter_p.appendChild(document.createTextNode(' '));
         var filter_input = quickElement('input', filter_p, '', 'type', 'text');
         filter_input.id = field_id + '_input';
+        filter_input.className = 'filter-search';
         selector_available.appendChild(from_box);
         quickElement('i', selector_available, '', 'class', 'icon-plus-sign');
         var choose_all = quickElement('a', selector_available, gettext('Choose all'), 'href', 'javascript: (function(){ SelectBox.move_all("' + field_id + '_from", "' + field_id + '_to"); })()');
@@ -482,7 +485,7 @@ var SelectFilter = {
         selector_filter.className = 'selector-filter';
         quickElement('i', selector_filter, '', 'class', (is_stacked ? 'icon-circle-arrow-right':'icon-circle-arrow-right'), 'alt', 'Add');
         var to_box = quickElement('select', selector_chosen, '', 'id', field_id + '_to', 'multiple', 'multiple', 'size', from_box.size, 'name', from_box.getAttribute('name'));
-        to_box.className = 'filtered';
+        to_box.className = original_class + 'filtered chosen';
         quickElement('i', selector_chosen, '', 'class', 'icon-minus-sign');
         var clear_all = quickElement('a', selector_chosen, gettext('Clear all'), 'href', 'javascript: (function() { SelectBox.move_all("' + field_id + '_to", "' + field_id + '_from");})()');
         clear_all.className = 'selector-clearall';

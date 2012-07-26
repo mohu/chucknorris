@@ -63,5 +63,5 @@ function saveTweets($screenname, $table) {
         $affected++;
     }
 
-    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screen_name .'</strong> saved.</p>';
+    return '<p>' . number_format($affected) . ' new tweets from <strong>'. $screenname .'</strong> saved.</p>';
 }

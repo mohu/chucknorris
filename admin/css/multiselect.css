@@ -16,6 +16,7 @@
 .selector select {
     width: 270px;
     height: 10em;
+    border: 1px solid #e5e5e5;
     -webkit-border-radius: 0 0 5px 5px;
     -moz-border-radius: 0 0 5px 5px;
     border-radius: 0 0 5px 5px;
@@ -28,17 +29,17 @@
 }
 
 .selector-available h6, .selector-chosen h6 {
-    border: 1px solid #ccc;
+    border: 1px solid #e5e5e5;
     padding: 4px 0px;
     -webkit-border-radius: 5px 5px 0 0;
     -moz-border-radius: 5px 5px 0 0;
     border-radius: 5px 5px 0 0;
-    background: #eeeeee;
+    background: #f5f5f5;
 }
 
 .selector .selector-filter {
-    background: white;
-    border: 1px solid #ccc;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
     border-width: 0 1px;
     padding: 3px;
     color: #999;
@@ -47,12 +48,17 @@
     text-align: left;
 }
 
+.selector .selector-filter i {
+    margin-left: 5px;
+}
+
 .selector .selector-chosen .selector-filter {
     padding: 8px 10px;
 }
 
 .selector .selector-available input {
-    width: 230px;
+    width: 220px;
+    margin-left: 5px
 }
 
 .selector ul.selector-chooser {

@@ -13,11 +13,17 @@
           
           $("form").validate({
             errorPlacement: function(error, element) {
-              $(element).parent('div').parent('div').addClass('error');
-              $(element).parent('label').parent('div').parent('div').addClass('error');
+              $(element).closest('.control-group').addClass('error');
+
+              $(element).closest('.control-group').find('.filter-search').css('border-color', '#cccccc');
+              $(element).closest('.control-group').find('.options').css('border-color', '#e5e5e5').css('color', '#555555');
+
               error.insertAfter(element.parent('div'));
               error.insertAfter(element.parent('label').parent('div'));
+              error.insertAfter(element.parent('div').parent('div').parent('div'));
+
               error.css('margin', '10px 0px 0px 160px');
+              error.css('clear', 'both');
             },
             success: function(element){
               $(element).parent('div').removeClass('error');
@@ -104,14 +110,18 @@
         });
         </script>
         <div class="span9">
-          <div class="page-header">
-            <h1>
-              Add
-              <small>{{ module|title }}</small>
-            </h1>
-          </div>
 
           <form class="form-horizontal" method="post" enctype="multipart/form-data">
+
+            <div class="page-header">
+              <a class="btn btn-small pull-right" href="/admin/{{ module }}">Cancel</a>
+              <button type="submit" name="save" class="btn btn-primary btn-small pull-right" style="margin-right:5px;"><i class="icon-pencil icon-white"></i> Save</button>
+              <h1>
+                Add
+                <small>{{ module|title }}</small>
+              </h1>
+            </div>
+
             <fieldset>
             {% for key, field in fields %}
             {% if field.type != 'foreignkey' %}
@@ -299,7 +309,7 @@
               {% elseif field.relation == 'shared' %}
               <div class="page-header">
                 <h1>
-                  <small>{{ key|slice(6, 100)|capitalize }}{% if field.required %} *{% endif %}</small>
+                  <small>{{ key|slice(6, 100)|capitalize }}</small>
                 </h1>
               </div>
               <div class="actions pull-right">
@@ -308,7 +318,7 @@
               <div class="control-group">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}">
+                  <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}"{% if field.required %} class="required"{% endif %}>
                   {% if field.one %}
                     <option value="0">-- Select --</option>
                   {% endif %}

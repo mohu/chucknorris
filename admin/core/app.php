@@ -590,6 +590,7 @@ class App {
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
               $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle']);
+              $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
 
@@ -750,6 +751,7 @@ class App {
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
               $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $id);
+              $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
 
@@ -1275,19 +1277,16 @@ class App {
         unset($_POST[$key]);
         $key = strtolower(str_replace('shared', '', $key));
         $shared[$key] = $value;
-        $table = strtolower(str_replace('shared', '', $key));
       }
     }
 
-    //echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
-    
     try {
       $data = R::graph($_POST[$module], true);
       $id   = R::store($data);
       if ($shared) {
         $data = R::load($module, $id);
-        R::clearRelations( $data, $table );
         foreach ($shared as $model => $items) {
+          R::clearRelations( $data, $model );
           if ($items) {
             foreach ($items as $id) {
               if ($id > 0) {
