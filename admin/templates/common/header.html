@@ -108,6 +108,25 @@
         e.preventDefault();
         $('#credits').modal('show');
       });
+
+      $("li.clear-cache").click(function() {
+        var span = $(this).find('span');
+        $(this).find('a').html('Clearing cache...');
+        $(this).find('a').append(span);
+        setTimeout(function() {
+          $.ajax({
+            type: 'POST',
+            url: '/admin/',
+            data: {clearcache: true},
+            success: function() {
+              span = $(span).html('0');
+              $('li.clear-cache').find('a').html('Clear cache');
+              $('li.clear-cache').find('a').append(span);
+            }
+          });
+        }, 1500);
+        return false;
+      });
     });
     </script>
 

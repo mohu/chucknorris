@@ -1,0 +1,19 @@
+        <div class="span9">
+          <div class="page-header">
+            <h1>
+              System information
+            </h1>
+          </div>
+
+          <script>
+            $(document).ready(function() {
+              $('#systeminfo a').click(function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+              })
+            });
+          </script>
+
+          {{ systeminfo|raw }}
+
+        </div>

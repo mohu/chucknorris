@@ -10,6 +10,7 @@ $valid_paths  = array( // Core
                        'menu',
                        'menuitem',
                        'settings',
+                       'system-info',
                        'tweets',
                        'users',
                        // Custom
