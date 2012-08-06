@@ -23,8 +23,12 @@ class App {
       $this->save($_POST);
     }
 
-    if (isset($_POST['update']) || isset($_POST['apply'])) { 
+    if (isset($_POST['update']) || isset($_POST['apply'])) {
       $this->update($_POST);
+    }
+
+    if (isset($_POST['clearcache'])) {
+      $this->clearCache();
     }
   }
 
@@ -57,7 +61,8 @@ class App {
 
     $sitename         = R::getCell('SELECT sitename FROM settings');
     $dict['sitename'] = ($sitename) ? $sitename : $dict['cms']['name'];
-    $dict['appletouchicon'] = (is_array(@getimagesize(LOCAL_PATH . 'apple-touch-icon-57x57-precomposed.png'))) ? true : false;
+    $dict['appletouchicon']  = (is_array(@getimagesize(LOCAL_PATH . 'apple-touch-icon-57x57-precomposed.png'))) ? true : false;
+    $dict['cache']['status'] = $this->getCache();
 
     return $dict;
   }
@@ -1492,6 +1497,52 @@ class App {
     }
     R::log($log_file);
     return true;
+  }
+
+  /**
+   * Counts cache
+   * @return int
+   */
+  public function getCache() {
+    $caches = array('cache' , 'admin/cache', 'mobile/cache');
+    $directories = 0;
+    foreach ($caches as $cache) {
+      $directories += (count(glob(LOCAL_PATH . $cache . '/*', GLOB_ONLYDIR)));
+    }
+    return (int) $directories;
+  }
+
+
+  /**
+   * Clears the Twig template caches
+   */
+  public function clearCache() {
+    $caches = array('cache' , 'admin/cache', 'mobile/cache');
+
+    foreach ($caches as $cache) {
+      // Get cache contents
+      $folders = glob(LOCAL_PATH . $cache . '/*');
+      // Iterate over cache folder
+      foreach($folders as $folder) {
+        if(is_dir($folder))
+          $this->rrmdir($folder);
+      }
+    }
+    exit;
+  }
+
+  /**
+   * Recursively removes directories
+   * @param $dir
+   */
+  public function rrmdir($dir) {
+    foreach(glob($dir . '/*') as $file) {
+      if(is_dir($file))
+        $this->rrmdir($file);
+      else
+        unlink($file);
+    }
+    rmdir($dir);
   }
 
   /**

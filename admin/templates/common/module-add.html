@@ -61,6 +61,18 @@
             var label = $(this).parent().parent().find('label').text();
             SelectFilter.init(this.id, label);
           });
+
+          var updateMultiselects = function () {
+            $('select[multiple]').filter('.chosen').find('option').each(function() {
+//              console.log(this);
+              $(this).attr('selected', 'selected');
+              $(this).parent('select[multiple]').filter('.chosen').valid();
+            });
+          };
+
+          $('div.form-actions button').click(function() {
+            updateMultiselects();
+          });
           
           var regex = /\[\d+\](?!.*\[\d+\])/i;
           var regex2 = /\d+(?!.*\d+)/i;
@@ -320,7 +332,7 @@
                 <div class="controls">
                   <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}"{% if field.required %} class="required"{% endif %}>
                   {% if field.one %}
-                    <option value="0">-- Select --</option>
+                    <option value="">-- Select --</option>
                   {% endif %}
                   {% for fkfield in field.fields %}
                     <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>

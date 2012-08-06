@@ -37,15 +37,16 @@
           $('form').submit(function(event) {
             tinyMCE.triggerSave();
             var status = [];
+
             $('form .textarea').each(function() {
               valid = $("#" + this.id).valid(); // Validate again
               status.push(valid);
             });
 
-            var textarea_validate = $.inArray(0, status);
+            var check_validate = $.inArray(0, status);
 
-            if (textarea_validate > 0) {
-              event.preventDefault()
+            if (check_validate > 0) {
+              event.preventDefault();
             }
           });
 
@@ -72,6 +73,20 @@
             var label = $(this).parent().parent().find('label').text();
             SelectFilter.init(this.id, label);
           });
+
+          var updateMultiselects = function () {
+            $('select[multiple]').filter('.chosen').find('option').each(function() {
+//              console.log(this);
+              $(this).attr('selected', 'selected');
+              $(this).parent('select[multiple]').filter('.chosen').valid();
+            });
+          };
+
+          $('div.form-actions button').click(function() {
+            updateMultiselects();
+          });
+
+          updateMultiselects();
 
           var regex = /\[\d+\](?!.*\[\d+\])/i;
           var regex2 = /\d+(?!.*\d+)/i;
