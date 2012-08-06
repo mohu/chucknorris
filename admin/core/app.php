@@ -1041,9 +1041,9 @@ class App {
    * Save new item to database
    * @param $_POST
    */
-  public function save($_POST) {
+  public function save($POST) {
     require_once realpath(dirname(__FILE__).'/../..'). '/includes/common/imageupload.php';
-    $_POST = sanitize($_POST);
+    $_POST = sanitize($POST);
     $_FILES = sanitize($_FILES);
     $module = $_POST['modulename'];
     $ownfields = null;
@@ -1169,9 +1169,9 @@ class App {
    * Updates existing item in database
    * @param $_POST
    */
-  public function update($_POST) {
+  public function update($POST) {
     require_once realpath(dirname(__FILE__).'/../..'). '/includes/common/imageupload.php';
-    $_POST = sanitize($_POST);
+    $_POST = sanitize($POST);
     $_FILES = sanitize($_FILES);
     $module = $_POST['modulename'];
     $start = (isset($_POST['start'])) ? $_POST['start'] : 0;
