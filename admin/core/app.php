@@ -219,6 +219,7 @@ class App {
     $fp = fopen($view, 'w');
     fwrite($fp, $file);
     fclose($fp);
+    chmod($view, 0664);
 
     App::includeView($view, $admin);
   }
@@ -313,6 +314,7 @@ class App {
     $fp = fopen($view, 'w');
     fwrite($fp, $file);
     fclose($fp);
+    chmod($view, 0664);
 
     App::includeView($view, $admin);
   }
