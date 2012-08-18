@@ -1,5 +1,5 @@
 <?php
-class Model_Users extends RedBean_SimpleModel {
+class Model_User extends RedBean_SimpleModel {
 
   function fields() {
     // Add fields here

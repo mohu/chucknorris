@@ -18,11 +18,12 @@
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">System tools <b class="caret"></b></a>
                 <ul class="dropdown-menu">
                   <li class="clear-cache"><a href="#">Clear cache <span class="badge pull-right">{{ cache.status }}</span></a></li>
-                  <li><a href="/admin/cache-manager">Cache manager</a></li>
+                  <!--<li><a href="/admin/cache-manager">Cache manager</a></li>-->
                   <li class="divider"></li>
                   <li><a href="/admin/system-info">System information</a></li>
                 </ul>
               </li>
+
               <li class="dropdown" id="menu2">
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#menu2">Logout {{ session.user }}? <b class="caret"></b></a>
                 <ul class="dropdown-menu">
@@ -30,8 +31,8 @@
                 </ul>
               </li>
             </ul>
-          </ul>
-          {% if session.region %}<p class="navbar-text pull-right">Region: <span class="badge badge-info">{{ session.region }}</span></p>{% endif %}
+            {% if session.region %}<p class="navbar-text pull-right">Region: <span class="badge badge-info">{{ session.region }}</span></p>{% endif %}
+            <p id="loader" class="navbar-text pull-right hidden">Loading... <img src="/admin/img/ajax-loader.gif" style="margin-bottom: 2px;"></p>
           </div><!--/.nav-collapse -->
         </div>
       </div>

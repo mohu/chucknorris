@@ -8,7 +8,7 @@ class Model_Menu extends RedBean_SimpleModel {
     $fields['menuitem']   = array('type'=>'foreignkey', 'label'=>'menu item', 'relation'=>'own', 'model'=>'menuitem', 'class'=>'Model_Menuitem');
     
     // Settings
-    $fields['add']        = 2;
+    $fields['add']        = true;
     $fields['edit']       = true;
     $fields['delete']     = false;
     return $fields;

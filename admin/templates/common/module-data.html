@@ -94,105 +94,217 @@
             $(this).next('.modal').modal('show');
           });
 
+          $('#table > tbody > tr:first').find('td[data-ordering] i.move').tooltip({
+            title: 'Drag to re-order',
+            placement: 'bottom',
+            trigger: 'manual'
+          }).tooltip('show');
+
+          $('#table > tbody > tr').on("mouseenter", "td[data-ordering]", function(){
+            $('i.move').tooltip('hide');
+          });
+
         });
+
+        {% if settings.orderby == 'ordering' %}
+        $(window).load(function() {
+          var firstOrder = $('#table tbody tr:first').find('td[data-ordering]').data('ordering');
+          var startPosition;
+          var endPosition;
+          var td_height = $('#table tbody tr td:first').outerHeight();
+
+          $("#table > tbody").sortable({
+            cursor: "move",
+            placeholder: "placeholder",
+            start:function(event, ui){
+              ui.placeholder.height(td_height);
+              startPosition = ui.item.prevAll().length + 1;
+              /* When using a table for sorting, the placeholder tr must have cells, or it
+               * is incorrectly formed. Make sure the placeholder row always has cells. */
+              var numCells = $("tr:first").children().size();
+
+              if ($("tr.placeholder").children().size() !== numCells) {
+                i = 1;
+                while (i <= numCells) {
+                  $("tr.placeholder").append("<td></td>");
+                  i++;
+                }
+              }
+            },
+            update: function(event, ui) {
+              endPosition = ui.item.prevAll().length + 1;
+              $(ui.item).find('td[data-ordering]').attr('data-ordering', endPosition).html('<i class="icon-move move pull-right"></i> ' + endPosition);
+
+              var json = {};
+
+              $('#table tbody tr').find('td[data-ordering]').each(function(index) {
+                $(this).attr('data-ordering', (index + firstOrder)).html('<i class="icon-move move pull-right"></i>' + (index + firstOrder));
+                var id = $(this).parent().data('id');
+                // Push new ordering to JSON object
+                json[id] = (index + firstOrder);
+              });
+
+              $('#loader').removeClass('hidden');
+
+              $.ajax ({
+                type: "POST",
+                url: '/admin/',
+                dataType: 'json',
+                async: false,
+                data: {module: '{{ module }}', dragdropordering: json},
+                success: function () {
+                  console.log('Re-order success');
+                  setTimeout(function() {
+                    $('#loader').addClass('hidden');
+                  }, 1000);
+                }
+              });
+            },
+            helper: function(e, tr) {
+              var $originals = tr.children();
+              var $helper = tr.clone();
+              $helper.children().each(function(index) {
+                // Set helper cell sizes to match the original sizes
+                $(this).width($originals.eq(index).width());
+              });
+              return $helper;
+            },
+            handle: 'td[data-ordering]'
+          });
+        });
+        {% endif %}
         </script>
         <style>
-        tr:hover {
-          cursor: pointer;
-        }
-        div.dataTables_filter input {
-          display: inline !important;
-          width: 142px;
-        }
-         
-        div.dataTables_filter {
-          float: right;
-        }
+          tr:hover {
+            cursor: pointer;
+          }
+          td[data-ordering] {
+            cursor: move;
+          }
+          div.dataTables_filter input {
+            display: inline !important;
+            width: 142px;
+          }
+          div.dataTables_filter {
+            float: right;
+          }
+          table.dataTable thead th.sort {
+            position: relative;
+            padding-right: 16px;
+            cursor: pointer;
+          }
+          table.dataTable thead th.sort .sort {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            height: 10px;
+            margin-top: -5px;
+            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+            filter: alpha(opacity=20);
+            -moz-opacity:0.2;
+            -khtml-opacity: 0.2;
+            opacity: 0.2;
 
-        table.dataTable thead th.sort {
-          position: relative;
-          padding-right: 16px;
-          cursor: pointer;
-        }
-        table.dataTable thead th.sort .sort {
-          position: absolute;
-          right: 4px;
-          top: 50%;
-          height: 100%;
-          margin-top: -5px;
-          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
-          filter: alpha(opacity=20);
-          -moz-opacity:0.2;
-          -khtml-opacity: 0.2;
-          opacity: 0.2;
-
-          -webkit-transition:opacity 0.25s ease-in;  
-          -moz-transition:opacity 0.25s ease-in;  
-          -o-transition:opacity 0.25s ease-in;  
-          transition:opacity 0.25s ease-in;
-        }
-        table.dataTable thead th.sort .sort .sort-up,
-        table.dataTable thead th.sort .sort .sort-down {
-          display: block;
-          width: 0;
-          height: 0;
-          vertical-align: top;
-          border-left: 4px solid transparent;
-          border-right: 4px solid transparent;
-          content: "";
-        }
-        table.dataTable thead th.sort .sort .sort-up {
-          border-bottom: 4px solid #000;
-          margin-bottom: 2px;
-        }
-        table.dataTable thead th.sort .sort .sort-down {
-          border-top: 4px solid #000;
-          margin-top: 2px;
-        }
-        table.dataTable thead th.sort.sort-none {
-          cursor: default;
-        }
-        table.dataTable thead th.sort.sort-none .sort {
-          display: none;
-        }
-        table.dataTable thead th.sort.sort-up .sort,
-        table.dataTable thead th.sort.sort-down .sort {
-          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
-          filter: alpha(opacity=60);
-          -moz-opacity:0.6;
-          -khtml-opacity: 0.6;
-          opacity: 0.6;
-        }
-        table.dataTable thead th.sort.sort-up .sort-down {
-          visibility: hidden;
-        }
-        table.dataTable thead th.sort.sort-down .sort-up {
-          visibility: hidden;
-        }
-        table.dataTable thead th.sort:hover .sort {
-          -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
-          filter: alpha(opacity=100);
-          -moz-opacity:1.0;
-          -khtml-opacity: 1.0;
-          opacity: 1.0;
-        }
-        .actions.both {
+            -webkit-transition:opacity 0.25s ease-in;
+            -moz-transition:opacity 0.25s ease-in;
+            -o-transition:opacity 0.25s ease-in;
+            transition:opacity 0.25s ease-in;
+          }
+          table.dataTable thead th.sort .sort .sort-up,
+          table.dataTable thead th.sort .sort .sort-down {
+            display: block;
+            width: 0;
+            height: 0;
+            vertical-align: top;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            content: "";
+          }
+          table.dataTable thead th.sort .sort .sort-up {
+            border-bottom: 4px solid #000;
+            margin-bottom: 2px;
+          }
+          table.dataTable thead th.sort .sort .sort-down {
+            border-top: 4px solid #000;
+            margin-top: 2px;
+          }
+          table.dataTable thead th.sort.sort-none {
+            cursor: default;
+          }
+          table.dataTable thead th.sort.sort-none .sort {
+            display: none;
+          }
+          table.dataTable thead th.sort.sort-up .sort,
+          table.dataTable thead th.sort.sort-down .sort {
+            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
+            filter: alpha(opacity=60);
+            -moz-opacity:0.6;
+            -khtml-opacity: 0.6;
+            opacity: 0.6;
+          }
+          table.dataTable thead th.sort.sort-up .sort-down {
+            visibility: hidden;
+          }
+          table.dataTable thead th.sort.sort-down .sort-up {
+            visibility: hidden;
+          }
+          table.dataTable thead th.sort:hover .sort {
+            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+            filter: alpha(opacity=100);
+            -moz-opacity:1.0;
+            -khtml-opacity: 1.0;
+            opacity: 1.0;
+          }
+          .actions.both {
             width: 125px;
-        }
-        .actions.delete {
+          }
+          .actions.delete {
             width: 60px;
-        }
-        .actions.edit {
+          }
+          .actions.edit {
             width: 48px;
-        }
+          }
+          tr.placeholder {
+            border-collapse: collapse;
+          }
+          .placeholder td {
+            background-color: #D9EDF7 !important;
+            border-top: 1px solid #DDDDDD;
+            border-right: 0px;
+            border-bottom: 0px;
+            border-left: 0px;
+          }
+          .placeholder td:first-child {
+            border-left: 1px solid #DDDDDD;
+          }
+          i.move {
+            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+            filter: alpha(opacity=20);
+            -moz-opacity:0.2;
+            -khtml-opacity: 0.2;
+            opacity: 0.2;
+            margin-top: 2px;
+          }
+          td[data-ordering]:hover i.move {
+            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+            filter: alpha(opacity=80);
+            -moz-opacity:0.8;
+            -khtml-opacity: 0.8;
+            opacity: 0.8;
+
+            -webkit-transition:opacity 0.25s ease-in;
+            -moz-transition:opacity 0.25s ease-in;
+            -o-transition:opacity 0.25s ease-in;
+            transition:opacity 0.25s ease-in;
+          }
         </style>
         <div class="span9">
           <div class="page-header">
             {% if settings.add == 'true' or settings.add > pagination.total %}
-            <a class="btn btn-small pull-right" href="/admin/{{ module }}/add"><i class="icon-plus"></i> Add new {{ module }}</a>
+            <a class="btn btn-small pull-right" href="/admin/{{ module }}/add"><i class="icon-plus"></i> Add new</a>
             {% endif %}
             {% if settings.run.path %}
-            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:10px;"{% endif %}><i class="icon-refresh"></i> {{ settings.run.button }}</a>
+            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:5px;"{% endif %}><i class="icon-refresh"></i> {{ settings.run.button }}</a>
             {% endif %}
             <h1>
               View
@@ -227,7 +339,7 @@
             {% endfor %}
             {% endif %}
             {% endfor %}
-            {% if settings.edit == 1 or settings.delete == 1 %}
+            {% if settings.edit == 1 and settings.delete == 1 %}
               <col style="width:{% if settings.edit + settings.delete == 2 %}150px{% elseif settings.edit == 1 %}75px{% else %}85px{% endif %};">
             {% endif %}
             </colgroup>
@@ -236,7 +348,7 @@
             {% for item in data %}
             {% if loop.first %}
             {% for param in item|keys %}
-                <th {% if param == settings.orderby %}class="dataTable-defaultSort"{% endif %}>
+                <th {% if param == settings.orderby %}class="dataTable-defaultSort {{ param }}"{% endif %}>
                   <div class="sort">
                       <div class="sort-up"></div>
                       <div class="sort-down"></div>
@@ -254,8 +366,8 @@
             <tbody>
             {% for item in data %}
               <tr data-id="{{ item.id }}" rel="tooltip">
-              {% for info in item %}
-                <td>{{ info|raw }}</td>
+              {% for key, info in item %}
+                <td{% if key == 'ordering' %} data-ordering="{{ info }}"{% endif %}>{% if key == 'ordering' %}<i class="icon-move move pull-right"></i>{% endif %}{{ info|raw }}</td>
               {% endfor %}
                 <td>
             {% if data %}

@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-07-19 09:19:28 +0000
+# Generation Time: 2012-08-18 13:57:12 +0000
 # ************************************************************
 
 
@@ -86,6 +86,7 @@ DROP TABLE IF EXISTS `menuitem`;
 
 CREATE TABLE `menuitem` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `ordering` int(11) DEFAULT NULL,
   `title` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `link` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `class` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -98,9 +99,9 @@ CREATE TABLE `menuitem` (
 LOCK TABLES `menuitem` WRITE;
 /*!40000 ALTER TABLE `menuitem` DISABLE KEYS */;
 
-INSERT INTO `menuitem` (`id`, `title`, `link`, `class`, `published`, `menu_id`)
+INSERT INTO `menuitem` (`id`, `ordering`, `title`, `link`, `class`, `published`, `menu_id`)
 VALUES
-	(1,'Home','','home','1',1);
+	(1,1,'Home','','home','1',1);
 
 /*!40000 ALTER TABLE `menuitem` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -119,15 +120,16 @@ CREATE TABLE `settings` (
   `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `contact` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `sitename` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `analytics` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 
-INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`, `sitename`)
+INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`, `sitename`, `analytics`)
 VALUES
-	(1,5,'','','','','');
+	(1,5,'','','','','',NULL);
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -150,12 +152,12 @@ CREATE TABLE `tweets` (
 
 
 
-# Dump of table users
+# Dump of table user
 # ------------------------------------------------------------
 
-DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `user`;
 
-CREATE TABLE `users` (
+CREATE TABLE `user` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `firstname` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -171,14 +173,14 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+LOCK TABLES `user` WRITE;
+/*!40000 ALTER TABLE `user` DISABLE KEYS */;
 
-INSERT INTO `users` (`id`, `username`, `firstname`, `lastname`, `email`, `password`, `group`, `biography`, `image`, `twitter`, `linkedin`, `position`)
+INSERT INTO `user` (`id`, `username`, `firstname`, `lastname`, `email`, `password`, `group`, `biography`, `image`, `twitter`, `linkedin`, `position`)
 VALUES
 	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','',NULL,'','','');
 
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+/*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
 

@@ -13,13 +13,17 @@
           <h3>&nbsp;</h3>
         </div>
         <div class="modal-body">
-          <p class="lead">{{ cms.name }} <small>v{{ cms.version }}</small> built by <a href="http://www.studiomohu.com" target="_blank">Studio Mohu</a></p>
-          <p>With thanks to the following open source softwares:</p>
-          <table class="table table-bordered span5">
+          <p class="lead well"  style="margin-left: 30px; width:430px !important;">{{ cms.name }} <small>v{{ cms.version }}</small> built by Rikki Pitt at <small><a href="http://www.studiomohu.com" target="_blank">Studio Mohu</a></small></p>
+          <table class="table table-bordered" style="margin-left: 30px; width:470px !important;">
+            <thead>
+            <tr>
+              <th>With thanks to the following open source softwares</th>
+            </tr>
+            </thead>
             <tbody>
               {% for dependancy, version in cms.dependancies %}
               <tr>
-                <td>{{ dependancy }}</td>
+                <td><i class="icon-star"></i> {{ dependancy }}</td>
                 <td>v{{ version }}</td>
               </tr>
               {% endfor %}

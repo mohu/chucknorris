@@ -24,6 +24,7 @@
 
           $('a.delete').click(function() {
             var id = $(this).attr('id');
+            console.log(id);
             if(id) {
               $('#delete-confirm.alert').show().animate({opacity: 1.0}, 3000);
               $('#delete-confirm a.delete-confirm').data('id', id);
@@ -226,7 +227,7 @@
                     <td>
                       {% if data %}
                       {% if settings.delete == 1 %}
-                      <a class="btn btn-small delete" id="{{ item.id }}" href="#"><i class="icon-trash"></i> Delete</a>
+                      <a class="btn btn-small delete" id="{{ data.id }}" href="#"><i class="icon-trash"></i> Delete</a>
                       {% endif %}
                       {% endif %}
                     </td>

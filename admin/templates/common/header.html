@@ -26,9 +26,13 @@
         -khtml-opacity: 0.80;
         opacity: 0.80;
       }
+      .padded {
+        padding: 0 19px;
+      }
     </style>
     <link href="/admin/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/admin/css/datepicker.css" rel="stylesheet">
+    <link href="/admin/css/colorpicker.css" rel="stylesheet">
     <link href="/admin/css/prettify.css" rel="stylesheet">
     <link href="/admin/css/multiselect.css" rel="stylesheet">
 
@@ -38,9 +42,11 @@
     <![endif]-->
 
     <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="/admin/js/libs/jquery-1.7.1.min.js"><\/script>')</script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/admin/js/libs/jquery-1.7.2.min.js"><\/script>')</script>
+    <script src="/admin/js/libs/jquery-ui-1.8.22.custom.min.js"></script>
     <script src="/admin/js/bootstrap-datepicker.js"></script>
+    <script src="/admin/js/bootstrap-colorpicker.js"></script>
     <script src="/admin/js/jquery.validate.js"></script>
     <script src="/admin/libs/dataTables/js/jquery.dataTables.min.js"></script>
     <script src="/admin/js/prettify.js"></script>
@@ -65,7 +71,7 @@
           skin : "thebigreason",
           plugins : "paste",
           width: "500",
-          height: "250",
+          height: "200",
           force_p_newlines : true,
           force_br_newlines : false,
           paste_create_paragraphs: true,
@@ -104,7 +110,7 @@
       if ({% if module %}true{% else %}false{% endif %}) {
         $('ul.nav-list li.{{ module }}').addClass('active');
       }
-      $(".credits").on("click", function(e) {
+      $('.credits').on('click', function(e) {
         e.preventDefault();
         $('#credits').modal('show');
       });

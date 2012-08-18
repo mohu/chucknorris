@@ -16,20 +16,7 @@ class App {
    * Constructor, runs core functions and listens to save/update calls
    */
   function __construct() {
-
     $this->coreFunctions(); // Run core functions
-    
-    if (isset($_POST['save'])) { 
-      $this->save($_POST);
-    }
-
-    if (isset($_POST['update']) || isset($_POST['apply'])) {
-      $this->update($_POST);
-    }
-
-    if (isset($_POST['clearcache'])) {
-      $this->clearCache();
-    }
   }
 
   /**
@@ -37,6 +24,12 @@ class App {
    * @return mixed
    */
   public function coreFunctions() {
+
+    if (isset($_POST['save'])) $this->save($_POST);
+    if (isset($_POST['update']) || isset($_POST['apply'])) $this->update($_POST);
+    if (isset($_POST['clearcache'])) $this->clearCache();
+    if (isset($_POST['dragdropordering'])) $this->dragdropOrdering();
+
     $this->checkIP();
     $this->parseErrors();
     $this->log();
@@ -53,10 +46,11 @@ class App {
     $dict['session']  = App::loadSession();
     $dict['cms']      = array('name'=>'Chuck Norris',
                               'version'=>'0.5.0',
-                              'dependancies'=>array('RedBeanPHP'=>'3.2.3',
-                                                    'Twig'=>'1.8.3',
-                                                    'Bootstrap, from Twitter'=>'2.0.4',
-                                                    'Glyphicons'=>'1.6')
+                              'dependancies'=>array('Bootstrap, from Twitter'=>'2.0.4',
+                                                    'Glyphicons'=>'1.6',
+                                                    'RedBeanPHP'=>'3.2.3',
+                                                    'Swift Mailer'=>'4.2.1',
+                                                    'Twig'=>'1.8.3',)
                               );
 
     $sitename         = R::getCell('SELECT sitename FROM settings');
@@ -353,6 +347,7 @@ class App {
     $dict = App::removeHidden($dict, $module, $class);
     $dict = App::parseTabledata($dict);
     $dict = App::parseImages($dict);
+    $dict = App::parseHexcodes($dict);
     return $dict;
   }
 
@@ -521,7 +516,8 @@ class App {
    * @param $dict
    *
    * @return mixed
-   */public static function parseTabledata($dict) {
+   */
+  public static function parseTabledata($dict) {
     $i = 0;
     foreach($dict as $key => $value) {
       foreach($value as $key2 => $value2) {
@@ -535,6 +531,14 @@ class App {
     return $dict;
   }
 
+  /**
+   * Find image paths in admin data display tables and convert to thumbnail with modal preview
+   * @static
+   *
+   * @param $dict
+   *
+   * @return mixed
+   */
   public static function parseImages($dict) {
     $replacement = '<a class="thumbnail"><img src="/${0}" /></a>
                     <div class="modal fade hide">
@@ -554,7 +558,30 @@ class App {
           $dict[$i][$key2] = $test;
         }
       }
-    $i++;
+      $i++;
+    }
+    return $dict;
+  }
+
+  /**
+   * Find hex codes in admin data display tables and convert to colour preview
+   * @static
+   *
+   * @param $dict
+   *
+   * @return mixed
+   */
+  public static function parseHexcodes($dict) {
+    $replacement = '<div class="pull-right" style="background-color: ${0}; width: 25px; height: 25px;"></div> ${0}';
+    $i = 0;
+    foreach($dict as $key => $value) {
+      foreach($value as $key2 => $value2) {
+        $test = preg_replace('/^#[a-f0-9]{6}$/i', $replacement, $value2);
+        if ($test) {
+          $dict[$i][$key2] = $test;
+        }
+      }
+      $i++;
     }
     return $dict;
   }
@@ -614,6 +641,7 @@ class App {
           $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } elseif ($field['type'] == 'select') { // File fields
 
@@ -624,6 +652,7 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } elseif ($field['type'] == 'radio') { // Radio fields
 
@@ -631,6 +660,18 @@ class App {
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
           $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+        } elseif ($field['type'] == 'order') { // Order field
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['values']     = App::orderValues();
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
@@ -652,24 +693,59 @@ class App {
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } else { // Own fields
         
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+          $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
+          $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
+          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
           $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
         
         }
       }
     }
     return $form;
+  }
+
+  public static function orderValues() {
+    global $module;
+    require_once realpath(dirname(__FILE__).'/..'). '/models/'.$module.'.php';
+    $class = 'Model_' . ucfirst($module);
+    $class = new $class;
+
+    $settings = App::getSettings($class->fields());
+    $orderby = $settings['orderby'];
+
+    if ($orderby === 'ordering') {
+      // Check if item exists and is being edited
+      $id = (isset($_GET['id'])) ? $_GET['id'] : 0;
+
+      // Total records. Adds 1 if in "add" view to account for the item being added
+      $total = R::getCell('SELECT COUNT(*) FROM ' . $module);
+      if (!$total) {
+        $total = 0;
+      }
+      $total = ($id == 0) ? $total + 1 : $total;
+
+      $values = array();
+      for ($i = 1; $i <= $total; $i++) {
+        $values[$i] = $i;
+      }
+      return $values;
+
+    } else {
+      return;
+    }
   }
 
   /**
@@ -689,6 +765,7 @@ class App {
   }
 
   /**
+   * Takes text with column names embedded between percent-signs for creating dynamic foreign key select titles
    * @static
    *
    * @param $model
@@ -698,16 +775,18 @@ class App {
    */
   public static function getShared($model, $select) {
 
-    $data = null;
+    $data = array();
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
-      $columns = R::$writer->getColumns($model);
-      if(array_key_exists($select, $columns)) {
-        $data = R::getAll( 'SELECT id, '. $select .' AS selecttitle  FROM ' . $model );
+      $rows = R::getAll( 'SELECT * FROM ' . $model );
+      $i = 0;
+      foreach ($rows AS $row) {
+        $data[$i]['id'] = $row['id'];
+        $data[$i]['selecttitle'] = App::createSprintf($select, $row);
+        $i++;
       }
     }
-
     return $data;
   }
 
@@ -733,7 +812,7 @@ class App {
 
     foreach($fields as $key => $field) {
 
-      if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
+      if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
 
         if ($field['type'] == 'foreignkey') {
 
@@ -776,6 +855,7 @@ class App {
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['isimage']    = (isset($data[0][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[0][$key]))) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } elseif ($field['type'] == 'select') { // File fields
 
@@ -786,6 +866,7 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } elseif ($field['type'] == 'radio') { // Radio fields
 
@@ -796,13 +877,25 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+        } elseif ($field['type'] == 'order') { // Order field
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['values']     = App::orderValues();
+          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
 
         } elseif ($field['type'] == 'textarea') { // Textarea fields
 
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['rich_editor']= true;
@@ -814,20 +907,24 @@ class App {
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } else { // Own fields
         
           $form[$key] = array();
           $form[$key]['type']       = $field['type'];
           $form[$key]['label']      = $field['label'];
-          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+          $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
+          $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
+          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
           $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-        
+          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
         }
       }
     }
@@ -889,38 +986,46 @@ class App {
 
     $data = R::exportAll($parent->$own);
 
+//    echo '<pre>'. print_r($data, true) . '</pre>';
+
     $array = array();
     $i = 0;
     foreach ($data as $key => $value) {
       foreach($fields as $key => $field) {
 
-        if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
+        // echo '<pre>'.print_r($field, true) . '</pre>';
+
+        if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
           if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select' && $field['type'] != 'radio') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
             $array[$i][$key]['label']      = $field['label'];
-            $array[$i][$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $array[$i][$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
+            $array[$i][$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
+            $array[$i][$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
             $array[$i][$key]['id']         = $data[$i]['id'];
             $array[$i][$key]['value']      = $data[$i][$key];
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
           } elseif ($field['type'] == 'file') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
             $array[$i][$key]['label']      = $field['label'];
-            $array[$i][$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $array[$i][$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
             $array[$i][$key]['id']         = $data[$i]['id'];
-            $array[$i][$key]['value']      = $data[$i][$key];
+            $array[$i][$key]['value']      = (isset($data[$i][$key])) ? $data[$i][$key] : null;
             $array[$i][$key]['isimage']    = (isset($data[$i][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[$i][$key]))) ? true : false;
             $array[$i][$key]['path']       = (isset($field['path'])) ? $field['path'] : false;
             $array[$i][$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
           } elseif ($field['type'] == 'select') { // File fields
 
@@ -932,6 +1037,7 @@ class App {
             $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
           } elseif ($field['type'] == 'radio') { // Radio fields
 
@@ -943,7 +1049,24 @@ class App {
             $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
+          } elseif ($field['relation'] == 'shared') { // Build into own, shared selection...
+            $key = $field['relation'].ucfirst($field['model']);
+
+            $array[$i][$key]              = array();
+            $array[$i][$key]['type']      = $field['type'];
+            $array[$i][$key]['label']     = $field['label'];
+            $array[$i][$key]['relation']  = $field['relation'];
+            $array[$i][$key]['id']        = $data[$i]['id'];
+            $array[$i][$key]['value']     = (isset($data[$i][$key])) ? $data[$i][$key] : null ;
+            $array[$i][$key]['fields']    = array();
+            $array[$i][$key]['fields']    = App::getEditshared($model, $field['model'], $field['selecttitle'], $data[$i]['id']);
+            $array[$i][$key]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $array[$i][$key]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
+            $array[$i][$key]['help']      = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
           }
         }
       }
@@ -980,21 +1103,13 @@ class App {
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
-      $columns = R::$writer->getColumns($model);
-      if(array_key_exists($select, $columns)) {
-        $data = R::getAll( 'SELECT id, '. $select .' AS selecttitle  FROM ' . $model );
-      }
-    }
-
-    foreach ($data as $key => $value) {
-      if (in_array($data[$key]['id'], $selected)) {
-        $data[$key]['id']           = $value['id'];
-        $data[$key]['selecttitle']  = $value['selecttitle'];
-        $data[$key]['selected']     = true;
-      } else {
-        $data[$key]['id']           = $value['id'];
-        $data[$key]['selecttitle']  = $value['selecttitle'];
-        $data[$key]['selected']     = false;
+      $rows = R::getAll( 'SELECT * FROM ' . $model );
+      $i = 0;
+      foreach ($rows AS $row) {
+        $data[$i]['id'] = $row['id'];
+        $data[$i]['selecttitle'] = App::createSprintf($select, $row);
+        $data[$i]['selected'] = (in_array($row['id'], $selected)) ? true : false;
+        $i++;
       }
     }
 
@@ -1037,6 +1152,92 @@ class App {
         $dict['run']['button_running'] = (isset($fields['run']['button_running'])) ?  $fields['run']['button_running'] : 'Running...';
       }
     return $dict;
+  }
+
+  public static function getGroups() {
+    $allclasses = get_declared_classes();
+
+    $classes = preg_grep('/^Model_.*/', $allclasses);
+    $classes = array_values($classes);
+
+    $dict = array();
+
+    foreach ($classes AS $class) {
+      $new = new $class;
+      $module = strtolower(substr($class, 6));
+      $dict[$module] = (method_exists($class, 'groups')) ? $new->groups() : null;
+    }
+    return $dict;
+  }
+
+  public static function saveOrdering($module, $order) {
+    // Total records. Adds 1 if in "add" save view to account for the item being added
+    $total = R::getCell('SELECT COUNT(*) FROM ' . $module);
+    if (!$total) {
+      $total = 0;
+    }
+
+    if ($total + 1 == $order) {
+      // No need to reshuffle if selected order is the new maximum
+      return;
+    } else {
+      // Increment the existing records for the new item to slot into, order-wise
+      R::exec('UPDATE `'. $module .'` SET `ordering` = `ordering` + 1 WHERE `ordering` BETWEEN ' . $order . ' AND ' . $total);
+    }
+  }
+
+  public static function updateOrdering($module, $new_ordering) {
+    // Total records
+    $total = R::getCell('SELECT COUNT(*) FROM ' . $module);
+    $id     = (isset($_GET['id'])) ? $_GET['id'] : null;
+
+    $current_ordering = R::getCell('SELECT `ordering` FROM ' . $module . ' WHERE id = ' . $id);
+
+    // Check if the 'ordering' column exists, if not, bail
+    if (!empty($current_ordering)) {
+
+      if ($current_ordering == $new_ordering) {
+        // No need to reshuffle if selected order is the unchanged
+        return;
+      } else {
+        if ($new_ordering - $current_ordering < 0) {
+          // Moved up (negative change)
+          R::exec('UPDATE `' . $module . '` SET `ordering` = CASE `id`
+                     WHEN ' . $id . ' THEN ' . $new_ordering . '
+                     ELSE `ordering` + 1
+                     END
+                   WHERE `ordering` BETWEEN ' . $new_ordering . ' AND ' . $current_ordering);
+        } else {
+          // Moved down (positive change)
+          R::exec('UPDATE `' . $module . '` SET `ordering` = CASE `id`
+                     WHEN ' . $id . ' THEN ' . $new_ordering . '
+                     ELSE `ordering` - 1
+                     END
+                   WHERE `ordering` BETWEEN ' . $current_ordering . ' AND ' . $new_ordering);
+        }
+      }
+    }
+  }
+
+  public static function dragdropOrdering() {
+    $module = $_POST['module'];
+    $ordering_array = $_POST['dragdropordering'];
+
+    $when = null;
+    $in   = null;
+
+    foreach ($ordering_array AS $id => $ordering) {
+      $when .= 'WHEN ' . $id . ' THEN ' . $ordering . ' ';
+      $in   .= $id . ',';
+    }
+
+    $in = substr($in, 0 , -1);
+
+    R::exec('UPDATE `' . $module . '` SET `ordering` = CASE `id`
+                 '. $when .'
+                 END
+             WHERE id IN (' . $in . ')');
+    exit;
   }
 
   /**
@@ -1138,7 +1339,12 @@ class App {
 
     $_POST = array_remove_empty($_POST);
 
-    // echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
+    if (isset($_POST[$module]['ordering'])) {
+      App::saveOrdering($module, $_POST[$module]['ordering']);
+    }
+
+//    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
+//    R::debug(1);
 
     $shared = null;
 
@@ -1149,9 +1355,9 @@ class App {
         $shared[$key] = $value;
       }
     }
-    
+
     try {
-      $data = R::graph($_POST[$module], true);
+      $data = R::graph($_POST[$module]);
       if ($shared) {
         foreach ($shared as $model => $items) {
           foreach ($items as $id) {
@@ -1274,6 +1480,10 @@ class App {
 //    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     $_POST = array_remove_empty($_POST);
+
+    if (isset($_POST[$module]['ordering'])) {
+      App::updateOrdering($module, $_POST[$module]['ordering']);
+    }
 
 //    echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
@@ -1616,6 +1826,41 @@ class App {
     } else {
       return false;
     }
+  }
+
+  public static function createSprintf($str, $vars, $char = '%') {
+    $tmp = array();
+    foreach($vars as $k => $v)
+    {
+      $tmp[$char . $k . $char] = $v;
+    }
+    return str_replace(array_keys($tmp), array_values($tmp), $str);
+  }
+
+  public static function twigEmail($to_email, $to_name, $from_email, $from_name, $identifier, $parameters) {
+    global $twig;
+    require_once LOCAL_PATH. 'includes/swiftmailer/swift_required.php';
+
+    // Create the Transport
+    $transport = Swift_MailTransport::newInstance();
+    // Create the Mailer using your created Transport
+    $mailer = Swift_Mailer::newInstance($transport);
+
+    $template = $twig->loadTemplate('email/' . $identifier . '.html');
+
+    $subject  = $template->renderBlock('subject',  $parameters);
+    $bodyhtml = $template->renderBlock('bodyhtml', $parameters);
+    $bodytext = $template->renderBlock('bodytext', $parameters);
+
+    // Create the message
+    $message = Swift_Message::newInstance()
+      ->setSubject($subject)
+      ->setFrom(array($from_email => $from_name))
+      ->setTo(array($to_email => $to_name))
+      ->setBody($bodytext, 'text/plain')
+      ->addPart($bodyhtml, 'text/html');
+
+    $mailer->send($message);
   }
 
 }

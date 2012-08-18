@@ -8,15 +8,14 @@ if (!$app->checkSession()) {
     $username = isset($_POST['username']) ? $_POST['username'] : null;
     $pass     = isset($_POST['password']) ? sha1($_POST['password']) : null;
 
-    $userquery = R::getRow( 'SELECT * FROM users WHERE username = "' . $username . '" AND password = "' . $pass . '" AND `group` = "superadmin"' );
+    $userquery = R::getRow( 'SELECT * FROM user WHERE username = "' . $username . '" AND password = "' . $pass . '" AND `group` = "superadmin"' );
 
       if ($userquery) {
 
         // Login successful: Create a session and redirect to the admin homepage
         $_SESSION['user']   = $userquery['username'];
         $_SESSION['userid'] = $userquery['id'];
-        $_SESSION['fname']  = $userquery['firstname'];
-        $_SESSION['lname']  = $userquery['lastname'];
+        $_SESSION['name']   = $userquery['name'];
         $_SESSION['mail']   = $userquery['email'];
         $_SESSION['grp']    = $userquery['group'];
         $_SESSION['region'] = (isset($_POST['region'])) ? $_POST['region'] : null;
