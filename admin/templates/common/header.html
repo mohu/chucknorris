@@ -20,7 +20,7 @@
       .cpanel-icon {
         float: left;
         margin: 5px 10px 0 0;
-        -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
+        -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
         filter: alpha(opacity=80);
         -moz-opacity:0.80;
         -khtml-opacity: 0.80;
@@ -41,7 +41,7 @@
         opacity: 0.80;
       }
       .nav-list > li > a {
-        padding-left: 0px !important;
+        padding-left: 5px !important;
       }
     </style>
     <link href="/admin/css/bootstrap-responsive.css" rel="stylesheet">
@@ -123,6 +123,9 @@
       $('.dropdown-toggle').dropdown();
       if ({% if module %}true{% else %}false{% endif %}) {
         $('ul.nav-list li.{{ module }}').addClass('active');
+        var id = $('ul.nav-list li.{{ module }}').parents('.collapse').attr('id');
+        $('ul.nav-list li.{{ module }}').parents('.collapse').collapse({parent: id, toggle: true});
+        $('#'+id).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-down').addClass('icon-circle-arrow-right');
       }
       $('.credits').on('click', function(e) {
         e.preventDefault();

@@ -6,10 +6,10 @@
             <div class="accordion-group">
               <div class="accordion-heading">
                 <a class="accordion-toggle{% if loop.first %} active{% endif %}" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ loop.index }}">
-                  <i class="icon-circle-arrow-{% if loop.first %}right{% else %}down{% endif %} pull-right"></i>{{ key }}
+                  <i class="icon-circle-arrow-down pull-right"></i>{{ key }}
                 </a>
               </div>
-              <div id="collapse{{ loop.index }}" class="accordion-body collapse{% if loop.first %} in{% endif %}">
+              <div id="collapse{{ loop.index }}" class="accordion-body collapse">
                 <div class="accordion-inner">
                   <ul class="nav nav-list">
                     {% for key, item in menugroup %}
