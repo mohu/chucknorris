@@ -6,11 +6,11 @@ if (!$app->checkSession()) {
     $_POST = sanitize($_POST);
 
     $username = isset($_POST['username']) ? $_POST['username'] : null;
-    $pass     = isset($_POST['password']) ? sha1($_POST['password']) : null;
+    $pass     = isset($_POST['password']) ? $_POST['password'] : null;
 
-    $userquery = R::getRow( 'SELECT * FROM user WHERE username = "' . $username . '" AND password = "' . $pass . '" AND `group` = "superadmin"' );
+    $userquery = R::getRow( 'SELECT * FROM user WHERE username = "' . $username . '" AND SHA1(CONCAT("'. $pass .'",`salt`)) = `password` AND `group` = "superadmin"' );
 
-      if ($userquery) {
+    if ($userquery) {
 
         // Login successful: Create a session and redirect to the admin homepage
         $_SESSION['user']   = $userquery['username'];

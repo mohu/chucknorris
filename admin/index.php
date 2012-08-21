@@ -12,14 +12,14 @@ $valid_paths  = array( // Core
                        'settings',
                        'system-info',
                        'tweets',
-                       'users',
+                       'user',
                        // Custom
                       );
 
 $dict            = $app->beginDict();
 $dict['menu']    = $app->loadMenu(array('Menus'               => array( 'menu' => 'Menu', 'menuitem' => 'Menu item', ),
                                         'Twitter'             => array( 'tweets' => 'Tweets', ),
-                                        'Users'               => array( 'users' => 'Users', ),
+                                        'Users'               => array( 'user' => 'Users', ),
                                         ));
 
 ## Router

@@ -27,7 +27,21 @@
         opacity: 0.80;
       }
       .padded {
-        padding: 0 19px;
+        padding: 8px 19px;
+      }
+      .accordion-heading {
+        background-color: #eeeeee;
+      }
+      .accordion-heading i {
+        margin: 1px 0 0 0;
+        -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+        filter: alpha(opacity=80);
+        -moz-opacity:0.80;
+        -khtml-opacity: 0.80;
+        opacity: 0.80;
+      }
+      .nav-list > li > a {
+        padding-left: 0px !important;
       }
     </style>
     <link href="/admin/css/bootstrap-responsive.css" rel="stylesheet">
@@ -137,6 +151,14 @@
       $('a[href=#top]').click(function(){
         $('html, body').animate({scrollTop:0}, 'slow');
         return false;
+      });
+
+      $('.accordion').on('show', function (e) {
+        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-down').addClass('icon-circle-arrow-right');
+      });
+
+      $('.accordion').on('hide', function (e) {
+        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-right').addClass('icon-circle-arrow-down');
       });
     });
     </script>
