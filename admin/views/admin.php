@@ -1,2 +1,2 @@
 <?php
-echo $twig->render('admin.html', $dict);
+echo $twig->render('admin.twig', $dict);

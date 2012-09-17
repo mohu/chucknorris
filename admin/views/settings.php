@@ -4,4 +4,4 @@ $model  = new Model_Settings();
 
 $dict['settings'] = $model->globalSettings();
 
-App::renderTwig('settings.html', $dict);
+App::renderTwig('settings.twig', $dict);

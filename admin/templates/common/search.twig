@@ -1,0 +1,81 @@
+          <script type="text/javascript">
+
+            $(document).ready(function() {
+              $('#table > tbody > tr').click(function() {
+                var module = $(this).parents('table').data('module');
+                var id = $(this).data('id');
+                $(location).attr("href", "/admin/" + module + "/edit/" + id);
+              });
+            });
+          </script>
+          <style>
+            tr:hover {
+              cursor: pointer;
+            }
+          </style>
+
+          <div class="span9">
+            <div class="page-header">
+            <h1>
+              Search {% if search.query %}<small>Showing results for: <span class="label label-info">{{ search.query }}</span></small>{% endif %}
+            </h1>
+          </div>
+
+          {% if search.results and search.query %}
+            {% for key, module in search.results %}
+            <blockquote>
+              <p>Results for: <strong>{{ key }}</strong></p>
+            </blockquote>
+            <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="table" data-module="{{ key }}">
+              <colgroup>
+                {% for item in module %}
+                {% if loop.first %}
+                {% for param in item %}
+                {% if loop.first %}
+                <col class="span1">
+                {% else %}
+                <col>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+              </colgroup>
+              <thead>
+              <tr class="header">
+                {% for item in module %}
+                {% if loop.first %}
+                {% for param in item|keys %}
+                <th>
+                <div class="sort">
+                  <div class="sort-up"></div>
+                  <div class="sort-down"></div>
+                </div>
+                {{ param|capitalize }}
+                </th>
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+              </tr>
+              </thead>
+              <tbody>
+              {% for item in module %}
+              <tr data-id="{{ item.id }}" rel="tooltip">
+                {% for key, info in item %}
+                <td>{{ info|raw }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% endfor %}
+          {% else %}
+            <blockquote>
+              {% if not search.query %}
+              <p>Please enter a search term...</p>
+              {% else %}
+              <p>No results found...</p>
+              {% endif %}
+            </blockquote>
+          {% endif %}
+
+        </div>

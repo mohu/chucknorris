@@ -8,7 +8,7 @@ $action = (isset($_GET['action'])) ? $_GET['action'] : null;
 if ($action == 'add') {
 
   $dict['fields']   = $model->add();
-  App::renderTwig('module-add.html', $dict);
+  App::renderTwig('module-add.twig', $dict);
  
 /**
 * Edit view
@@ -18,7 +18,7 @@ if ($action == 'add') {
   $dict['fields']       = $model->edit($id);
   $dict['o2mstructure'] = App::buildEditformownfields($model->fields());
   $dict['settings']     = $model->settings();
-  App::renderTwig('module-edit.html', $dict);
+  App::renderTwig('module-edit.twig', $dict);
 
 /**
 * Delete view
@@ -29,7 +29,7 @@ if ($action == 'add') {
   $dict['data']       = $model->view();
   $dict['pagination'] = $model->count();
   $dict['settings']   = $model->settings();
-  App::renderTwig('module.html', $dict);
+  App::renderTwig('module.twig', $dict);
 
 /**
 * List view
@@ -39,7 +39,7 @@ if ($action == 'add') {
   $dict['data']       = $model->view();
   $dict['pagination'] = $model->count();
   $dict['settings']   = $model->settings();
-  App::renderTwig('module.html', $dict);
+  App::renderTwig('module.twig', $dict);
 
 }
 

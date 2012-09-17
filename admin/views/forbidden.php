@@ -1,3 +1,3 @@
 <?php
-echo $twig->render('forbidden.html');
+echo $twig->render('forbidden.twig');
 die();

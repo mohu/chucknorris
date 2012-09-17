@@ -4,4 +4,4 @@ $model  = new Model_Systeminfo();
 
 $dict['systeminfo'] = $model->sysinfo();
 
-App::renderTwig('system-info.html', $dict);
+App::renderTwig('system-info.twig', $dict);

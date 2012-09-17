@@ -1,2 +1,2 @@
 <?php
-echo $twig->render('404.html');
+echo $twig->render('404.twig');

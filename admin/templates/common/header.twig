@@ -43,6 +43,20 @@
       .nav-list > li > a {
         padding-left: 5px !important;
       }
+      .navbar i {
+        -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+        filter: alpha(opacity=50);
+        -moz-opacity:0.50;
+        -khtml-opacity: 0.50;
+        opacity: 0.50;
+      }
+      .navbar a:hover i {
+        -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+        filter: alpha(opacity=100);
+        -moz-opacity:1.0;
+        -khtml-opacity: 1.0;
+        opacity: 1.0;
+      }
     </style>
     <link href="/admin/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="/admin/css/datepicker.css" rel="stylesheet">
@@ -122,9 +136,8 @@
     $(document).ready(function() {
       $('.dropdown-toggle').dropdown();
       if ({% if module %}true{% else %}false{% endif %}) {
-        $('ul.nav-list li.{{ module }}').addClass('active');
-        var id = $('ul.nav-list li.{{ module }}').parents('.collapse').attr('id');
-        $('ul.nav-list li.{{ module }}').parents('.collapse').collapse({parent: id, toggle: true});
+        $('ul.nav-list li.menu_{{ module }}').addClass('active');
+        var id = $('ul.nav-list li.menu_{{ module }}').parents('.collapse').attr('id');
         $('#'+id).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-down').addClass('icon-circle-arrow-right');
       }
       $('.credits').on('click', function(e) {
@@ -134,7 +147,7 @@
 
       $("li.clear-cache").click(function() {
         var span = $(this).find('span');
-        $(this).find('a').html('Clearing cache...');
+        $(this).find('a').html('<i class="icon-trash"></i> Clearing...');
         $(this).find('a').append(span);
         setTimeout(function() {
           $.ajax({
@@ -143,7 +156,7 @@
             data: {clearcache: true},
             success: function() {
               span = $(span).html('0');
-              $('li.clear-cache').find('a').html('Clear cache');
+              $('li.clear-cache').find('a').html('<i class="icon-trash"></i> Clear cache');
               $('li.clear-cache').find('a').append(span);
             }
           });
@@ -163,6 +176,19 @@
       $('.accordion').on('hide', function (e) {
         $(e.target).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-right').addClass('icon-circle-arrow-down');
       });
+
+      var links = [{% for menugroup in menu %}{% for key, item in menugroup %}
+      {% if item %}{"id":"{{ key }}", "name": "{{ item }}"},{% endif %}{% endfor %}{% endfor %}];
+
+      $('.search-query').typeahead({
+        source: links,
+        updater:function (item) {
+          document.location.href = 'http://' + document.location.hostname + '/admin/' + item;
+          // Return the item to reflect them into input
+          return item;
+          }
+      });
+
     });
     </script>
 

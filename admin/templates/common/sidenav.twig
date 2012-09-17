@@ -9,16 +9,20 @@
                   <i class="icon-circle-arrow-down pull-right"></i>{{ key }}
                 </a>
               </div>
-              <div id="collapse{{ loop.index }}" class="accordion-body collapse">
+              <div id="collapse{{ loop.index }}" class="accordion-body collapse{% if module and module in menugroup|keys %} in{% endif %}">
                 <div class="accordion-inner">
                   <ul class="nav nav-list">
                     {% for key, item in menugroup %}
-                    <li class="{{ key }}">
+                    {% if item %}
+                    <li class="menu_{{ key }}">
                       <a href="/admin/{{ key }}">
                         <i class="icon-list"></i>
                         {{ item|raw }}
                       </a>
                     </li>
+                    {% else %}
+                    <li class="divider"></li>
+                    {% endif %}
                     {% endfor %}
                   </ul>
                 </div>

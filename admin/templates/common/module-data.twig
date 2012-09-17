@@ -255,6 +255,9 @@
             -khtml-opacity: 1.0;
             opacity: 1.0;
           }
+          table td.dataTables_empty {
+            text-align: center;
+          }
           .actions.both {
             width: 125px;
           }
@@ -332,14 +335,14 @@
             {% if loop.first %}
             {% for param in item %}
             {% if loop.first %}
-              <col class="span1">
+              <col>
             {% else %}
               <col>
             {% endif %}
             {% endfor %}
             {% endif %}
             {% endfor %}
-            {% if settings.edit == 1 and settings.delete == 1 %}
+            {% if settings.edit or settings.delete %}
               <col style="width:{% if settings.edit + settings.delete == 2 %}150px{% elseif settings.edit == 1 %}75px{% else %}85px{% endif %};">
             {% endif %}
             </colgroup>

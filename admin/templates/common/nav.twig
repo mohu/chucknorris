@@ -1,0 +1,51 @@
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/admin">{{ sitename }}</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li{% if not module %} class="active"{% endif %}><a href="/admin"><i class="icon-home icon-white"></i> Dashboard</a></li>
+              <li{% if module == 'settings' %} class="active"{% endif %}><a href="/admin/settings"><i class="icon-cog icon-white"></i> Settings</a></li>
+              <li{% if module == 'enquiries' %} class="active"{% endif %}><a href="/admin/enquiries">Enquiries</a></li>
+            </ul>
+
+            <ul class="nav pull-right">
+              <li><a href="/" target="_blank">Preview <i class="icon-globe icon-white"></i></a></li>
+              <li class="dropdown" id="menu1">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">Tools <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li class="clear-cache"><a href="#"><i class="icon-trash"></i> Clear cache <span class="badge pull-right">{{ cache.status }}</span></a></li>
+                  <!--<li><a href="/admin/cache-manager">Cache manager</a></li>-->
+                  <li class="divider"></li>
+                  <li><a href="/admin/system-info"><i class="icon-tasks"></i> System information</a></li>
+                </ul>
+              </li>
+
+              <li class="dropdown" id="menu2">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#menu2">Logout <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="/admin/logout/"><i class="icon-off"></i> Logout {{ session.user }}?</a></li>
+                </ul>
+              </li>
+            </ul>
+
+            <form class="navbar-search pull-right" action="/admin/search/" method="post">
+              <input type="text" class="search-query span2" placeholder="Search" name="search" autocomplete="off">
+            </form>
+
+            {% if session.region %}<p class="navbar-text pull-right">Region: <span class="badge badge-info">{{ session.region }}</span></p>{% endif %}
+            <p id="loader" class="navbar-text pull-right hidden">Loading... <img src="/admin/img/ajax-loader.gif" style="margin-bottom: 2px; margin-right:10px"></p>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+{% if not backtrace.0 %}
+    {% include "common/sidenav.twig" %}
+{% endif %}

@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-08-18 13:57:12 +0000
+# Generation Time: 2012-09-17 09:13:39 +0000
 # ************************************************************
 
 
@@ -30,7 +30,7 @@ CREATE TABLE `allowedips` (
   `ip` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `reference` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `allowedips` WRITE;
 /*!40000 ALTER TABLE `allowedips` DISABLE KEYS */;
@@ -66,7 +66,7 @@ CREATE TABLE `menu` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `menu` WRITE;
 /*!40000 ALTER TABLE `menu` DISABLE KEYS */;
@@ -94,7 +94,7 @@ CREATE TABLE `menuitem` (
   `menu_id` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_foreignkey_menu` (`menu_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `menuitem` WRITE;
 /*!40000 ALTER TABLE `menuitem` DISABLE KEYS */;
@@ -122,14 +122,14 @@ CREATE TABLE `settings` (
   `sitename` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `analytics` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 
 INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`, `sitename`, `analytics`)
 VALUES
-	(1,5,'','','','','',NULL);
+	(1,10,'',NULL,NULL,NULL,NULL,NULL);
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -148,7 +148,7 @@ CREATE TABLE `tweets` (
   `text` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `published` set('1') COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 
@@ -160,27 +160,80 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `firstname` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `lastname` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `email` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `password` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `group` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `biography` text COLLATE utf8_unicode_ci,
+  `salt` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `image` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `twitter` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `position` text COLLATE utf8_unicode_ci,
+  `position` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
 
-INSERT INTO `user` (`id`, `username`, `firstname`, `lastname`, `email`, `password`, `group`, `biography`, `image`, `twitter`, `linkedin`, `position`)
+INSERT INTO `user` (`id`, `username`, `name`, `email`, `password`, `salt`, `image`, `twitter`, `linkedin`, `position`)
 VALUES
-	(1,'admin','Rikki','Pitt','rikki@studiomohu.com','a94a8fe5ccb19ba61c4c0873d391e987982fbbd3','superadmin','',NULL,'','','');
+	(1,'admin','Rikki Pitt','rikki@studiomohu.com','2f666fa11a7b04199f462cbcbd98defc078cd171','r52vtrz6cgg8004080w84osww0scscs',NULL,'','','');
 
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+# Dump of table user_usergroup
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `user_usergroup`;
+
+CREATE TABLE `user_usergroup` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) unsigned DEFAULT NULL,
+  `usergroup_id` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UQ_e9607fe99c286c54c931e73c2129f5d9eab1ec14` (`user_id`,`usergroup_id`),
+  KEY `index_for_user_usergroup_user_id` (`user_id`),
+  KEY `index_for_user_usergroup_usergroup_id` (`usergroup_id`),
+  CONSTRAINT `user_usergroup_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `user_usergroup_ibfk_2` FOREIGN KEY (`usergroup_id`) REFERENCES `usergroup` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+LOCK TABLES `user_usergroup` WRITE;
+/*!40000 ALTER TABLE `user_usergroup` DISABLE KEYS */;
+
+INSERT INTO `user_usergroup` (`id`, `user_id`, `usergroup_id`)
+VALUES
+	(1,1,1);
+
+/*!40000 ALTER TABLE `user_usergroup` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+# Dump of table usergroup
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `usergroup`;
+
+CREATE TABLE `usergroup` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `group` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `area` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+LOCK TABLES `usergroup` WRITE;
+/*!40000 ALTER TABLE `usergroup` DISABLE KEYS */;
+
+INSERT INTO `usergroup` (`id`, `title`, `group`, `area`)
+VALUES
+	(1,'Super administrator','superadmin','backend'),
+	(2,'Administrator','admin','backend'),
+	(3,'Public member','member','frontend'),
+	(4,'Public press','press','frontend');
+
+/*!40000 ALTER TABLE `usergroup` ENABLE KEYS */;
 UNLOCK TABLES;
 
 

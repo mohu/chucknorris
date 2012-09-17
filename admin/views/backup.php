@@ -13,7 +13,7 @@ if ($action == 'delete' && $id) {
   $dict['result']   = $model->trash($id);
   $dict['data']     = $model->backup();
   $dict['settings'] = $model->settings();
-  echo $twig->render( 'backup.html', $dict);
+  echo $twig->render( 'backup.twig', $dict);
 
 /**
 * List view
@@ -23,6 +23,6 @@ if ($action == 'delete' && $id) {
   $dict['data']       = $model->backup();
   $dict['pagination'] = $model->count();
   $dict['settings']   = $model->settings();
-  echo $twig->render( 'backup.html', $dict);
+  echo $twig->render( 'backup.twig', $dict);
 
 }

@@ -35,6 +35,10 @@
     -moz-border-radius: 5px 5px 0 0;
     border-radius: 5px 5px 0 0;
     background: #f5f5f5;
+    text-transform: none !important;
+    /*color: #08C;*/
+    font-weight: normal;
+    font-size: 13px;
 }
 
 .selector .selector-filter {

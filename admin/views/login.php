@@ -27,18 +27,18 @@ if (!$app->checkSession()) {
 
         // Login failed: display an error message to the user
         $dict['error'] = "<h5><small>Incorrect credentials. Please try again...</small></h5>";
-        echo $twig->render('login.html', $dict);
+        echo $twig->render('login.twig', $dict);
 
       }
 
   } else {
 
     // User has not posted the login form yet: display the form
-    echo $twig->render('login.html', $dict);
+    echo $twig->render('login.twig', $dict);
 
   }
 } else {
 
-  echo $twig->render('admin.html');
+  echo $twig->render('admin.twig');
 
 }

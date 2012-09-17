@@ -32,7 +32,7 @@ class App {
 
     $this->checkIP();
     $this->parseErrors();
-    $this->log();
+    //$this->log();
     return;
   }
 
@@ -108,6 +108,59 @@ class App {
   }
 
   /**
+   * Displays global dashboard search page
+   * @static
+   * @return array
+   */
+  public static function globalSearch() {
+    $dict = array();
+    if (isset($_POST["search"]) && ($_POST["search"] != "")) {
+      $query = $_POST["search"];
+      $dict['query'] = $query;
+      $dict['results'] = array();
+
+      $tables = R::$writer->getTables();
+
+      $i = 0;
+      foreach ($tables as $table) {
+        $columns = R::$writer->getColumns($table);
+        if($columns) {
+          $sql = 'SELECT * FROM `' . $table . '` WHERE ';
+          $j = 0;
+          foreach ($columns as $column => $type) {
+            $sql .= '`' . $column . '` LIKE :query';
+            if ($j + 1 != count($columns)) {
+              $sql .= ' OR ';
+            } else {
+              $sql .= '';
+            }
+            $j++;
+          }
+          $results = R::getAll($sql, array(':query'=>"%$query%"));
+          if ($results) {
+            $dict['results'][$table] = $results;
+          }
+        }
+        $i++;
+      }
+    }
+
+    if (!empty($dict['results'])) {
+
+      $parsedresults = array();
+
+      foreach ($dict['results'] as $key => $resultblock) {
+        // Parse data to trim text for display
+        $parsedresults[$key] = App::parseTabledata($resultblock);
+      }
+
+      $dict['results'] = $parsedresults;
+    }
+
+    return $dict;
+  }
+
+  /**
    * Check $_SESSION exists
    * @return null
    */
@@ -156,10 +209,29 @@ class App {
    */
   public static function renderTwig($template, $dict) {
     global $twig;
-    if (empty($GLOBALS['bufferederrors'])) {
-      echo $twig->render($template, $dict);
-    }
+		if (App::checkAccess($dict['session']['userid'], $template)) {
+    	if (empty($GLOBALS['bufferederrors'])) {
+      	echo $twig->render($template, $dict);
+    	}
+		} else {
+			echo $twig->render('not-allowed.twig', $dict);
+		}
   }
+
+	public static function checkAccess($id, $template) {
+		global $module;
+		$usergroup = R::getCell('SELECT usergroup_id FROM user_usergroup WHERE user_id = ' . $id);
+		if ($usergroup == 1) return true; // Return true for super administrators
+
+		$access_paths = R::getAll('SELECT a.path FROM access a INNER JOIN access_usergroup ug ON a.id = ug.access_id AND ug.usergroup_id = ' . $usergroup);
+
+		$paths = array();
+		foreach ($access_paths as $path) {
+			$paths[] = $path['path'];
+		}
+		if (in_array($module, $paths)) return true;
+		return false;
+	}
 
   /**
    * Custom include function for view files
@@ -206,7 +278,7 @@ class App {
       $file .= 'App::requireModel(\'models/\' . $module . \'.php\', false);' . "\n";
       $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
       $file .= '$dict[$module] = $model->' . $module_lower . '();' . "\n\n";
-      $file .= 'echo $twig->render(\'' . $module_lower . '.html\', $dict);';
+      $file .= 'echo $twig->render(\'' . $module_lower . '.twig\', $dict);';
 
     }
 
@@ -540,7 +612,7 @@ class App {
    * @return mixed
    */
   public static function parseImages($dict) {
-    $replacement = '<a class="thumbnail"><img src="/${0}" /></a>
+    $replacement = '<a class="thumbnail"><img src="/${0}" style="max-width: 75px;" /></a>
                     <div class="modal fade hide">
                       <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">×</button>
@@ -618,15 +690,18 @@ class App {
 
               $name = $field['relation'].ucfirst($field['model']);
 
+              $where = (isset($field['where'])) ? $field['where'] : null;
+
               $form[$name]              = array();
               $form[$name]['type']      = $field['type'];
               $form[$name]['label']     = $field['label'];
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle']);
+							       $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle'], $where);
               $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
+              $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
 
             }
         
@@ -664,6 +739,7 @@ class App {
           $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
           $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+         $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
           $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
         } elseif ($field['type'] == 'order') { // Order field
@@ -764,22 +840,26 @@ class App {
     return App::buildForm($class->fields());
   }
 
-  /**
-   * Takes text with column names embedded between percent-signs for creating dynamic foreign key select titles
-   * @static
-   *
-   * @param $model
-   * @param $select
-   *
-   * @return array|null
-   */
-  public static function getShared($model, $select) {
+	 /**
+ 	 * Takes text with column names embedded between percent-signs for creating dynamic foreign key select titles
+ 	 * @static
+ 	 *
+ 	 * @param      $model
+	 * @param      $select
+ 	 *
+ 	 * @param null $where
+ 	 *
+ 	 * @return array|null
+ 	 */
+  public static function getShared($model, $select, $where = null) {
 
     $data = array();
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
-      $rows = R::getAll( 'SELECT * FROM ' . $model );
+      // Build condition into query if exists
+      $condition = ($where) ? ' WHERE '. $where : null;
+      $rows = R::getAll( 'SELECT * FROM ' . $model . $condition );
       $i = 0;
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
@@ -830,16 +910,18 @@ class App {
             } elseif ($field['relation'] == 'shared') { // Many to many
 
               $name = $field['relation'].ucfirst($field['model']);
+              $where = (isset($field['where'])) ? $field['where'] : null;
 
               $form[$name]              = array();
               $form[$name]['type']      = $field['type'];
               $form[$name]['label']     = $field['label'];
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $id);
+              $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $where, $id);
               $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
+              $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
 
             }
         
@@ -877,6 +959,7 @@ class App {
           $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
           $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+					     $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
           $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
           $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
@@ -996,7 +1079,8 @@ class App {
         // echo '<pre>'.print_r($field, true) . '</pre>';
 
         if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
-          if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select' && $field['type'] != 'radio') {
+          if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select'&&
+              $field['type'] != 'radio' && $field['type'] != 'textarea') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
@@ -1004,6 +1088,7 @@ class App {
             $array[$i][$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
             $array[$i][$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
             $array[$i][$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
             $array[$i][$key]['id']         = $data[$i]['id'];
             $array[$i][$key]['value']      = $data[$i][$key];
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
@@ -1049,11 +1134,34 @@ class App {
             $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+						$array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $array[$i][$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'textarea') { // Textarea fields
+
+            $array[$i][$key] = array();
+            $array[$i][$key]['type']       = $field['type'];
+            $array[$i][$key]['label']      = $field['label'];
+            $array[$i][$key]['id']         = $data[$i]['id'];
+
+            $array[$i][$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+            $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $array[$i][$key]['rich_editor']= true;
+            if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
+              $form[$key]['rich_editor'] = true;
+            } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
+              $form[$key]['rich_editor'] = false;
+            }
+            $array[$i][$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $array[$i][$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
           } elseif ($field['relation'] == 'shared') { // Build into own, shared selection...
             $key = $field['relation'].ucfirst($field['model']);
+            $where = (isset($field['where'])) ? $field['where'] : null;
 
             $array[$i][$key]              = array();
             $array[$i][$key]['type']      = $field['type'];
@@ -1062,7 +1170,7 @@ class App {
             $array[$i][$key]['id']        = $data[$i]['id'];
             $array[$i][$key]['value']     = (isset($data[$i][$key])) ? $data[$i][$key] : null ;
             $array[$i][$key]['fields']    = array();
-            $array[$i][$key]['fields']    = App::getEditshared($model, $field['model'], $field['selecttitle'], $data[$i]['id']);
+            $array[$i][$key]['fields']    = App::getEditshared($model, $field['model'], $field['selecttitle'], $where, $data[$i]['id']);
             $array[$i][$key]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
             $array[$i][$key]['help']      = (isset($field['help'])) ? $field['help'] : null;
@@ -1087,7 +1195,7 @@ class App {
    *
    * @return array|null
    */
-  public static function getEditshared($parent, $model, $select, $id) {
+  public static function getEditshared($parent, $model, $select, $where = null, $id) {
 
     $data = null;
 
@@ -1103,7 +1211,9 @@ class App {
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
-      $rows = R::getAll( 'SELECT * FROM ' . $model );
+      // Build condition into query if exists
+      $condition = ($where) ? ' WHERE '. $where : null;
+      $rows = R::getAll( 'SELECT * FROM ' . $model .$condition );
       $i = 0;
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
@@ -1252,7 +1362,7 @@ class App {
     $ownfields = null;
     $owninfo = null;
     // echo '<pre>' . print_r($_FILES, true) . '</pre>'; 
-    // echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+		// echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
     require_once 'models/' . $module . '.php';
 
@@ -1388,7 +1498,7 @@ class App {
 
     require_once 'models/' . $module . '.php';
 
-//    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
+//		 echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     if (isset($_POST['removeimages'])) {
       App::removeImages($_POST['removeimages']);
@@ -1632,14 +1742,14 @@ class App {
 
     // Cycle through
     foreach($tables as $table) {
-      $result = R::getAll('SELECT * FROM '.$table);
+      $result = R::getAll('SELECT * FROM `'.$table.'`');
       $count = count($result);
 
       $return .= '# Dump of table ' .$table. "\n";
       $return .= "# ------------------------------------------------------------\n\n";
 
       $return .= 'DROP TABLE IF EXISTS `'.$table.'`;';
-      $row2 = R::getRow('SHOW CREATE TABLE '.$table);
+      $row2 = R::getRow('SHOW CREATE TABLE `'.$table.'`');
       $return .= "\n\n".$row2['Create Table'].";";
       $return .= "\n\n".'LOCK TABLES `'.$table.'` WRITE;'."\n";
       $return .= '/*!40000 ALTER TABLE `'.$table.'` DISABLE KEYS */;' . "\n\n";
@@ -1821,7 +1931,7 @@ class App {
     if (error_get_last()) {
       $dict['backtrace'] = $GLOBALS['bufferederrors'];
       $dict['phpversion'] = phpversion();
-      echo $twig->render('error-trace.html', $dict);
+      echo $twig->render('error-trace.twig', $dict);
       //echo '<pre>' . print_r($dict, true) . '</pre>';
     } else {
       return false;
@@ -1830,10 +1940,10 @@ class App {
 
   public static function createSprintf($str, $vars, $char = '%') {
     $tmp = array();
-    foreach($vars as $k => $v)
-    {
+    foreach($vars as $k => $v) {
       $tmp[$char . $k . $char] = $v;
     }
+
     return str_replace(array_keys($tmp), array_values($tmp), $str);
   }
 
@@ -1846,7 +1956,7 @@ class App {
     // Create the Mailer using your created Transport
     $mailer = Swift_Mailer::newInstance($transport);
 
-    $template = $twig->loadTemplate('email/' . $identifier . '.html');
+    $template = $twig->loadTemplate('email/' . $identifier . '.twig');
 
     $subject  = $template->renderBlock('subject',  $parameters);
     $bodyhtml = $template->renderBlock('bodyhtml', $parameters);
@@ -1856,6 +1966,8 @@ class App {
     $message = Swift_Message::newInstance()
       ->setSubject($subject)
       ->setFrom(array($from_email => $from_name))
+      ->setSender($from_email)
+      ->setReplyTo(array($from_email => $from_name))
       ->setTo(array($to_email => $to_name))
       ->setBody($bodytext, 'text/plain')
       ->addPart($bodyhtml, 'text/html');

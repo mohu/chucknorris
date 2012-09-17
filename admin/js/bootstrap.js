@@ -1568,6 +1568,8 @@
 
   var Typeahead = function (element, options) {
     this.$element = $(element)
+    this.$hiddeninput = $('<input type="hidden" name="'
+            +this.$element.attr('name')+'-data-id" value="">').insertAfter(this.$element)
     this.options = $.extend({}, $.fn.typeahead.defaults, options)
     this.matcher = this.options.matcher || this.matcher
     this.sorter = this.options.sorter || this.sorter
@@ -1585,8 +1587,12 @@
 
   , select: function () {
       var val = this.$menu.find('.active').attr('data-value')
+      var id = this.$menu.find('.active').attr('data-id')
       this.$element
         .val(this.updater(val))
+        .change()
+      this.$hiddeninput
+        .val(this.updater(id))
         .change()
       return this.hide()
     }
@@ -1617,17 +1623,24 @@
     }
 
   , lookup: function (event) {
-      var that = this
-        , items
-        , q
+      var items
 
       this.query = this.$element.val()
 
-      if (!this.query) {
+      if (!this.query || this.query.length < this.options.minLength) {
         return this.shown ? this.hide() : this
       }
 
-      items = $.grep(this.source, function (item) {
+      items = $.isFunction(this.source) ? this.source(this.query, $.proxy(this.process, this)) : this.source
+
+      return items ? this.process(items) : this
+    }
+
+  , process: function (items) {
+      var that = this
+      console.log(items);
+
+      items = $.grep(items, function (item) {
         return that.matcher(item)
       })
 
@@ -1641,7 +1654,8 @@
     }
 
   , matcher: function (item) {
-      return ~item.toLowerCase().indexOf(this.query.toLowerCase())
+      //return ~item.toLowerCase().indexOf(this.query.toLowerCase())
+      return ~item.name.toLowerCase().indexOf(this.query.toLowerCase())
     }
 
   , sorter: function (items) {
@@ -1651,8 +1665,8 @@
         , item
 
       while (item = items.shift()) {
-        if (!item.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
-        else if (~item.indexOf(this.query)) caseSensitive.push(item)
+        if (!item.name.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item)
+        else if (~item.name.indexOf(this.query)) caseSensitive.push(item)
         else caseInsensitive.push(item)
       }
 
@@ -1661,7 +1675,7 @@
 
   , highlighter: function (item) {
       var query = this.query.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&')
-      return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
+      return item.name.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
         return '<strong>' + match + '</strong>'
       })
     }
@@ -1670,7 +1684,7 @@
       var that = this
 
       items = $(items).map(function (i, item) {
-        i = $(that.options.item).attr('data-value', item)
+        i = $(that.options.item).attr('data-value', item.name).attr('data-id', item.id)
         i.find('a').html(that.highlighter(item))
         return i[0]
       })
@@ -1708,13 +1722,47 @@
         .on('keypress', $.proxy(this.keypress, this))
         .on('keyup',    $.proxy(this.keyup, this))
 
-      if ($.browser.webkit || $.browser.msie) {
-        this.$element.on('keydown', $.proxy(this.keypress, this))
+      if ($.browser.chrome || $.browser.webkit || $.browser.msie) {
+        this.$element.on('keydown', $.proxy(this.keydown, this))
       }
 
       this.$menu
         .on('click', $.proxy(this.click, this))
         .on('mouseenter', 'li', $.proxy(this.mouseenter, this))
+    }
+
+  , move: function (e) {
+      if (!this.shown) return
+
+      switch(e.keyCode) {
+        case 9: // tab
+        case 13: // enter
+        case 27: // escape
+          e.preventDefault()
+          break
+
+        case 38: // up arrow
+          e.preventDefault()
+          this.prev()
+          break
+
+        case 40: // down arrow
+          e.preventDefault()
+          this.next()
+          break
+      }
+
+      e.stopPropagation()
+    }
+
+  , keydown: function (e) {
+      this.suppressKeyPressRepeat = !~$.inArray(e.keyCode, [40,38,9,13,27])
+      this.move(e)
+    }
+
+  , keypress: function (e) {
+      if (this.suppressKeyPressRepeat) return
+      this.move(e)
     }
 
   , keyup: function (e) {
@@ -1741,32 +1789,6 @@
       e.stopPropagation()
       e.preventDefault()
   }
-
-  , keypress: function (e) {
-      if (!this.shown) return
-
-      switch(e.keyCode) {
-        case 9: // tab
-        case 13: // enter
-        case 27: // escape
-          e.preventDefault()
-          break
-
-        case 38: // up arrow
-          if (e.type != 'keydown') break
-          e.preventDefault()
-          this.prev()
-          break
-
-        case 40: // down arrow
-          if (e.type != 'keydown') break
-          e.preventDefault()
-          this.next()
-          break
-      }
-
-      e.stopPropagation()
-    }
 
   , blur: function (e) {
       var that = this
@@ -1805,12 +1827,13 @@
   , items: 8
   , menu: '<ul class="typeahead dropdown-menu"></ul>'
   , item: '<li><a href="#"></a></li>'
+  , minLength: 1
   }
 
   $.fn.typeahead.Constructor = Typeahead
 
 
- /* TYPEAHEAD DATA-API
+ /*   TYPEAHEAD DATA-API
   * ================== */
 
   $(function () {
