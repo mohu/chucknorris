@@ -4,6 +4,7 @@ class Model_Allowedips extends RedBean_SimpleModel {
 
   function fields() {
     // Add fields here
+    $fields['separator']  = array('type'=>'separator', 'label'=>'Enter an IP address to add to the admin area login whitelist (e.g. 1.2.3.4)', 'text'=>'Wildcards (*) are allowed to give clearance to IP ranges. Use with care.');
     $fields['ip']         = array('type'=>'text', 'label'=>'allowed ip', 'max_length'=>'255', 'help'=>'', 'required'=>true);
     $fields['reference']  = array('type'=>'text', 'label'=>'reference', 'max_length'=>'255', 'help'=>'Who is this?', 'required'=>true);
     

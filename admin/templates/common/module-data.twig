@@ -12,7 +12,73 @@
 
         /* Table initialisation */
         $(document).ready(function() {
+          // Datatables filter highlighting
+          jQuery.fn.dataTableExt.oApi.fnSearchHighlighting = function(oSettings) {
+            // Initialize regex cache
+            oSettings.oPreviousSearch.oSearchCaches = {};
+
+            oSettings.oApi._fnCallbackReg( oSettings, 'aoRowCallback', function( nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+              // Initialize search string array
+              var searchStrings = [];
+              var oApi = this.oApi;
+              var cache = oSettings.oPreviousSearch.oSearchCaches;
+              // Global search string
+              // If there is a global search string, add it to the search string array
+              if (oSettings.oPreviousSearch.sSearch) {
+                searchStrings.push(oSettings.oPreviousSearch.sSearch);
+              }
+              // Individual column search option object
+              // If there are individual column search strings, add them to the search string array
+              if ((oSettings.aoPreSearchCols) && (oSettings.aoPreSearchCols.length > 0)) {
+                for (var i in oSettings.aoPreSearchCols) {
+                  if (oSettings.aoPreSearchCols[i].sSearch) {
+                    searchStrings.push(oSettings.aoPreSearchCols[i].sSearch);
+                  }
+                }
+              }
+              // Create the regex built from one or more search string and cache as necessary
+              if (searchStrings.length > 0) {
+                var sSregex = searchStrings.join("|");
+                if (!cache[sSregex]) {
+                  var regRules = "("
+                        ,   regRulesSplit = sSregex.split(' ');
+
+                  regRules += "("+ sSregex +")";
+                  for(var i=0; i<regRulesSplit.length; i++) {
+                    regRules += "|("+ regRulesSplit[i] +")";
+                  }
+                  regRules += ")";
+
+                  // This regex will avoid in HTML matches
+                  cache[sSregex] = new RegExp(regRules+"(?!([^<]+)?>)", 'ig');
+                }
+                var regex = cache[sSregex];
+              }
+              // Loop through the rows/fields for matches
+              jQuery('td', nRow).each( function(i) {
+                // Take into account that ColVis may be in use
+                var j = oApi._fnVisibleToColumnIndex( oSettings,i);
+                // Only try to highlight if the cell is not empty or null
+                if (aData[j]) {
+                  // If there is a search string try to match
+                  if ((typeof sSregex !== 'undefined') && (sSregex)) {
+                    this.innerHTML = aData[j].replace( regex, function(matched) {
+                      return "<span class='filterMatches'>"+matched+"</span>";
+                    });
+                  }
+                  // Otherwise reset to a clean string
+                  else {
+                    this.innerHTML = aData[j];
+                  }
+                }
+              });
+              return nRow;
+            }, 'row-highlight');
+            return this;
+          };
+
           renderDataTable("#table");
+          $('.dataTables_filter input').attr("placeholder", "Filter records");
           function renderDataTable(selector) {
             var out = [];
             var tables = $(selector);
@@ -34,16 +100,20 @@
                 "bSort": true,
                 "bInfo": false,
                 "bAutoWidth": false,
+                "oLanguage": {
+                  "sSearch": ""
+                },
                 "aoColumnDefs": [
                   {"bSearchable": false, "bSortable": false, "aTargets": ["dataTable-exclude"]},
                   {"bVisible":false, "aTargets" : ["dataTables_notVisible"]}
-                ]
+                ],
               } );
+              oTable2.fnSearchHighlighting();
               out.push( oTable2 );
+
             }
             return out;
           }
-
           // $("[rel=tooltip]").tooltip({title: 'Edit item', delay: { show: 300, hide: 0 }, placement: 'left'});
 
           $('#table > tbody > tr > td:not(:last-child)').filter(function(index){ return $('.thumbnail', this).length == 0; }).click(function() {
@@ -174,133 +244,7 @@
         });
         {% endif %}
         </script>
-        <style>
-          tr:hover {
-            cursor: pointer;
-          }
-          td[data-ordering] {
-            cursor: move;
-          }
-          div.dataTables_filter input {
-            display: inline !important;
-            width: 142px;
-          }
-          div.dataTables_filter {
-            float: right;
-          }
-          table.dataTable thead th.sort {
-            position: relative;
-            padding-right: 16px;
-            cursor: pointer;
-          }
-          table.dataTable thead th.sort .sort {
-            position: absolute;
-            right: 4px;
-            top: 50%;
-            height: 10px;
-            margin-top: -5px;
-            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
-            filter: alpha(opacity=20);
-            -moz-opacity:0.2;
-            -khtml-opacity: 0.2;
-            opacity: 0.2;
 
-            -webkit-transition:opacity 0.25s ease-in;
-            -moz-transition:opacity 0.25s ease-in;
-            -o-transition:opacity 0.25s ease-in;
-            transition:opacity 0.25s ease-in;
-          }
-          table.dataTable thead th.sort .sort .sort-up,
-          table.dataTable thead th.sort .sort .sort-down {
-            display: block;
-            width: 0;
-            height: 0;
-            vertical-align: top;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            content: "";
-          }
-          table.dataTable thead th.sort .sort .sort-up {
-            border-bottom: 4px solid #000;
-            margin-bottom: 2px;
-          }
-          table.dataTable thead th.sort .sort .sort-down {
-            border-top: 4px solid #000;
-            margin-top: 2px;
-          }
-          table.dataTable thead th.sort.sort-none {
-            cursor: default;
-          }
-          table.dataTable thead th.sort.sort-none .sort {
-            display: none;
-          }
-          table.dataTable thead th.sort.sort-up .sort,
-          table.dataTable thead th.sort.sort-down .sort {
-            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
-            filter: alpha(opacity=60);
-            -moz-opacity:0.6;
-            -khtml-opacity: 0.6;
-            opacity: 0.6;
-          }
-          table.dataTable thead th.sort.sort-up .sort-down {
-            visibility: hidden;
-          }
-          table.dataTable thead th.sort.sort-down .sort-up {
-            visibility: hidden;
-          }
-          table.dataTable thead th.sort:hover .sort {
-            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
-            filter: alpha(opacity=100);
-            -moz-opacity:1.0;
-            -khtml-opacity: 1.0;
-            opacity: 1.0;
-          }
-          table td.dataTables_empty {
-            text-align: center;
-          }
-          .actions.both {
-            width: 125px;
-          }
-          .actions.delete {
-            width: 60px;
-          }
-          .actions.edit {
-            width: 48px;
-          }
-          tr.placeholder {
-            border-collapse: collapse;
-          }
-          .placeholder td {
-            background-color: #D9EDF7 !important;
-            border-top: 1px solid #DDDDDD;
-            border-right: 0px;
-            border-bottom: 0px;
-            border-left: 0px;
-          }
-          .placeholder td:first-child {
-            border-left: 1px solid #DDDDDD;
-          }
-          i.move {
-            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=20)";
-            filter: alpha(opacity=20);
-            -moz-opacity:0.2;
-            -khtml-opacity: 0.2;
-            opacity: 0.2;
-            margin-top: 2px;
-          }
-          td[data-ordering]:hover i.move {
-            -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
-            filter: alpha(opacity=80);
-            -moz-opacity:0.8;
-            -khtml-opacity: 0.8;
-            opacity: 0.8;
-
-            -webkit-transition:opacity 0.25s ease-in;
-            -moz-transition:opacity 0.25s ease-in;
-            -o-transition:opacity 0.25s ease-in;
-            transition:opacity 0.25s ease-in;
-          }
-        </style>
         <div class="span9">
           <div class="page-header">
             {% if settings.add == 'true' or settings.add > pagination.total %}
@@ -372,13 +316,15 @@
               {% for key, info in item %}
                 <td{% if key == 'ordering' %} data-ordering="{{ info }}"{% endif %}>{% if key == 'ordering' %}<i class="icon-move move pull-right"></i>{% endif %}{{ info|raw }}</td>
               {% endfor %}
-                <td>
+                <td class="actions">
             {% if data %}
             {% if settings.edit == 1 %}
-            <a class="btn btn-small" href="/admin/{{ module }}/edit/{{ item.id }}?start={{ pagination.start }}"{% if settings.delete == 1 %} style="margin-right:5px;"{% endif %}><i class="icon-edit"></i> Edit</a>
-            {% endif %}
-            {% if settings.delete == 1 %}
-            <a class="btn btn-small delete" id="{{ item.id }}" href="#"><i class="icon-trash"></i> Delete</a>
+            <div class="btn-group">
+              <a class="btn btn-small" href="/admin/{{ module }}/edit/{{ item.id }}?start={{ pagination.start }}"><i class="icon-edit"></i> Edit</a>
+              {% endif %}
+              {% if settings.delete == 1 %}
+              <a class="btn btn-small delete" id="{{ item.id }}" href="#"><i class="icon-trash"></i> Delete</a>
+            </div>
             {% endif %}
             {% endif %}
                 </td>

@@ -11,7 +11,7 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
   $username = 'root';
   $password = 'root';
   
-} elseif (php_uname('n') == '(null)') {// Jane's computer is null at the moment
+} elseif (php_uname('n') == 'jane-kellys-macbook-pro.local') {
   $username = 'root';
   $password = 'root';
   
@@ -19,13 +19,17 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
   $username = 'root';
   $password = '';
   
+} elseif (php_uname('n') == 'janesmbp.lan') { 
+  $username = 'root';
+  $password = 'root';
+
 } elseif (php_uname('n') == 'art.local') {
   $username = 'root';
   $password = 'skoot';
 
-} elseif (php_uname('n') == 'timinator.local') {
+} elseif (php_uname('n') == 'timinator.lan') {
   $username = 'root';
-  $password = '7pwtfNPOFizt';
+  $password = 'root';
 
 } elseif (php_uname('n') == 'kien56.local') {
   $username = 'root';
@@ -35,9 +39,9 @@ if (php_uname('n') == 'Arthurs-Mac-mini.local') {
   $username = 'root';
   $password = 'DGKmjYr4drbt8LNVNR';
 
-} elseif (php_uname('n') == 'ben-smiths-macbook-pro.local') {
+} elseif (php_uname('n') == 'Ben-no-MacBook-Air.local' && 'Bens-MacBook-Pro-5.local') {
   $username = 'root';
-  $password = 'root';
+  $password = 'communist10';
 
 } else { // Live server
   $host     = '';

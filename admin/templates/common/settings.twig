@@ -1,25 +1,20 @@
         <div class="span9">
-          <div class="page-header">
-            <h1>
-              Settings
-            </h1>
-          </div>
 
           <form class="form-horizontal" method="post">
+
+            <div class="page-header">
+              <div class="btn-group pull-right">
+                <button type="submit" name="update" class="btn btn-primary btn-small"><i class="icon-check icon-white"></i> Save</button>
+                <a class="btn btn-small" href="/admin"><i class="icon-ban-circle"></i> Cancel</a>
+              </div>
+              <h1>
+                Settings
+              </h1>
+            </div>
+
             <fieldset>
 
-              <div class="page-header">
-                <h1>
-                  <small>General settings</small>
-                </h1>
-              </div>
-
-              <div class="control-group">
-                <label class="control-label" for="sitename">Site name</label>
-                <div class="controls">
-                  <input type="text" id="sitename" class="input-xlarge" name="settings[sitename]" value="{{ settings.sitename.value }}">
-                </div>
-              </div>
+              <legend>General settings</legend>
 
               <div class="control-group">
                 <label class="control-label" for="pagination">Pagination</label>
@@ -41,49 +36,55 @@
                   <p class="help-block">{{ settings.analytics.help|raw }}</p>
                 </div>
               </div>
+              <div class="control-group">
+                <label class="control-label" for="debug">Enable debugger</label>
+                <div class="controls">
 
-              <div class="page-header">
-                <h1>
-                  <small>Social accounts</small>
-                </h1>
+                  <label class="radio">
+                    <input type="radio"name="settings[debug]" value="1" {% if settings.debug.value == 1 %}checked="checked"{% endif %}>
+                    On
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="settings[debug]" value="0" {% if settings.debug.value == 0 %}checked="checked"{% endif %}>
+                    Off
+                  </label>
+                </div>
               </div>
 
+              <legend>Social accounts</legend>
+
               <div class="control-group">
-                <label class="control-label" for="twitter">Twitter username</label>               
+                <label class="control-label" for="twitter">Twitter username</label>
                 <div class="controls">
                   <input type="text" id="twitter" class="input-xlarge" name="settings[twitter]" value="{{ settings.twitter.value }}">
                 </div>
               </div>
 
               <div class="control-group">
-                <label class="control-label" for="facebook">Facebook URL</label>               
+                <label class="control-label" for="facebook">Facebook URL</label>
                 <div class="controls">
                   <input type="text" id="facebook" class="input-xlarge" name="settings[facebook]" value="{{ settings.facebook.value }}">
                 </div>
               </div>
 
               <div class="control-group">
-                <label class="control-label" for="linkedin">Linkedin URL</label>               
+                <label class="control-label" for="linkedin">Linkedin URL</label>
                 <div class="controls">
                   <input type="text" id="linkedin" class="input-xlarge" name="settings[linkedin]" value="{{ settings.linkedin.value }}">
                 </div>
               </div>
 
               <div class="control-group">
-                <label class="control-label" for="pinterest">Pinterest URL</label>               
+                <label class="control-label" for="pinterest">Pinterest URL</label>
                 <div class="controls">
                   <input type="text" id="pinterest" class="input-xlarge" name="settings[pinterest]" value="{{ settings.pinterest.value }}">
                 </div>
               </div>
 
-              <div class="page-header">
-                <h1>
-                  <small>Contact us email address</small>
-                </h1>
-              </div>
+              <legend>Contact us email address</legend>
 
               <div class="control-group">
-                <label class="control-label" for="pagination">Email address</label>               
+                <label class="control-label" for="pagination">Email address</label>
                 <div class="controls">
                   <input type="text" id="pagination" class="input-xlarge" name="settings[contact]" value="{{ settings.contact.value }}">
                   <p class="help-block">{{ settings.contact.help }}</p>
@@ -94,8 +95,10 @@
                 <input type="hidden" name="settings[id]" value="1">
                 <input type="hidden" name="settings[type]" value="settings">
                 <input type="hidden" id="modulename" name="modulename" value="settings">
-                <button type="submit" name="update" class="btn btn-primary"><i class="icon-pencil icon-white"></i> Save</button>
-                <a class="btn" href="/admin">Cancel</a>
+                <div class="btn-group">
+                  <button type="submit" name="update" class="btn btn-primary"><i class="icon-pencil icon-white"></i> Save</button>
+                  <a class="btn" href="/admin">Cancel</a>
+                </div>
               </div>
             </fieldset>
           </form>

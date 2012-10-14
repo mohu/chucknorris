@@ -5,26 +5,28 @@
         <div class="span9">
           <div class="hero-unit">
             {% if appletouchicon %}
-            <img src="/apple-touch-icon-57x57-precomposed.png" style="float: left; margin: 3px 5px 0px -25px;">
+            <img src="/apple-touch-icon-57x57-precomposed.png" style="float: left; margin: 12px 10px 0px -25px;">
             {% endif %}
             <h1>{{ sitename }} <small>Dashboard</small></h1>
           </div>
           <div class="row-fluid">
             <div class="span4 well">
-              <img class="cpanel-icon" src="/admin/img/glyphicons/glyphicons_044_keys.png">
-              <h2>IP whitelist</h2>
-              <p>In order to grant access to new admins, add their IP address to the whitelist.</p>
-              <p><a class="btn btn-inverse" href="/admin/allowedips">Add IP address <i class="icon-arrow-right icon-white"></i></a></p>
-            </div><!--/span-->
-            <div class="span4 well">
               <img class="cpanel-icon" src="/admin/img/glyphicons/glyphicons_140_database_lock.png">
-              <h2>Backup database</h2>
+              <h3>Database backup</h3>
               <p>Run the database backup utility to safeguard your site's data.</p>
               <p><a class="btn btn-inverse" href="/admin/backup">Backup now <i class="icon-arrow-right icon-white"></i></a></p>
             </div><!--/span-->
+
+            <div class="span4 well">
+              <img class="cpanel-icon" src="/admin/img/glyphicons/glyphicons_044_keys.png">
+              <h3>IP whitelist</h3>
+              <p>In order to grant access to new admins, add their IP address to the whitelist.</p>
+              <p><a class="btn btn-inverse" href="/admin/allowedips">Add IP address <i class="icon-arrow-right icon-white"></i></a></p>
+            </div><!--/span-->
+
             <div class="span4 well">
               <img class="cpanel-icon" src="/admin/img/glyphicons/glyphicons_023_cogwheels.png">
-              <h2>Settings</h2>
+              <h3>Settings</h3>
               <p>Edit general administration settings such as Twitter accounts and email addresses.</p>
               <p><a class="btn btn-inverse" href="/admin/settings">Edit settings <i class="icon-arrow-right icon-white"></i></a></p>
             </div><!--/span-->

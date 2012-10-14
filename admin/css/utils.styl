@@ -1,0 +1,133 @@
+/* =============================================================================
+   VARIABLES & UTILITY STYLES
+   ========================================================================== */
+
+// utility mixins
+
+// vendor mixin
+vendor(prop, args)
+  -webkit-{prop} args
+  -moz-{prop} args
+  -ms-{prop} args
+  -o-{prop} args
+  {prop} args
+  
+// border-radius
+border-radius()
+  vendor('border-radius', arguments)
+
+// box-shadow
+box-shadow()
+  vendor('box-shadow', arguments)
+  
+// transition
+transition()
+  vendor('transition', arguments)
+
+// regular opacity
+opacity(n)
+  opacity n
+  .lt-ie8 &
+    filter unquote('alpha(opacity=' + round(n * 100) + ')')
+  .lt-ie9 &
+    filter unquote('progid:DXImageTransform.Microsoft.Alpha(Opacity=' + round(n * 100) + ')')
+  
+replace(expr, str, val)
+  expr = clone(expr)
+  for e, i in expr
+    if str == e
+      expr[i] = val
+  expr
+        
+// background transparency
+background-transparency(color, alpha = 1)
+  ms-color = argb(color, alpha)
+  background rgb(color)
+  background rgba(color, alpha)
+  .lt-ie8 &
+    zoom 1
+  .lt-ie9 &
+    background transparent
+    filter s('progid:DXImageTransform.Microsoft.gradient(startColorstr=%s,endColorstr=%s)', ms-color, ms-color)
+    &:nth-child(n)
+      filter none
+
+hex(decimal)
+   hex-value = ('0') ('1') ('2') ('3') ('4') ('5') ('6') ('7') ('8') ('9') ('A') ('B') ('C') ('D') ('E') ('F')
+   unquote(hex-value[floor(decimal / 16)] + hex-value[floor(decimal % 16)])
+
+argb(color, alpha = 1)
+  unquote('#') + hex(alpha * 255) + hex(red(color)) + hex(green(color)) + hex(blue(color))
+    
+// container-ize
+container-ize(width)
+  width width
+  text-align left
+  margin auto
+  
+// strip list styles
+strip-list()
+  list-style none
+  list-style-image none
+  margin 0
+  padding 0
+  
+// clearfix
+/* Contain floats: h5bp.com/q */
+clearfix()
+  &:before, &:after
+    content ""
+    display table
+  &:after
+    clear both
+  zoom 1
+  
+// hide-text
+hide-text()
+  text-indent 100%
+  white-space nowrap
+  overflow hidden
+  text-decoration none
+
+// min-height
+min-height(height)
+  min-height height
+  height auto !important
+  height height
+
+// line header
+line-header()
+  position relative
+  display inline-block
+  padding 0 130px
+  &:after,
+  &:before
+    content ''
+    height 1px
+    background white
+    width 100px
+    position absolute
+    top 50%
+  &:after
+    right 0
+  &:before
+    left 0
+
+// active arrow
+active-arrow(direction, size, color, position)
+  position relative
+  &:after
+    content ''
+    width 0
+    height 0
+    border size solid transparent
+    border-{direction}-color color
+    position absolute
+    {direction} 0
+    if position == 'side'
+      top 50%
+      margin-top unquote('-' + size)
+    else
+      left 50%
+      margin-left unquote('-' + size)
+

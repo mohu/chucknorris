@@ -1,5 +1,6 @@
 <?php
 // error_reporting(0);
+ini_set('html_errors',0);
 define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
@@ -31,8 +32,8 @@ class App {
     if (isset($_POST['dragdropordering'])) $this->dragdropOrdering();
 
     $this->checkIP();
-    $this->parseErrors();
-    //$this->log();
+//    $this->parseErrors();
+//    $this->log();
     return;
   }
 
@@ -44,11 +45,12 @@ class App {
   public function beginDict() {
     $dict = array();
     $dict['session']  = App::loadSession();
-    $dict['cms']      = array('name'=>'Chuck Norris',
+    $dict['cms']      = array('name'=>'Chuck',
                               'version'=>'0.5.0',
-                              'dependancies'=>array('Bootstrap, from Twitter'=>'2.0.4',
+                              'dependencies'=>array('Bootstrap, from Twitter'=>'2.1.1',
                                                     'Glyphicons'=>'1.6',
-                                                    'RedBeanPHP'=>'3.2.3',
+                                                    'RedBeanPHP'=>'3.3',
+                                                    'Select2'=>'3.2',
                                                     'Swift Mailer'=>'4.2.1',
                                                     'Twig'=>'1.8.3',)
                               );
@@ -57,6 +59,14 @@ class App {
     $dict['sitename'] = ($sitename) ? $sitename : $dict['cms']['name'];
     $dict['appletouchicon']  = (is_array(@getimagesize(LOCAL_PATH . 'apple-touch-icon-57x57-precomposed.png'))) ? true : false;
     $dict['cache']['status'] = $this->getCache();
+    if ((R::getCell('SELECT debug FROM settings')) == 1) {
+      // Add extra server and environment debug information to dict
+      $dict['debugger']['server']= $_SERVER;
+      $dict['debugger']['session']= $_SESSION;
+      $dict['debugger']['env']= $_ENV;
+      $dict['debugger']['request']= $_REQUEST;
+      $dict['debugger']['cookies']= $_COOKIE;
+    }
 
     return $dict;
   }
@@ -67,7 +77,7 @@ class App {
   public function checkIP() {
     global $twig;
     if (!defined('FRONTEND')) {
-      $allowed_ips = R::getAll( 'SELECT * FROM allowedips' );
+      $allowed_ips = R::getCol( 'SELECT ip FROM allowedips' );
 
       $allowed = false;
 
@@ -80,19 +90,29 @@ class App {
       if (($commapos = strpos($ip, ',')) > 0)
         $ip = substr($Ip, 0, ($commapos - 1));
 
-      foreach ($allowed_ips as $allowedip) {
-        if ($allowedip["ip"]) {
-          if (substr_count($ip, trim($allowedip["ip"])) != "0") {
-            $allowed = true;
-          }
-        }
-      }
-      if ($allowed != true) {
+      if ($this->wildcardMatch($ip, $allowed_ips) != true) {
         // The banned display page
         header('HTTP/1.1 401 Unauthorized');
         include_once realpath(dirname(__FILE__).'/../..'). '/admin/views/forbidden.php';
       }
     }
+  }
+
+  /**
+   * Search arrays with wildcards
+   * This function is now available on Windows platforms (PHP v5.3.0 +)
+   * @param $needle
+   * @param $haystack
+   *
+   * @return bool
+   */
+  function wildcardMatch($needle, $haystack) {
+    foreach ($haystack as $value) {
+      if (fnmatch($value, $needle) === true) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -612,7 +632,7 @@ class App {
    * @return mixed
    */
   public static function parseImages($dict) {
-    $replacement = '<a class="thumbnail"><img src="/${0}" style="max-width: 75px;" /></a>
+    $replacement = '<a class="thumbnail"><img src="/${0}" style="max-width: 75px; height: auto !important;" /></a>
                     <div class="modal fade hide">
                       <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">×</button>
@@ -771,6 +791,13 @@ class App {
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
           $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
+        } elseif ($field['type'] == 'separator') { // Separator field
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['text']       = $field['text'];
+
         } else { // Own fields
         
           $form[$key] = array();
@@ -857,9 +884,12 @@ class App {
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
+      // Alias the parent table to do sub-queries in condition
+      // Alias = first letter of table/model e.g. SELECT * user AS u...
+      $alias = ' AS ' . substr($model, 0, 1);
       // Build condition into query if exists
       $condition = ($where) ? ' WHERE '. $where : null;
-      $rows = R::getAll( 'SELECT * FROM ' . $model . $condition );
+      $rows = R::getAll( 'SELECT * FROM ' . $model . $alias . $condition );
       $i = 0;
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
@@ -992,6 +1022,13 @@ class App {
           $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
           $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
+        } elseif ($field['type'] == 'separator') { // Separator field
+
+          $form[$key] = array();
+          $form[$key]['type']       = $field['type'];
+          $form[$key]['label']      = $field['label'];
+          $form[$key]['text']       = $field['text'];
+
         } else { // Own fields
         
           $form[$key] = array();
@@ -1080,7 +1117,7 @@ class App {
 
         if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
           if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select'&&
-              $field['type'] != 'radio' && $field['type'] != 'textarea') {
+              $field['type'] != 'radio' && $field['type'] != 'textarea' && $field['type'] != 'separator') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
@@ -1134,7 +1171,7 @@ class App {
             $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-						$array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+						      $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $array[$i][$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
@@ -1150,14 +1187,21 @@ class App {
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['rich_editor']= true;
             if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
-              $form[$key]['rich_editor'] = true;
+              $array[$i][$key]['rich_editor'] = true;
             } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
-              $form[$key]['rich_editor'] = false;
+              $array[$i][$key]['rich_editor'] = false;
             }
-            $array[$i][$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $array[$i][$key]['value']      = (isset($data[$i][$key])) ? $data[$i][$key] : null;
             $array[$i][$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'separator') { // Separator field
+
+            $array[$i][$key] = array();
+            $array[$i][$key]['type']       = $field['type'];
+            $array[$i][$key]['label']      = $field['label'];
+            $array[$i][$key]['text']       = $field['text'];
 
           } elseif ($field['relation'] == 'shared') { // Build into own, shared selection...
             $key = $field['relation'].ucfirst($field['model']);
@@ -1211,9 +1255,12 @@ class App {
 
     $tables = R::$writer->getTables();
     if (in_array($model, $tables)) {
+      // Alias the parent table to do sub-queries in condition
+      // Alias = first letter of table/model e.g. SELECT * user AS u...
+      $alias = ' AS ' . substr($model, 0, 1);
       // Build condition into query if exists
       $condition = ($where) ? ' WHERE '. $where : null;
-      $rows = R::getAll( 'SELECT * FROM ' . $model .$condition );
+      $rows = R::getAll( 'SELECT * FROM ' . $model . $alias . $condition );
       $i = 0;
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
@@ -1280,6 +1327,13 @@ class App {
     return $dict;
   }
 
+  /**
+   * Saves ordering on save
+   * @static
+   *
+   * @param $module
+   * @param $order
+   */
   public static function saveOrdering($module, $order) {
     // Total records. Adds 1 if in "add" save view to account for the item being added
     $total = R::getCell('SELECT COUNT(*) FROM ' . $module);
@@ -1296,6 +1350,13 @@ class App {
     }
   }
 
+  /**
+   * Updates ordering on update
+   * @static
+   *
+   * @param $module
+   * @param $new_ordering
+   */
   public static function updateOrdering($module, $new_ordering) {
     // Total records
     $total = R::getCell('SELECT COUNT(*) FROM ' . $module);
@@ -1329,6 +1390,11 @@ class App {
     }
   }
 
+  /**
+   * Updates the module data view table ordering on drag/drop
+   * @static
+   *
+   */
   public static function dragdropOrdering() {
     $module = $_POST['module'];
     $ordering_array = $_POST['dragdropordering'];
@@ -1467,7 +1533,7 @@ class App {
     }
 
     try {
-      $data = R::graph($_POST[$module]);
+      $data = R::graph($_POST[$module], true);
       if ($shared) {
         foreach ($shared as $model => $items) {
           foreach ($items as $id) {
@@ -1938,6 +2004,16 @@ class App {
     }
   }
 
+  /**
+   * Function for creating dynamic selecttitles for o2m and m2m relationships in forms
+   * @static
+   *
+   * @param        $str
+   * @param        $vars
+   * @param string $char
+   *
+   * @return mixed
+   */
   public static function createSprintf($str, $vars, $char = '%') {
     $tmp = array();
     foreach($vars as $k => $v) {
@@ -1947,6 +2023,17 @@ class App {
     return str_replace(array_keys($tmp), array_values($tmp), $str);
   }
 
+  /**
+   * TwigMailer using SwiftMailer - to template html/text emails with Twig!
+   * @static
+   *
+   * @param $to_email
+   * @param $to_name
+   * @param $from_email
+   * @param $from_name
+   * @param $identifier
+   * @param $parameters
+   */
   public static function twigEmail($to_email, $to_name, $from_email, $from_name, $identifier, $parameters) {
     global $twig;
     require_once LOCAL_PATH. 'includes/swiftmailer/swift_required.php';

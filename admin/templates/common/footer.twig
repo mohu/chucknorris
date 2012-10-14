@@ -2,6 +2,23 @@
 
       <hr>
 
+      {% if debugger %}
+      <div class="accordion" id="debug">
+        <div class="accordion-group">
+          <div class="accordion-heading debug">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#debug" href="#debugpane">
+              <i class="icon-wrench"></i> Debugger
+            </a>
+          </div>
+          <div id="debugpane" class="accordion-body collapse">
+            <div class="accordion-inner">
+              <pre>{{ dump()|raw }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <footer>
         <p class="pull-right"><a href="#top"><i class="icon-arrow-up"></i></a></p>
         <p>&copy; {{ cms.name }} {{ "now"|date("Y") }} | <a href="#" class="credits">Credits</a></p>
@@ -21,9 +38,9 @@
             </tr>
             </thead>
             <tbody>
-              {% for dependancy, version in cms.dependancies %}
+              {% for dependency, version in cms.dependencies %}
               <tr>
-                <td><i class="icon-star"></i> {{ dependancy }}</td>
+                <td><i class="icon-star"></i> {{ dependency }}</td>
                 <td>v{{ version }}</td>
               </tr>
               {% endfor %}
@@ -34,8 +51,5 @@
 
     </div><!--/.fluid-container-->
 
-    <!-- JavaScript at the bottom for fast page loading -->
-    <script src="/admin/js/bootstrap.js"></script>
-
-  </body>
+      </body>
 </html>

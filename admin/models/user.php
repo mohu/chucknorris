@@ -2,19 +2,24 @@
 class Model_User extends RedBean_SimpleModel {
 
   function fields() {
+    global $dict;
+    $usergroup = $dict['session']['grp'];
     // Add fields here
     $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true);
-    $fields['name']       = array('type'=>'text', 'label'=>'first name', 'help'=>'', 'required'=>true);
-    $fields['position']   = array('type'=>'text', 'label'=>'position', 'help'=>'');
-    $fields['email']      = array('type'=>'text', 'label'=>'email', 'help'=>'', 'required'=>true);
+    $fields['name']       = array('type'=>'text', 'label'=>'name', 'help'=>'', 'required'=>true);
+    $fields['email']      = array('type'=>'text', 'label'=>'email', 'help'=>'', 'required'=>true, 'validate'=>'email');
+    $fields['phone']      = array('type'=>'text', 'label'=>'phone', 'help'=>'');
     $fields['password']   = array('type'=>'text', 'label'=>'password', 'help'=>'', 'table_hide'=>true, 'required'=>true);
     $fields['salt']       = array('type'=>'text', 'label'=>'salt', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
-    $fields['image']      = array('type'=>'file', 'label'=>'image', 'path'=>'img', 'help'=>'Profile image 200 x 200 px', 'table_hide'=>false);
-    $fields['twitter']    = array('type'=>'text', 'label'=>'Twitter account', 'help'=>'Enter the user\'s Twitter <strong>user name</strong> (without the @ symbol)', 'table_hide'=>true);
-    $fields['facebook']   = array('type'=>'text', 'label'=>'Facebook account', 'help'=>'Enter the user\'s Facebook <strong>Public Profile URL</strong> (including http://)', 'table_hide'=>true);
-    $fields['linkedin']   = array('type'=>'text', 'label'=>'Linkedin account', 'help'=>'Enter the user\'s Linkedin <strong>Public Profile URL</strong> (including http://)', 'table_hide'=>true);
 
-    $fields['group']   = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'usergroup', 'one'=>true, 'selecttitle'=>'%title% (%area%)', 'label'=>'group', 'help'=>'');
+    $fields['separator2'] = array('type'=>'separator');
+
+    $fields['oauth_uid']  = array('type'=>'text', 'label'=>'facebook', 'prepend'=>'OAuth uid', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
+    $fields['oauth_provider']  = array('type'=>'text', 'label'=>'facebook', 'prepend'=>'OAuth provider', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
+    $fields['twitter_oauth_token']  = array('type'=>'text', 'label'=>'twitter', 'prepend'=>'OAuth token', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
+    $fields['twitter_oauth_token_secret']  = array('type'=>'text', 'label'=>'twitter', 'prepend'=>'OAuth token secret', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
+
+		  $fields['group']   = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'usergroup', 'one'=>true, 'selecttitle'=>'%title% (%area%)', 'label'=>'group', 'help'=>'', 'required'=>true);
 
     // Settings
     $fields['add']        = true;
@@ -56,7 +61,25 @@ class Model_User extends RedBean_SimpleModel {
     return App::trash($id, $module);
   }
 
+  function update() {
+    if ($this->id == 0) {
+      // Get site details
+      $fromemail = R::getCell("SELECT contact FROM settings");
+      $fromname  = R::getCell("SELECT sitename FROM settings");
+
+      // PHP mail - notifies user when added
+      App::twigEmail($this->email, $this->name, $fromemail, $fromname, 'user-added', array(
+        'name'        => $this->name,
+        'username'    => $this->username,
+        'email'       => $this->email,
+        'url'         => "http://" . $_SERVER['HTTP_HOST'],
+        'password'    => $this->password,
+      ));
+    }
+  }
+
   function after_update() {
+
     if (!$this->salt) {
       // Create unique salt if none exists
       $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);

@@ -1,0 +1,22 @@
+{% block subject %}
+You have been added as a user
+{% endblock %}
+
+{% block bodyhtml %}
+Hello, {{ name }}<br />
+You have been added as a user<br />
+{{ url }}<br /><br />
+Username: {{ username }}<br />
+Email: {{ email }}<br />
+Password: {{ password }}<br />
+{% endblock %}
+
+{% block bodytext %}
+Hello, {{ name }}
+You have been added as a user
+{{ url }}
+
+Username: {{ username }}
+Email: {{ email }}
+Password: {{ password }}
+{% endblock %}

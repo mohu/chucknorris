@@ -8,10 +8,12 @@ class Model_Settings extends RedBean_SimpleModel {
     
     $fields['sitename']   = array('type'=>'text', 'label'=>'Site name', 'help'=>'');
     $fields['analytics']  = array('type'=>'text', 'label'=>'Google analytics ID', 'help'=>'Enter your Google analytics tracking code in the format of <strong>UA-XXXXX-X</strong>');
+    $fields['debug']      = array('type'=>'radio', 'label'=>'Enable debugger', 'help'=>'', 'values'=>array('on'=>1, 'off'=>0));
 
     $fields['twitter']    = array('type'=>'text', 'label'=>'Twitter username', 'help'=>'');
     $fields['facebook']   = array('type'=>'text', 'label'=>'Facebook URL', 'help'=>'');
     $fields['linkedin']   = array('type'=>'text', 'label'=>'Linkedin URL', 'help'=>'');
+    $fields['pinterest']  = array('type'=>'text', 'label'=>'Pinterest URL', 'help'=>'');
 
     $fields['contact']    = array('type'=>'text', 'label'=>'Contact us email', 'help'=>'');
     

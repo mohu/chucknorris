@@ -8,7 +8,14 @@ if (!$app->checkSession()) {
     $username = isset($_POST['username']) ? $_POST['username'] : null;
     $pass     = isset($_POST['password']) ? $_POST['password'] : null;
 
-    $userquery = R::getRow( 'SELECT * FROM user WHERE username = "' . $username . '" AND SHA1(CONCAT("'. $pass .'",`salt`)) = `password` AND `group` = "superadmin"' );
+		// Default usergroups
+		// 1 = Super administrator
+		// 2 = Admin
+		// 3 = Sales
+		$userquery = R::getRow('SELECT u.*, ug.usergroup_id AS `group` FROM user u
+														INNER JOIN user_usergroup ug ON u.id = ug.user_id AND ug.usergroup_id IN (1, 2 ,3)
+														WHERE u.username = ? AND SHA1(CONCAT(?,u.salt)) = u.password
+														LIMIT 1', array($username, $pass) );
 
     if ($userquery) {
 

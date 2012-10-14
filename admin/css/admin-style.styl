@@ -1,0 +1,182 @@
+@import "utils"
+
+body
+  padding-top 60px
+  padding-bottom 40px
+
+.sidebar-nav
+  padding 9px 0
+
+.cpanel-icon
+  float left
+  margin 16px 10px 0 0
+  opacity(0.80)
+
+.padded
+  padding 8px 19px
+
+.accordion-heading
+  background-color #eeeeee
+  &.debug
+    background-color #D9EDF7
+
+.accordion-heading i
+  margin 1px 0 0 0
+  opacity(0.80)
+
+.nav-list > li > a
+  padding-left 5px
+
+.navbar i
+  opacity(0.50)
+
+.navbar a:hover i
+  opacity(1.0)
+
+// ------------------------ //
+// --- Module date page --- //
+// ------------------------ //
+
+td:not(.actions)
+  .filterMatches
+    background-color #3A87AD
+    color #ffffff
+    font-weight bold
+    border-radius(3px)
+    font-size 11.844px
+    line-height 14px
+    text-shadow 0 -1px 0 rgba(0, 0, 0, 0.25)
+    white-space nowrap
+    vertical-align baseline
+
+tr:hover
+  cursor: pointer
+
+td[data-ordering]
+  cursor: move
+
+div.dataTables_filter input
+  display: inline
+  width: 142px
+
+div.dataTables_filter
+  float: right
+
+table.dataTable thead th.sort
+  position: relative
+  padding-right: 16px
+  cursor: pointer
+
+table.dataTable thead th.sort .sort
+  position: absolute
+  right: 4px
+  top: 50%
+  height: 10px
+  margin-top: -5px
+  opacity(0.20)
+  -webkit-transition: opacity 0.25s ease-in
+  -moz-transition: opacity 0.25s ease-in
+  -o-transition: opacity 0.25s ease-in
+  transition: opacity 0.25s ease-in
+
+table.dataTable thead th.sort .sort .sort-up, table.dataTable thead th.sort .sort .sort-down
+  display: block
+  width: 0
+  height: 0
+  vertical-align: top
+  border-left: 4px solid transparent
+  border-right: 4px solid transparent
+  content: ""
+
+table.dataTable thead th.sort .sort .sort-up
+  border-bottom: 4px solid #000
+  margin-bottom: 2px
+
+table.dataTable thead th.sort .sort .sort-down
+  border-top: 4px solid #000
+  margin-top: 2px
+
+table.dataTable thead th.sort.sort-none
+  cursor: default
+
+table.dataTable thead th.sort.sort-none .sort
+  display: none
+
+table.dataTable thead th.sort.sort-up .sort, table.dataTable thead th.sort.sort-down .sort
+  opacity(0.60)
+
+table.dataTable thead th.sort.sort-up .sort-down
+  visibility: hidden
+
+table.dataTable thead th.sort.sort-down .sort-up
+  visibility: hidden
+
+table.dataTable thead th.sort:hover .sort
+  opacity(1.0)
+
+table td.dataTables_empty
+  text-align: center
+
+.actions.both
+  width: 125px
+
+.actions.delete
+  width: 65px
+
+.actions.edit
+  width: 48px
+
+tr.placeholder
+  border-collapse: collapse
+
+.placeholder td
+  background-color: #D9EDF7
+  border-top: 1px solid #DDDDDD
+  border-right: 0px
+  border-bottom: 0px
+  border-left: 0px
+
+.placeholder td:first-child
+  border-left: 1px solid #DDDDDD
+
+i.move
+  opacity(0.2)
+  margin-top: 2px
+
+td[data-ordering]:hover i.move
+  opacity(0.8)
+  -webkit-transition: opacity 0.25s ease-in
+  -moz-transition: opacity 0.25s ease-in
+  -o-transition: opacity 0.25s ease-in
+  transition: opacity 0.25s ease-in
+
+// ---------------------------- //
+// --- Module add/edit page --- //
+// ---------------------------- //
+.input-append
+  display block !important
+
+.actions
+  margin-right 20px
+
+span[rel="tooltip"]
+  border-bottom 1px dashed #cccccc
+
+.label-info.showmodal2
+  cursor pointer
+
+.fk.well
+  padding-left 0px
+
+.color
+  i
+    margin-top 2px
+
+.actions
+  .btn-link
+    i
+      opacity(0.5)
+      margin-top -2px
+
+i.help
+  opacity(0.5)

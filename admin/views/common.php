@@ -8,6 +8,7 @@ $action = (isset($_GET['action'])) ? $_GET['action'] : null;
 if ($action == 'add') {
 
   $dict['fields']   = $model->add();
+  $dict['groups']   = App::getGroups();
   App::renderTwig('module-add.twig', $dict);
  
 /**
@@ -18,6 +19,7 @@ if ($action == 'add') {
   $dict['fields']       = $model->edit($id);
   $dict['o2mstructure'] = App::buildEditformownfields($model->fields());
   $dict['settings']     = $model->settings();
+  $dict['groups']       = App::getGroups();
   App::renderTwig('module-edit.twig', $dict);
 
 /**

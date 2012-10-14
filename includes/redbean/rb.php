@@ -496,7 +496,6 @@ interface RedBean_Driver {
  */
 class RedBean_Driver_PDO implements RedBean_Driver {
 
-
 	/**
 	 * Contains database DSN for connecting to database.
 	 * @var string
@@ -510,8 +509,8 @@ class RedBean_Driver_PDO implements RedBean_Driver {
 	protected $debug = false;
 
 	/**
-	 * Holds an instance of ILogger implementation.
-	 * @var RedBean_ILogger
+	 * Holds an instance of Logger implementation.
+	 * @var RedBean_Logger
 	 */
 	protected $logger = NULL;
 
@@ -566,9 +565,9 @@ class RedBean_Driver_PDO implements RedBean_Driver {
 	 *    $driver = new RedBean_Driver_PDO($dsn, $user, $password);
 	 *    $driver = new RedBean_Driver_PDO($existingConnection);
 	 *
-	 * @param string|PDO  $dsn	 database connection string
-	 * @param string      $user optional
-	 * @param string      $pass optional
+	 * @param string|PDO  $dsn	database connection string
+	 * @param string      $user optional, usename to sign in 
+	 * @param string      $pass optional, password for connection login
 	 *
 	 * @return void
 	 */
@@ -692,8 +691,10 @@ class RedBean_Driver_PDO implements RedBean_Driver {
 		}catch(PDOException $e) {
 			//Unfortunately the code field is supposed to be int by default (php)
 			//So we need a property to convey the SQL State code.
-			$x = new RedBean_Exception_SQL( $e->getMessage(), 0);
-			$x->setSQLState( $e->getCode() );
+			$err = $e->getMessage();
+			if ($this->debug && $this->logger) $this->logger->log('An error occurred: '.$err);
+            $x = new RedBean_Exception_SQL( $err, 0);
+      		$x->setSQLState( $e->getCode() );
 			throw $x;
 		}
 	}
@@ -820,35 +821,35 @@ class RedBean_Driver_PDO implements RedBean_Driver {
 	 * passes on to the screen for inspection.
 	 * This method has no return value.
 	 *
-	 * Additionally you can inject RedBean_ILogger implementation
+	 * Additionally you can inject RedBean_Logger implementation
 	 * where you can define your own log() method
 	 *
 	 * @param boolean $trueFalse turn on/off
-	 * @param RedBean_ILogger $logger 
+	 * @param RedBean_Logger $logger 
 	 *
 	 * @return void
 	 */
 	public function setDebugMode( $tf, $logger = NULL ) {
 		$this->connect();
 		$this->debug = (bool)$tf;
-		if ($this->debug and !$logger) $logger = new RedBean_Logger();
+		if ($this->debug and !$logger) $logger = new RedBean_Logger_Default();
 		$this->setLogger($logger);
 	}
 
 
 	/**
-	 * Injects RedBean_ILogger object.
+	 * Injects RedBean_Logger object.
 	 *
-	 * @param RedBean_ILogger $logger
+	 * @param RedBean_Logger $logger
 	 */
-	public function setLogger( RedBean_ILogger $logger ) {
+	public function setLogger( RedBean_Logger $logger ) {
 		$this->logger = $logger;
 	}
 
 	/**
-	 * Gets RedBean_ILogger object.
+	 * Gets RedBean_Logger object.
 	 *
-	 * @return RedBean_ILogger
+	 * @return RedBean_Logger
 	 */
 	public function getLogger() {
 		return $this->logger;
@@ -971,6 +972,17 @@ class RedBean_Driver_PDO implements RedBean_Driver {
  */
 class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 
+	
+	/**
+	 * By default own-lists and shared-lists no longer have IDs as keys (3.3+),
+	 * this is because exportAll also does not offer this feature and we want the
+	 * ORM to be more consistent. Also, exporting without keys makes it easier to
+	 * export lists to Javascript because unlike in PHP in JS arrays will fill up gaps.
+	 * 
+	 * @var boolean  
+	 */
+	private static $flagKeyedExport = false;
+	
     /**
      * Reference to NULL property for magic getter.
      * @var Null $null
@@ -1005,7 +1017,34 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 	 * @var null
 	 */
 	private $fetchType = NULL;
+	
+	/**
+	 * Used store store SQL snippet for use with with()
+	 * method.
+	 * 
+	 * @var string 
+	 */
+	private $withSql = '';
+	
+	/**
+	 * Alias name for a type.
+	 * 
+	 * @var string 
+	 */
+	private $aliasName = NULL;
 
+	/**
+	 * By default own-lists and shared-lists no longer have IDs as keys (3.3+),
+	 * this is because exportAll also does not offer this feature and we want the
+	 * ORM to be more consistent. Also, exporting without keys makes it easier to
+	 * export lists to Javascript because unlike in PHP in JS arrays will fill up gaps.
+	 * 
+	 * @var boolean $yesNo 
+	 */
+	public static function setFlagKeyedExport($flag) {
+		self::$flagKeyedExport = (boolean) $flag;
+	}
+	
 	/** Returns the alias for a type
 	 *
 	 * @param  $type aliased type
@@ -1030,7 +1069,7 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 	 * @param RedBean_IBeanHelper $helper
 	 * @return void
 	 */
-	public function setBeanHelper(RedBean_IBeanHelper $helper) {
+	public function setBeanHelper(RedBean_BeanHelper $helper) {
 		$this->beanHelper = $helper;
 	}
 
@@ -1078,6 +1117,23 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 		}
 		return $this;
 	}
+	
+	/**
+	 * Injects the properties of another bean but keeps the original ID.
+	 * Just like import() but keeps the original ID.
+	 * Chainable.
+	 * 
+	 * @param RedBean_OODBBean $otherBean the bean whose properties you would like to copy
+	 * 
+	 * @return RedBean_OODBBean $self
+	 */
+	public function inject(RedBean_OODBBean $otherBean) {
+		$myID = $this->id;
+		$array = $otherBean->export();
+		$this->import($array);
+		$this->id = $myID;
+		return $this;
+	}
 
 	/**
 	 * Very superficial export function
@@ -1096,11 +1152,35 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 	 * @param boolean $meta
 	 * @return array $arr
 	 */
-	public function export($meta = false) {
-		//$arr = $this->properties;
+	public function export($meta = false, $parents = false, $onlyMe = false, $filters = array()) {
 		$arr=array();
+		if ($parents) {
+			foreach($this as $k=>$v) {
+				if (substr($k,-3)=='_id') {
+					$prop = substr($k,0,strlen($k)-3);
+					$this->$prop;
+				}
+			}
+		}
 		foreach($this as $k=>$v) {
-			if (is_array($v)) foreach($v as $i=>$b) $v[$i]=$b->export(); 
+			if (!$onlyMe && is_array($v)) {
+				$vn = array();
+				foreach($v as $i=>$b) {
+					if (is_numeric($i) && !self::$flagKeyedExport) {
+						$vn[]=$b->export($meta,false,false,$filters);
+					}
+					else {
+						$vn[$i]=$b->export($meta,false,false,$filters);
+					}
+					$v = $vn;
+				}
+			}
+			elseif ($v instanceof RedBean_OODBBean) {
+				if (count($filters) && !in_array(strtolower($v->getMeta('type')),$filters)) {
+					continue;
+				}
+				$v = $v->export($meta,$parents,false,$filters);
+			}
 			$arr[$k] = $v;
 		}
 		if ($meta) $arr['__info'] = $this->__info;
@@ -1175,7 +1255,75 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 		unset($this->properties[$property]);
 	}
 
-
+	/**
+	 * Adds WHERE clause conditions to ownList retrieval.
+	 * For instance to get the pages that belong to a book you would
+	 * issue the following command: $book->ownPage
+	 * However, to order these pages by number use:
+	 * 
+	 * $book->with(' ORDER BY `number` ASC ')->ownPage
+	 * 
+	 * the additional SQL snippet will be merged into the final
+	 * query.
+	 * 
+	 * @param string $sql SQL to be added to retrieval query.
+	 * 
+	 * @return RedBean_OODBBean $self
+	 */
+	public function with($sql) {
+		$this->withSql = $sql;
+		return $this;
+	}
+	
+	/**
+	 * Just like with(). Except that this method prepends the SQL query snippet 
+	 * with AND which makes it slightly more comfortable to use a conditional
+	 * SQL snippet. For instance to filter an own-list with pages (belonging to
+	 * a book) on specific chapters you can use:
+	 * 
+	 * $book->withCondition(' chapter = 3 ')->ownPage
+	 * 
+	 * This will return in the own list only the pages having 'chapter == 3'. 
+	 * 
+	 * @param string $sql SQL to be added to retrieval query (prefixed by AND)
+	 * 
+	 * @return RedBean_OODBBean $self
+	 */
+	public function withCondition($sql) {
+		$this->withSql = ' AND '.$sql;
+		return $this;
+	}
+	
+	/**
+	 * Prepares an own-list to use an alias. This is best explained using
+	 * an example. Imagine a project and a person. The project always involves
+	 * two persons: a teacher and a student. The person beans have been aliased in this
+	 * case, so to the project has a teacher_id pointing to a person, and a student_id
+	 * also pointing to a person. Given a project, we obtain the teacher like this:
+	 * 
+	 * $project->fetchAs('person')->teacher;
+	 * 
+	 * Now, if we want all projects of a teacher we cant say:
+	 * 
+	 * $teacher->ownProject
+	 * 
+	 * because the $teacher is a bean of type 'person' and no project has been
+	 * assigned to a person. Instead we use the alias() method like this:
+	 * 
+	 * $teacher->alias('teacher')->ownProject
+	 * 
+	 * now we get the projects associated with the person bean aliased as
+	 * a teacher.
+	 * 
+	 * @param string $aliasName the alias name to use
+	 * 
+	 * @return RedBean_OODBBean 
+	 */
+	public function alias($aliasName) {
+		$this->aliasName = $aliasName;
+		return $this;
+	}	
+	
 	/**
 	 * Magic Getter. Gets the value for a specific property in the bean.
 	 * If the property does not exist this getter will make sure no error
@@ -1188,6 +1336,11 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 	public function &__get( $property ) {
 		if ($this->beanHelper)
 		$toolbox = $this->beanHelper->getToolbox();
+		if ($this->withSql!=='') {
+			if (strpos($property,'own')===0) {
+				unset($this->properties[$property]);
+			}
+		}
 		if (!isset($this->properties[$property])) { 
 			$fieldLink = $property.'_id'; 
 			/**
@@ -1209,8 +1362,16 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 				$firstCharCode = ord(substr($property,3,1));
 				if ($firstCharCode>=65 && $firstCharCode<=90) {
 					$type = (__lcfirst(str_replace('own','',$property)));
-					$myFieldLink = $this->getMeta('type').'_id';
-					$beans = $toolbox->getRedBean()->find($type,array(),array(" $myFieldLink = ? ",array($this->getID())));
+					if ($this->aliasName) {
+						$myFieldLink = $this->aliasName.'_id';
+						$this->setMeta('sys.alias.'.$type,$this->aliasName);
+						$this->aliasName = null;
+					}
+					else {
+						$myFieldLink =  $this->getMeta('type').'_id';
+					}
+					$beans = $toolbox->getRedBean()->find($type,array(),array(" $myFieldLink = ? ".$this->withSql,array($this->getID())));
+					$this->withSql = '';
 					$this->properties[$property] = $beans;
 					$this->setMeta('sys.shadow.'.$property,$beans);
 					$this->setMeta('tainted',true);
@@ -1260,12 +1421,26 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 		if ($value===false) {
 			$value = '0';
 		}
-		if ($value===true) {
+		elseif ($value===true) {
 			$value = '1';
+		}
+		elseif ($value instanceof DateTime) {
+			$value = $value->format('Y-m-d H:i:s');
 		}
 		$this->properties[$property] = $value;
 	}
 
+	/**
+	 * Sets a property directly, for internal use only.
+	 * 
+	 * @param string $property property
+	 * @param mixed  $value    value
+	 */
+	public function setProperty($property,$value) {
+		$this->properties[$property] = $value;
+	}
+	
+	
 	/**
 	 * Returns the value of a meta property. A meta property
 	 * contains extra information about the bean object that will not
@@ -1434,6 +1609,37 @@ class RedBean_OODBBean implements IteratorAggregate, ArrayAccess, Countable {
 			}	
 		}
 		return $empty;
+	}
+	
+	
+	/**
+	 * Chainable setter.
+	 * 
+	 * @param string $property the property of the bean
+	 * @param mixed  $value    the value you want to set 
+	 * 
+	 * @return RedBean_OODBBean the bean 
+	 */
+	public function setAttr($property,$value) {
+		$this->properties[$property] = $value;
+		return $this;
+	}
+	
+	/**
+	 * Comfort method.
+	 * Unsets all properties in array.
+	 * 
+	 * @param array $properties properties you want to unset.
+	 * 
+	 * @return RedBean_OODBBean 
+	 */
+	public function unsetAll($properties) {
+		foreach($properties as $prop) {
+			if (isset($this->properties[$prop])) {
+				unset($this->properties[$prop]);
+			}
+		}
+		return $this;
 	}
 }
 
@@ -1735,6 +1941,8 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Returns the latest SQL Statement.
+	 * This method returns the most recently executed SQL statement string.
+	 * This can be used for building logging features.
 	 *
 	 * @return string $SQL latest SQL statement
 	 */
@@ -1744,6 +1952,8 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Escapes a string for use in a Query.
+	 * This method escapes the value argument using the native
+	 * driver escaping functions.
 	 *
 	 * @param  string $sqlvalue SQL value to escape
 	 *
@@ -1911,6 +2121,8 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Returns latest insert id, most recently inserted id.
+	 * Following an insert-SQL statement this method will return the most recently
+	 * primary key ID of an inserted record.
 	 *
 	 * @return integer $id latest insert ID
 	 */
@@ -1920,6 +2132,8 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Returns number of affected rows.
+	 * Returns the number of rows that have been affected by the most recent
+	 * SQL query.
 	 *
 	 * @return integer $numOfAffectRows
 	 */
@@ -1929,6 +2143,8 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Unwrap the original database object.
+	 * Returns the database driver instance. For instance this can be
+	 * an OCI object or a PDO instance or some other third party driver.
 	 *
 	 * @return RedBean_Driver $database	returns the inner database object
 	 */
@@ -1938,8 +2154,10 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Transactions.
-	 * Part of the transaction management infrastructure of RedBean.
+	 * Part of the transaction management infrastructure of RedBeanPHP.
 	 * Starts a transaction.
+	 * Note that transactions may not work in fluid mode depending on your 
+	 * database platform.
 	 */
 	public function startTransaction() {
 		return $this->db->StartTrans();
@@ -1947,8 +2165,10 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Transactions.
-	 * Part of the transaction management infrastructure of RedBean.
+	 * Part of the transaction management infrastructure of RedBeanPHP.
 	 * Commits a transaction.
+	 * Note that transactions may not work in fluid mode depending on your 
+	 * database platform.
 	 */
 	public function commit() {
 		return $this->db->CommitTrans();
@@ -1956,13 +2176,15 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 
 	/**
 	 * Transactions.
-	 * Part of the transaction management infrastructure of RedBean.
-	 * Rolls back transaction.
+	 * Part of the transaction management infrastructure of RedBeanPHP.
+	 * Rolls back transaction. This will undo all changes that have been
+	 * part of the transaction.
+	 * Note that transactions may not work in fluid mode depending on your 
+	 * database platform.
 	 */
 	public function rollback() {
 		return $this->db->FailTrans();
 	}
-	
 	
 	/**
 	 * Closes the database connection.
@@ -1970,7 +2192,6 @@ class RedBean_Adapter_DBAdapter extends RedBean_Observable implements RedBean_Ad
 	public function close() {
 		$this->db->close();
 	}
-
 }
 
 
@@ -2478,6 +2699,8 @@ abstract class RedBean_QueryWriter_AQueryWriter {
 	}
 
 
+	
+
 	/**
 	 * This selects a record. You provide a
 	 * collection of conditions using the following format:
@@ -2507,13 +2730,23 @@ abstract class RedBean_QueryWriter_AQueryWriter {
 			if (!count($values)) continue;
 			$sql = $this->safeColumn($column);
 			$sql .= ' '.($inverse ? ' NOT ':'').' IN ( ';
-			$sql .= implode(',',array_fill(0,count($values),'?')).') ';
-			$sqlConditions[] = $sql;
-			if (!is_array($values)) $values = array($values);
-			foreach($values as $k=>$v) {
-				$values[$k]=strval($v);
+			//If its safe to not use bindings please do... (fixes SQLite PDO issue limit 256 bindings)
+			if (count($conditions)===1 
+				&& isset($conditions['id']) 
+				&& is_array($values) 
+				&& preg_match('/^\d+$/',implode('',$values))) {
+				$sql .= implode(',',$values).') ';
+				$sqlConditions[] = $sql;
 			}
-			$bindings = array_merge($bindings,$values);
+			else {
+				$sql .= implode(',',array_fill(0,count($values),'?')).') ';
+				$sqlConditions[] = $sql;
+				if (!is_array($values)) $values = array($values);
+				foreach($values as $k=>$v) {
+					$values[$k]=strval($v);
+				}
+				$bindings = array_merge($bindings,$values);
+			}
 		}
 		//$addSql can be either just a string or array($sql, $bindings)
 		if (is_array($addSql)) {
@@ -2564,33 +2797,19 @@ abstract class RedBean_QueryWriter_AQueryWriter {
 	/**
 	 * Counts rows in a table.
 	 *
-	 * @param string $beanType
+	 * @param string $beanType type of bean to count
+	 * @param string $addSQL   additional SQL
+	 * @param array  $params   parameters to bind to SQL
 	 *
 	 * @return integer $numRowsFound
 	 */
-	public function count($beanType) {
+	public function count($beanType,$addSQL = '',$params = array()) {
 		$sql = "SELECT count(*) FROM {$this->safeTable($beanType)} ";
-		return (int) $this->adapter->getCell($sql);
+		if ($addSQL!='') $addSQL = ' WHERE '.$addSQL; 
+		return (int) $this->adapter->getCell($sql.$addSQL,$params);
 	}
 
-	/**
-	 * This method should add an index to a type and field with name
-	 * $name.
-	 * This methods accepts a type and infers the corresponding table name.
-	 *
-	 * @param  $type   type to add index to
-	 * @param  $name   name of the new index
-	 * @param  $column field to index
-	 *
-	 * @return void
-	 */
-	public function addIndex($type, $name, $column) {
-		$table = $type;
-		$table = $this->safeTable($table);
-		$name = preg_replace('/\W/','',$name);
-		$column = $this->safeColumn($column);
-		try{ $this->adapter->exec("CREATE INDEX $name ON $table ($column) "); }catch(Exception $e){}
-	}
+	
 
 	/**
 	 * This is a utility service method publicly available.
@@ -3096,6 +3315,28 @@ class RedBean_QueryWriter_MySQL extends RedBean_QueryWriter_AQueryWriter impleme
 	}
 
 	/**
+	 * This method should add an index to a type and field with name
+	 * $name.
+	 * This methods accepts a type and infers the corresponding table name.
+	 *
+	 * @param  $type   type to add index to
+	 * @param  $name   name of the new index
+	 * @param  $column field to index
+	 *
+	 * @return void
+	 */
+	public function addIndex($type, $name, $column) {
+		$table = $type;
+		$table = $this->safeTable($table);
+		$name = preg_replace('/\W/','',$name);
+		$column = $this->safeColumn($column);
+		foreach( $this->adapter->get("SHOW INDEX FROM $table ") as $ind) {
+			if ($ind['Key_name']===$name) return;
+		}
+		try{ $this->adapter->exec("CREATE INDEX $name ON $table ($column) "); }catch(Exception $e){}
+	}
+	
+	/**
 	 * Tests whether a given SQL state is in the list of states.
 	 *
 	 * @param string $state code
@@ -3334,20 +3575,81 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 		return $r;
 	}
 
+	
+	
+	
 	/**
-	 * Quote Items, to prevent issues with reserved words.
-	 *
-	 * @param array $items items to quote
-	 *
-	 * @return $quotedfItems quoted items
+	 * Gets all information about a table (from a type).
+	 * 
+	 * Format:
+	 * array(
+	 *		name => name of the table
+	 *		columns => array( name => datatype )
+	 *		indexes => array() raw index information rows from PRAGMA query
+	 *		keys => array() raw key information rows from PRAGMA query
+	 * )
+	 * 
+	 * @param string $type type you want to get info of
+	 * 
+	 * @return array $info 
 	 */
-	private function quote( $items ) {
-		foreach($items as $k=>$item) {
-			$items[$k]=$this->noKW($item);
-		}
-		return $items;
+	protected function getTable($type) {
+		$tableName = $this->safeTable($type,true);
+		$columns = $this->getColumns($type);
+		$indexes = $this->getIndexes($type);
+		$keys = $this->getKeys($type);
+		$table = array('columns'=>$columns,'indexes'=>$indexes,'keys'=>$keys,'name'=>$tableName);
+		$this->tableArchive[$tableName] = $table;
+		return $table;
 	}
-
+	
+	/**
+	 * Puts a table. Updates the table structure.
+	 * In SQLite we can't change columns, drop columns, change or add foreign keys so we
+	 * have a table-rebuild function. You simply load your table with getTable(), modify it and
+	 * then store it with putTable()...
+	 * 
+	 * @param array $tableMap information array 
+	 */
+	protected function putTable($tableMap) {
+		$table = $tableMap['name'];
+		$q = array();
+		$q[] = "DROP TABLE IF EXISTS tmp_backup;";
+		$oldColumnNames = array_keys($this->getColumns($table));
+		foreach($oldColumnNames as $k=>$v) $oldColumnNames[$k] = "`$v`";
+		$q[] = "CREATE TEMPORARY TABLE tmp_backup(".implode(",",$oldColumnNames).");";
+		$q[] = "INSERT INTO tmp_backup SELECT * FROM `$table`;";
+		$q[] = "PRAGMA foreign_keys = 0 ";
+		$q[] = "DROP TABLE `$table`;";
+		$newTableDefStr = '';
+		foreach($tableMap['columns'] as $column=>$type) {
+			if ($column != 'id') {
+				$newTableDefStr .= ",`$column` $type";
+			}
+		}
+		$fkDef = '';
+		foreach($tableMap['keys'] as $key) {
+			$fkDef .= ", FOREIGN KEY(`{$key['from']}`) 
+						 REFERENCES `{$key['table']}`(`{$key['to']}`) 
+						 ON DELETE {$key['on_delete']} ON UPDATE {$key['on_update']}";
+		}
+		$q[] = "CREATE TABLE `$table` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT  $newTableDefStr  $fkDef );";
+		foreach($tableMap['indexes'] as $name=>$index)  {
+			if (strpos($name,'UQ_')===0) {
+				if (strpos($name,'__')===false) continue; //old  index, forget.
+				$cols = explode('__',substr($name,strlen('UQ_'.$table)));
+				foreach($cols as $k=>$v) $cols[$k] = "`$v`";
+				$q[] = "CREATE UNIQUE INDEX $name ON `$table` (".implode(',',$cols).")";
+			}
+			else $q[] = "CREATE INDEX $name ON `$table` ({$index['name']}) ";
+		}
+		$q[] = "INSERT INTO `$table` SELECT * FROM tmp_backup;";
+		$q[] = "DROP TABLE tmp_backup;";
+		$q[] = "PRAGMA foreign_keys = 1 ";
+		foreach($q as $sq) $this->adapter->exec($sq);
+		
+	}
+	
 	/**
 	 * This method upgrades the column to the specified data type.
 	 * This methods accepts a type and infers the corresponding table name.
@@ -3359,33 +3661,9 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 	 * @return void
 	 */
 	public function widenColumn( $type, $column, $datatype ) {
-		$table = $this->safeTable($type,true);
-		$column = $this->safeColumn($column,true);
-		$newtype = $this->typeno_sqltype[$datatype];
-		$oldColumns = $this->getColumns($type);
-		$oldColumnNames = $this->quote(array_keys($oldColumns));
-		$newTableDefStr='';
-		foreach($oldColumns as $oldName=>$oldType) {
-			if ($oldName != 'id') {
-				if ($oldName!=$column) {
-					$newTableDefStr .= ",`$oldName` $oldType";
-				}
-				else {
-					$newTableDefStr .= ",`$oldName` $newtype";
-				}
-			}
-		}
-		$q = array();
-		$q[] = "DROP TABLE IF EXISTS tmp_backup;";
-		$q[] = "CREATE TEMPORARY TABLE tmp_backup(".implode(",",$oldColumnNames).");";
-		$q[] = "INSERT INTO tmp_backup SELECT * FROM `$table`;";
-		$q[] = "DROP TABLE `$table`;";
-		$q[] = "CREATE TABLE `$table` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT  $newTableDefStr  );";
-		$q[] = "INSERT INTO `$table` SELECT * FROM tmp_backup;";
-		$q[] = "DROP TABLE tmp_backup;";
-		foreach($q as $sq) {
-			$this->adapter->exec($sq);
-		}
+		$t = $this->getTable($type);
+		$t['columns'][$column] = $this->typeno_sqltype[$datatype];
+		$this->putTable($t);
 	}
 
 
@@ -3428,6 +3706,41 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 	}
 
 	/**
+	 * Returns the indexes for type $type.
+	 * 
+	 * @param string $type
+	 * 
+	 * @return array $indexInfo index information
+	 */
+	protected function getIndexes($type) {
+		$table = $this->safeTable($type, true);
+		$indexes = $this->adapter->get("PRAGMA index_list('$table')");
+		$indexInfoList = array();
+		foreach($indexes as $i) {
+			$indexInfoList[$i['name']] = $this->adapter->getRow("PRAGMA index_info('{$i['name']}') ");
+			$indexInfoList[$i['name']]['unique'] = $i['unique'];
+		}
+		return $indexInfoList;
+	}
+	
+	/**
+	 * Returns the keys for type $type.
+	 * 
+	 * @param string $type
+	 * 
+	 * @return array $keysInfo keys information
+	 */
+	protected function getKeys($type) {
+		$table = $this->safeTable($type,true);
+		$keys = $this->adapter->get("PRAGMA foreign_key_list('$table')");
+		$keyInfoList = array();
+		foreach($keys as $k) {
+			$keyInfoList['from_'.$k['from'].'_to_table_'.$k['table'].'_col_'.$k['to']] = $k;
+		}
+		return $keyInfoList;
+	}
+	
+	/**
 	 * Adds a Unique index constrain to the table.
 	 *
 	 * @param string $table   table
@@ -3436,11 +3749,14 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 	 *
 	 * @return void
 	 */
-	public function addUniqueIndex( $table,$columns ) {
-		$table = $this->safeTable($table);
-		$name = 'UQ_'.sha1(implode(',',$columns));
-		$sql = "CREATE UNIQUE INDEX IF NOT EXISTS $name ON $table (".implode(',',$columns).")";
-		$this->adapter->exec($sql);
+	public function addUniqueIndex( $type,$columns ) {
+		$table = $this->safeTable($type,true);
+		$name = 'UQ_'.$table.implode('__',$columns);
+		$t = $this->getTable($type);
+		if (isset($t['indexes'][$name])) return;
+		$t['indexes'][$name] = array('name'=>$name);
+		$this->putTable($t);
+		
 	}
 
 	/**
@@ -3462,6 +3778,31 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 		return in_array((isset($stateMap[$state]) ? $stateMap[$state] : '0'),$list);
 	}
 
+	/**
+	 * This method should add an index to a type and field with name
+	 * $name.
+	 * This methods accepts a type and infers the corresponding table name.
+	 *
+	 * @param  $type   type to add index to
+	 * @param  $name   name of the new index
+	 * @param  $column field to index
+	 *
+	 * @return void
+	 */
+	public function addIndex($type, $name, $column) {
+		$table = $type;
+		$table = $this->safeTable($table);
+		$name = preg_replace('/\W/','',$name);
+		$column = $this->safeColumn($column,true);
+		foreach( $this->adapter->get("PRAGMA INDEX_LIST($table) ") as $ind) {
+			if ($ind['name']===$name) return;
+		}
+		$t = $this->getTable($type);
+		$t['indexes'][$name] = array('name'=>$column);
+		return $this->putTable($t);
+	}
+	
+	
 	/**
 	 * Counts rows in a table.
 	 * Uses SQLite optimization for deleting all records (i.e. no WHERE)
@@ -3499,68 +3840,32 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 	 * @param  string $targetField field where the fk needs to point to
 	 * @param  integer $buildopt   0 = NO ACTION, 1 = ON DELETE CASCADE
 	 *
-	 * @return bool $success whether an FK has been added
+	 * @return boolean $didIt
+	 * 
+	 * @note: cant put this in try-catch because that can hide the fact
+	 * that database has been damaged. 
 	 */
 
 	protected function buildFK($type, $targetType, $field, $targetField,$constraint=false) {
-			try{
-				$consSQL = ($constraint ? 'CASCADE' : 'SET NULL');
-				$table = $this->safeTable($type,true);
-				$targetTable = $this->safeTable($targetType,true);
-				$field = $this->safeColumn($field,true);
-				$targetField = $this->safeColumn($targetField,true);
-				$oldColumns = $this->getColumns($type);
-				$oldColumnNames = $this->quote(array_keys($oldColumns));
-				$newTableDefStr='';
-				foreach($oldColumns as $oldName=>$oldType) {
-					if ($oldName != 'id') {
-						$newTableDefStr .= ",`$oldName` $oldType";
-					}
-				}
-				//retrieve old foreign keys
-				$sqlGetOldFKS = "PRAGMA foreign_key_list('$table'); ";
-				$oldFKs = $this->adapter->get($sqlGetOldFKS);
-				$restoreFKSQLSnippets = "";
-				foreach($oldFKs as $oldFKInfo) {
-					if ($oldFKInfo['from']==$field && $oldFKInfo['on_delete']==$consSQL) {
-						//this field already has a FK.
-						return false;
-					}
-					if ($oldFKInfo['from']==$field && $oldFKInfo['on_delete']!=$consSQL) {
-						//this field already has a FK.but needs to be replaced
-						continue;
-					}
-					$oldTable = $table;
-					$oldField = $oldFKInfo['from'];
-					$oldTargetTable = $oldFKInfo['table'];
-					$oldTargetField = $oldFKInfo['to'];
-					$restoreFKSQLSnippets .= ", FOREIGN KEY(`$oldField`) REFERENCES `$oldTargetTable`(`$oldTargetField`) ON DELETE ".$oldFKInfo['on_delete'];
-				}
-				$fkDef = $restoreFKSQLSnippets;
-				if ($constraint) {
-					$fkDef .= ", FOREIGN KEY(`$field`) REFERENCES `$targetTable`(`$targetField`) ON DELETE CASCADE ";
-				}
-				else {
-					$fkDef .= ", FOREIGN KEY(`$field`) REFERENCES `$targetTable`(`$targetField`) ON DELETE SET NULL ON UPDATE SET NULL";
-				}
-				$q = array();
-				$q[] = "DROP TABLE IF EXISTS tmp_backup;";
-				$q[] = "CREATE TEMPORARY TABLE tmp_backup(".implode(',',$oldColumnNames).");";
-				$q[] = "INSERT INTO tmp_backup SELECT * FROM `$table`;";
-				$q[] = "PRAGMA foreign_keys = 0 ";
-				$q[] = "DROP TABLE `$table`;";
-				$q[] = "CREATE TABLE `$table` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT  $newTableDefStr $fkDef );";
-				$q[] = "INSERT INTO `$table` SELECT * FROM tmp_backup;";
-				$q[] = "DROP TABLE tmp_backup;";
-				$q[] = "PRAGMA foreign_keys = 1 ";
-				foreach($q as $sq) {
-					$this->adapter->exec($sq);
-				}
-				
-				
-				return true;
-			}
-			catch(Exception $e){ return false; }
+		$consSQL = ($constraint ? 'CASCADE' : 'SET NULL');
+		$t = $this->getTable($type);
+		$label = 'from_'.$field.'_to_table_'.$targetType.'_col_'.$targetField;
+		if (isset($t['keys'][$label]) 
+				&& $t['keys'][$label]['table']===$targetType 
+				&& $t['keys'][$label]['from']===$field
+				&& $t['keys'][$label]['to']===$targetField
+				&& $t['keys'][$label]['on_delete']===$consSQL
+		) return false;
+		
+		$t['keys'][$label] = array(
+			'table' => $targetType,
+			'from' => $field,
+			'to' => $targetField,
+			'on_update' => 'SET NULL',
+			'on_delete' => $consSQL
+		);
+		$this->putTable($t);
+		return true;
 	}
 
 
@@ -3603,6 +3908,7 @@ class RedBean_QueryWriter_SQLiteT extends RedBean_QueryWriter_AQueryWriter imple
 		}
 		$this->adapter->exec('PRAGMA foreign_keys = 1 ');
 	}
+	
 
 }
 
@@ -3716,7 +4022,7 @@ class RedBean_QueryWriter_PostgreSQL extends RedBean_QueryWriter_AQueryWriter im
 	 *
 	 * @param RedBean_DBAdapter $adapter adapter
 	 */
-	public function __construct( RedBean_Adapter_DBAdapter $adapter ) {
+	public function __construct( RedBean_Adapter $adapter ) {
 		
 		
 		$this->typeno_sqltype = array(
@@ -3940,6 +4246,27 @@ class RedBean_QueryWriter_PostgreSQL extends RedBean_QueryWriter_AQueryWriter im
 		return in_array((isset($stateMap[$state]) ? $stateMap[$state] : '0'),$list);
 	}
 
+	
+	/**
+	 * This method should add an index to a type and field with name
+	 * $name.
+	 * This methods accepts a type and infers the corresponding table name.
+	 *
+	 * @param  $type   type to add index to
+	 * @param  $name   name of the new index
+	 * @param  $column field to index
+	 *
+	 * @return void
+	 */
+	public function addIndex($type, $name, $column) {
+		$table = $type;
+		$table = $this->safeTable($table);
+		$name = preg_replace('/\W/','',$name);
+		$column = $this->safeColumn($column);
+		if ($this->adapter->getCell("SELECT COUNT(*) FROM pg_class WHERE relname = '$name'")) return;
+		try{ $this->adapter->exec("CREATE INDEX $name ON $table ($column) "); }catch(Exception $e){}
+	}
+	
 	/**
 	 * Adds a foreign key to a table. The foreign key will not have any action; you
 	 * may configure this afterwards.
@@ -4087,6 +4414,23 @@ class RedBean_QueryWriter_PostgreSQL extends RedBean_QueryWriter_AQueryWriter im
 	 		catch(Exception $e){  throw $e; }
 		}
 		$this->adapter->exec('SET CONSTRAINTS ALL IMMEDIATE');
+	}
+	
+	
+	
+	/**
+	 * This method removes all beans of a certain type.
+	 * This methods accepts a type and infers the corresponding table name.
+	 *
+	 * @param  string $type bean type
+	 *
+	 * @return void
+	 */
+	public function wipe($type) {
+		$table = $type;
+		$table = $this->safeTable($table);
+		$sql = "TRUNCATE $table CASCADE";
+		$this->adapter->exec($sql);
 	}
 
 }
@@ -4318,7 +4662,7 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 		$value = strval($value);
 		if (!$this->startsWithZeros($value)) {
 
-			if (is_numeric($value) && (floor($value)==$value) && $value >= -2147483648  && $value <= 2147483648 ) {
+			if (is_numeric($value) && (floor($value)==$value) && $value >= -2147483647  && $value <= 2147483647 ) {
 				return self::C_DATATYPE_INTEGER;
 			}
 			if (is_numeric($value)) {
@@ -4431,19 +4775,12 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 	 * @return boolean $yesno occurs in list
 	 */
 	public function sqlStateIn($state, $list) {
-		/*$stateMap = array(
-			'HY000'=>RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_TABLE,
-			'42S22'=>RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_COLUMN,
-			'HY000'=>RedBean_QueryWriter::C_SQLSTATE_INTEGRITY_CONSTRAINT_VIOLATION
-		);*/
-		
 		if ($state=='HY000') {
 			if (in_array(RedBean_QueryWriter::C_SQLSTATE_INTEGRITY_CONSTRAINT_VIOLATION,$list)) return true;
 			if (in_array(RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_COLUMN,$list)) return true;
 			if (in_array(RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_TABLE,$list)) return true;
 		}
 		return false;
-		//return in_array((isset($stateMap[$state]) ? $stateMap[$state] : '0'),$list); 
 	}
 
 	
@@ -4491,6 +4828,26 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 		return ($firstState && $secondState);
 	}
 
+	/**
+	 * This method should add an index to a type and field with name
+	 * $name.
+	 * This methods accepts a type and infers the corresponding table name.
+	 *
+	 * @param  $type   type to add index to
+	 * @param  $name   name of the new index
+	 * @param  $column field to index
+	 *
+	 * @return void
+	 */
+	public function addIndex($type, $name, $column) {
+		$table = $type;
+		$table = $this->safeTable($table);
+		$name = preg_replace('/\W/','',$name);
+		$column = $this->safeColumn($column);
+		$index = $this->adapter->getRow("SELECT 1 as `exists` FROM db_index WHERE index_name = ? ",array($name));
+		if ($index && $index['exists']) return;   // positive number will return, 0 will continue.
+		try{ $this->adapter->exec("CREATE INDEX $name ON $table ($column) "); }catch(Exception $e){}
+	}
 	
 	/**
 	 * This method adds a foreign key from type and field to
@@ -4550,7 +4907,7 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 				if ((($isDep && $key['DELETE_RULE']==0) || (!$isDep && $key['DELETE_RULE']==3))) {
 					return false;
 				}
-				
+				break;
 			}
 		}
 		
@@ -4558,11 +4915,9 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 			$sql = "ALTER TABLE $table DROP FOREIGN KEY {$key['FK_NAME']} ";
 			$this->adapter->exec($sql);
 		}
-		
 		$casc = ($isDep ? 'CASCADE' : 'SET NULL');
 		$sql = "ALTER TABLE $table ADD CONSTRAINT FOREIGN KEY($column) REFERENCES $targetTable($targetColumn) ON DELETE $casc ";
 		$this->adapter->exec($sql);
-		
 	}	
 	
 	
@@ -4576,9 +4931,7 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
 			}
 			$this->adapter->exec("DROP TABLE \"$t\"");
 		}
-		foreach($this->getTables() as $t) {
-			$this->adapter->exec("DROP TABLE \"$t\"");
-		}
+		
 	}
 	
 	
@@ -4626,7 +4979,7 @@ class RedBean_QueryWriter_CUBRID extends RedBean_QueryWriter_AQueryWriter implem
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_Exception extends Exception {}
+class RedBean_Exception extends LogicException {}
 
 /**
  * RedBean Exception SQL
@@ -4642,7 +4995,7 @@ class RedBean_Exception extends Exception {}
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_Exception_SQL extends Exception {
+class RedBean_Exception_SQL extends RuntimeException {
 
 	/**
 	 * Holds the current SQL Strate code.
@@ -4722,39 +5075,49 @@ class RedBean_OODB extends RedBean_Observable {
 	 * are considered to be stable and don't need to be modified.
 	 * @var array 
 	 */
-	private $chillList = array();
+	protected $chillList = array();
 	
 	/**
 	 * List of dependencies. Format: $type => array($depensOnMe, $andMe)
 	 * @var array
 	 */
-	private $dep = array();
+	protected $dep = array();
 
 	/**
 	 * Secret stash. Used for batch loading.
 	 * @var array
 	 */
-	private $stash = NULL;
+	protected $stash = NULL;
 
 	/**
 	 * Contains the writer for OODB.
 	 * @var RedBean_Adapter_DBAdapter
 	 */
-	private $writer;
+	protected $writer;
+	
 	/**
 	 * Whether this instance of OODB is frozen or not.
 	 * In frozen mode the schema will not de modified, in fluid mode
 	 * the schema can be adjusted to meet the needs of the developer.
 	 * @var boolean
 	 */
-	private $isFrozen = false;
+	protected $isFrozen = false;
 
 	/**
 	 * Bean Helper. The bean helper to give to the beans. Bean Helpers
 	 * assist beans in getting hold of a toolbox.
 	 * @var null|\RedBean_BeanHelperFacade
 	 */
-	private $beanhelper = null;
+	protected $beanhelper = null;
+	
+	/**
+	 * Association Manager.
+	 * Reference to the Association Manager. The OODB class uses
+	 * the association manager to store many-to-many relations.
+	 * 
+	 * @var RedBean_AssociationManager
+	 */
+	protected $assocManager = null;
 
 	/**
 	 * The RedBean OODB Class is the main class of RedBean.
@@ -4768,7 +5131,7 @@ class RedBean_OODB extends RedBean_Observable {
 		if ($writer instanceof RedBean_QueryWriter) {
 			$this->writer = $writer;
 		}
-		$this->beanhelper = new RedBean_BeanHelperFacade();
+		$this->beanhelper = new RedBean_BeanHelper_Facade();
 	}
 
 	/**
@@ -4819,7 +5182,6 @@ class RedBean_OODB extends RedBean_Observable {
 	 * @return RedBean_OODBBean $bean the new bean instance
 	 */
 	public function dispense($type ) {
-		$this->signal( 'before_dispense', $type );
 		$bean = new RedBean_OODBBean();
 		$bean->setBeanHelper($this->beanhelper);
 		$bean->setMeta('type',$type );
@@ -4839,7 +5201,7 @@ class RedBean_OODB extends RedBean_Observable {
 	 *
 	 * @return void
 	 */
-	public function setBeanHelper( RedBean_IBeanHelper $beanhelper) {
+	public function setBeanHelper( RedBean_BeanHelper $beanhelper) {
 		$this->beanhelper = $beanhelper;
 	}
 
@@ -5224,6 +5586,13 @@ class RedBean_OODB extends RedBean_Observable {
 	 */
 	private function processTrashcan($bean,$ownTrashcan) {
 		$myFieldLink = $bean->getMeta('type').'_id';
+		if (count($ownTrashcan)>0) {
+			$first = reset($ownTrashcan);
+			if ($first instanceof RedBean_OODBBean) {
+				$alias = $bean->getMeta('sys.alias.'.$first->getMeta('type'));
+				if ($alias) $myFieldLink = $alias.'_id';
+			}
+		}
 		foreach($ownTrashcan as $trash) {
 			if (isset($this->dep[$trash->getMeta('type')]) && in_array($bean->getMeta('type'),$this->dep[$trash->getMeta('type')])) {
 				$this->trash($trash);
@@ -5247,7 +5616,7 @@ class RedBean_OODB extends RedBean_Observable {
 		foreach($embeddedBeans as $linkField=>$embeddedBean) {
 			if (!$this->isFrozen) {
 				$this->writer->addIndex($bean->getMeta('type'),
-							'index_foreignkey_'.$embeddedBean->getMeta('type'),
+							'index_foreignkey_'.$bean->getMeta('type').'_'.$embeddedBean->getMeta('type'),
 							 $linkField);
 				$isDep = $this->isDependentOn($bean->getMeta('type'),$embeddedBean->getMeta('type'));
 				$this->writer->addFK($bean->getMeta('type'),$embeddedBean->getMeta('type'),$linkField,'id',$isDep);
@@ -5268,14 +5637,22 @@ class RedBean_OODB extends RedBean_Observable {
 	 */
 	private function processAdditions($bean,$ownAdditions) {
 		$myFieldLink = $bean->getMeta('type').'_id';
+		if ($bean && count($ownAdditions)>0) {
+			$first = reset($ownAdditions);
+			if ($first instanceof RedBean_OODBBean) {
+				$alias = $bean->getMeta('sys.alias.'.$first->getMeta('type'));
+				if ($alias) $myFieldLink = $alias.'_id';
+			}
+		}
 		foreach($ownAdditions as $addition) {
 			if ($addition instanceof RedBean_OODBBean) {  
 				$addition->$myFieldLink = $bean->id;
 				$addition->setMeta('cast.'.$myFieldLink,'id');
 				$this->store($addition);
+				
 				if (!$this->isFrozen) {
 					$this->writer->addIndex($addition->getMeta('type'),
-						'index_foreignkey_'.$bean->getMeta('type'),
+						'index_foreignkey_'.$addition->getMeta('type').'_'.$bean->getMeta('type'),
 						 $myFieldLink);
 					$isDep = $this->isDependentOn($addition->getMeta('type'),$bean->getMeta('type'));
 					$this->writer->addFK($addition->getMeta('type'),$bean->getMeta('type'),$myFieldLink,'id',$isDep);
@@ -5326,7 +5703,6 @@ class RedBean_OODB extends RedBean_Observable {
 	 * @return RedBean_OODBBean $bean loaded bean
 	 */
 	public function load($type,$id) {
-		$this->signal('before_open',array('type'=>$type,'id'=>$id));
 		$bean = $this->dispense( $type );
 		if ($this->stash && isset($this->stash[$id])) {
 			$row = $this->stash[$id];
@@ -5346,7 +5722,7 @@ class RedBean_OODB extends RedBean_Observable {
 					if ($this->isFrozen) throw $e; //only throw if frozen;
 				}
 			}
-			if (!$rows) return $bean; // $this->dispense($type); -- no need...
+			if (empty($rows)) return $bean; // $this->dispense($type); -- no need...
 			$row = array_pop($rows);
 		}
 		foreach($row as $p=>$v) {
@@ -5465,13 +5841,15 @@ class RedBean_OODB extends RedBean_Observable {
 	/**
 	 * Returns the number of beans we have in DB of a given type.
 	 *
-	 * @param string $type type of bean we are looking for
+	 * @param string $type   type of bean we are looking for
+	 * @param string $addSQL additional SQL snippet
+	 * @param array  $params parameters to bind to SQL
 	 *
 	 * @return integer $num number of beans found
 	 */
-	public function count($type) {
+	public function count($type,$addSQL='',$params=array()) {
 		try {
-			return (int) $this->writer->count($type);
+			return (int) $this->writer->count($type,$addSQL,$params);
 		}catch(RedBean_Exception_SQL $e) {
 			if (!$this->writer->sqlStateIn($e->getSQLState(),
 			array(RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_TABLE)
@@ -5526,6 +5904,28 @@ class RedBean_OODB extends RedBean_Observable {
 	}
 	
 	
+	/**
+	 * Sets a dependency list. Dependencies can be used to make
+	 * certain beans depend on others. This causes dependent beans to get removed
+	 * once the bean they depend on has been removed as well.
+	 * A dependency takes the form:
+	 * 
+	 * $me => depends on array( $bean1, $bean2 )
+	 * 
+	 * For instance a to inform RedBeanPHP about the fact that a page
+	 * depends on a book:
+	 * 
+	 * 'page' => array('book')
+	 * 
+	 * A bean can depend on multiple other beans.
+	 * 
+	 * A dependency does two things:
+	 * 
+	 * 1. Adds a ON CASCADE DELETE 
+	 * 2. trashes the depending bean if the entry in the ownList is removed 
+	 * 
+	 * @param array $dep 
+	 */
 	public function setDepList($dep) {
 		$this->dep = $dep;
 	}
@@ -5701,10 +6101,18 @@ class RedBean_AssociationManager extends RedBean_Observable {
 	 * @param RedBean_OODBBean $bean1 bean1
 	 * @param RedBean_OODBBean $bean2 bean2
 	 */
-	public function associate(RedBean_OODBBean $bean1, RedBean_OODBBean $bean2) {
-		$table = $this->getTable( array($bean1->getMeta('type') , $bean2->getMeta('type')) );
-		$bean = $this->oodb->dispense($table);
-		return $this->associateBeans( $bean1, $bean2, $bean );
+	public function associate($beans1, $beans2) {
+		$results = array();
+		if (!is_array($beans1)) $beans1 = array($beans1);
+		if (!is_array($beans2)) $beans2 = array($beans2);
+		foreach($beans1 as $bean1) {
+			foreach($beans2 as $bean2) {
+				$table = $this->getTable( array($bean1->getMeta('type') , $bean2->getMeta('type')) );
+				$bean = $this->oodb->dispense($table);
+				$results[] = $this->associateBeans( $bean1, $bean2, $bean );
+			}
+		}
+		return (count($results)>1) ? $results : reset($results);
 	}
 
 	
@@ -5719,6 +6127,7 @@ class RedBean_AssociationManager extends RedBean_Observable {
 	 * @return mixed $id either the link ID or null
 	 */
 	protected function associateBeans(RedBean_OODBBean $bean1, RedBean_OODBBean $bean2, RedBean_OODBBean $bean) {
+	
 		$property1 = $bean1->getMeta('type') . '_id';
 		$property2 = $bean2->getMeta('type') . '_id';
 		if ($property1==$property2) $property2 = $bean2->getMeta('type').'2_id';
@@ -5743,7 +6152,7 @@ class RedBean_AssociationManager extends RedBean_Observable {
 				if (!$this->oodb->isFrozen())
 				$this->writer->addConstraint( $bean1, $bean2 );
 			}
-			return $id;
+			$results[] = $id;
 		}
 		catch(RedBean_Exception_SQL $e) {
 			if (!$this->writer->sqlStateIn($e->getSQLState(),
@@ -5751,6 +6160,7 @@ class RedBean_AssociationManager extends RedBean_Observable {
 			RedBean_QueryWriter::C_SQLSTATE_INTEGRITY_CONSTRAINT_VIOLATION
 			))) throw $e;
 		}
+			
 	}
 
 	/**
@@ -5846,44 +6256,50 @@ class RedBean_AssociationManager extends RedBean_Observable {
 	 * @param RedBean_OODBBean $bean2 second bean
 	 * @param boolean          $fast  If TRUE, removes the entries by query without FUSE
 	 */
-	public function unassociate(RedBean_OODBBean $bean1, RedBean_OODBBean $bean2, $fast=null) {
-		$this->oodb->store($bean1);
-		$this->oodb->store($bean2);
-		$table = $this->getTable( array($bean1->getMeta('type') , $bean2->getMeta('type')) );
-		$type = $bean1->getMeta('type');
-		if ($type==$bean2->getMeta('type')) {
-			$type .= '2';
-			$cross = 1;
-		}
-		else $cross = 0;
-		$property1 = $type.'_id';
-		$property2 = $bean2->getMeta('type').'_id';
-		$value1 = (int) $bean1->id;
-		$value2 = (int) $bean2->id;
-		try {
-			$rows = $this->writer->selectRecord($table,array(
-				$property1 => array($value1), $property2=>array($value2)),null,$fast
-			);
-			if ($cross) {
-				$rows2 = $this->writer->selectRecord($table,array(
-				$property2 => array($value1), $property1=>array($value2)),null,$fast
-				);
-				if ($fast) return;
-				$rows = array_merge($rows,$rows2);
+	public function unassociate($beans1, $beans2, $fast=null) {
+		if (!is_array($beans1)) $beans1 = array($beans1);
+		if (!is_array($beans2)) $beans2 = array($beans2);
+		foreach($beans1 as $bean1) {
+			foreach($beans2 as $bean2) {
+		
+				$this->oodb->store($bean1);
+				$this->oodb->store($bean2);
+				$table = $this->getTable( array($bean1->getMeta('type') , $bean2->getMeta('type')) );
+				$type = $bean1->getMeta('type');
+				if ($type==$bean2->getMeta('type')) {
+					$type .= '2';
+					$cross = 1;
+				}
+				else $cross = 0;
+				$property1 = $type.'_id';
+				$property2 = $bean2->getMeta('type').'_id';
+				$value1 = (int) $bean1->id;
+				$value2 = (int) $bean2->id;
+				try {
+					$rows = $this->writer->selectRecord($table,array(
+						$property1 => array($value1), $property2=>array($value2)),null,$fast
+					);
+					if ($cross) {
+						$rows2 = $this->writer->selectRecord($table,array(
+						$property2 => array($value1), $property1=>array($value2)),null,$fast
+						);
+						if ($fast) continue;
+						$rows = array_merge($rows,$rows2);
+					}
+					if ($fast) continue;
+					$beans = $this->oodb->convertToBeans($table,$rows);
+					foreach($beans as $link) {
+						$this->oodb->trash($link);
+					}
+				}catch(RedBean_Exception_SQL $e) {
+					if (!$this->writer->sqlStateIn($e->getSQLState(),
+					array(
+					RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_COLUMN,
+					RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_TABLE)
+					)) throw $e;
+				}
 			}
-			if ($fast) return;
-			$beans = $this->oodb->convertToBeans($table,$rows);
-			foreach($beans as $link) {
-				$this->oodb->trash($link);
-			}
-		}catch(RedBean_Exception_SQL $e) {
-			if (!$this->writer->sqlStateIn($e->getSQLState(),
-			array(
-			RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_COLUMN,
-			RedBean_QueryWriter::C_SQLSTATE_NO_SUCH_TABLE)
-			)) throw $e;
 		}
-		return;
 	}
 
 	/**
@@ -5979,7 +6395,7 @@ class RedBean_AssociationManager extends RedBean_Observable {
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_ExtAssociationManager extends RedBean_AssociationManager {
+class RedBean_AssociationManager_ExtAssociationManager extends RedBean_AssociationManager {
 
 	/**
 	 * Associates two beans with eachother. This method connects two beans with eachother, just
@@ -6031,10 +6447,11 @@ class RedBean_Setup {
 		$dsn = trim($dsn);
 		$dsn = strtolower($dsn);
 		if (
-		strpos($dsn, 'mysql:')!==0
+					 strpos($dsn, 'mysql:')!==0
 				  && strpos($dsn,'sqlite:')!==0
 				  && strpos($dsn,'pgsql:')!==0
 				  && strpos($dsn,'cubrid:')!==0
+				  && strpos($dsn,'oracle:')!==0
 		) {
 			trigger_error('Unsupported DSN');
 		}
@@ -6069,14 +6486,18 @@ class RedBean_Setup {
 	 */
 	public static function kickstart($dsn,$username=NULL,$password=NULL,$frozen=false ) {
 		if ($dsn instanceof PDO) {
-			$pdo = new RedBean_Driver_PDO($dsn);
-			$dsn = $pdo->getDatabaseType() ;
+			$db = new RedBean_Driver_PDO($dsn);
+			$dsn = $db->getDatabaseType();
 		}
 		else {
 			self::checkDSN($dsn);
-			$pdo = new RedBean_Driver_PDO($dsn,$username,$password);
+			if (strpos($dsn, 'oracle') === 0) 
+				$db = new RedBean_Driver_OCI($dsn,$username,$password);	
+			else
+				$db = new RedBean_Driver_PDO($dsn,$username,$password);
+						
 		}
-		$adapter = new RedBean_Adapter_DBAdapter($pdo);
+		$adapter = new RedBean_Adapter_DBAdapter($db);
 		if (strpos($dsn,'pgsql')===0) {
 			$writer = new RedBean_QueryWriter_PostgreSQL($adapter);
 		}
@@ -6086,6 +6507,7 @@ class RedBean_Setup {
 		else if (strpos($dsn,'cubrid')===0) {
 			$writer = new RedBean_QueryWriter_CUBRID($adapter);
 		}
+		else if (strpos($dsn,'oracle')===0) { $writer = new RedBean_QueryWriter_Oracle($adapter); }	//layout important for unit test - this line cannot always be tested. 	
 		else {
 			$writer = new RedBean_QueryWriter_MySQL($adapter);
 		}
@@ -6128,27 +6550,31 @@ interface RedBean_IModelFormatter {
 
 
 /**
- * RedBean interface for Logging
+ * RedBean Logging
  * 
- * @name    RedBean ILogger
- * @file    RedBean/ILogger.php
- * @author    Gabor de Mooij
- * @license   BSD
+ * @file			RedBean/Logging.php
+ * @description		Logging interface for RedBeanPHP ORM,
+ *					provides a uniform and convenient logging 
+ *					interface throughout RedBeanPHP.
+ * @author			Gabor de Mooij and the RedBeanPHP Community
+ * @license			BSD/GPLv2
  *
- *
- * copyright (c) G.J.G.T. (Gabor) de Mooij
+ * copyright (c) G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
+ *
  */
-interface RedBean_ILogger {
+interface RedBean_Logger {
 
   /**
-   * Redbean will call this method to log your data
+   * Method used to log messages.
+   * Writes the specified message to the log document whatever
+   * that may be (files, database etc). Provides a uniform
+   * interface for logging throughout RedBeanPHP.
    *
-   * @param ...
+   * @param string $message the message to log. (optional)
    */
   public function log();
-
 
 }
 
@@ -6156,8 +6582,8 @@ interface RedBean_ILogger {
 /**
  * RedBean class for Logging
  * 
- * @name    RedBean ILogger
- * @file    RedBean/ILogger.php
+ * @name    RedBean Logger
+ * @file    RedBean/Logger.php
  * @author    Gabor de Mooij
  * @license   BSD
  *
@@ -6166,12 +6592,14 @@ interface RedBean_ILogger {
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_Logger implements RedBean_ILogger {
+class RedBean_Logger_Default implements RedBean_Logger {
 
   /**
-   * Default logger method logging to STDOUT
+   * Default logger method logging to STDOUT.
+   * This is the default/reference implementation of a logger.
+   * This method will write the message value to STDOUT (screen).
    *
-   * @param ...
+   * @param $message (optional)
    */
   public function log() {
     if (func_num_args() > 0) {
@@ -6201,7 +6629,7 @@ class RedBean_Logger implements RedBean_ILogger {
  * with this source code in the file license.txt.
  *
  */
-interface RedBean_IBeanHelper {
+interface RedBean_BeanHelper {
 
 	/**
 	 * @abstract
@@ -6225,7 +6653,7 @@ interface RedBean_IBeanHelper {
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_BeanHelperFacade implements RedBean_IBeanHelper {
+class RedBean_BeanHelper_Facade implements RedBean_BeanHelper {
 
 	/**
 	 * Returns a reference to the toolbox. This method returns a toolbox
@@ -6256,7 +6684,6 @@ class RedBean_BeanHelperFacade implements RedBean_IBeanHelper {
 		$obj->loadBean($bean);
 		return $obj;
 	}
-	
 }
 
 
@@ -6372,6 +6799,15 @@ class RedBean_ModelHelper implements RedBean_Observer {
 	 * @var type 
 	 */
 	private static $dependencyInjector;
+	
+	/**
+	 * Cache for model names to avoid unnecessary
+	 * reflections.
+	 * 
+	 * @var array 
+	 */
+	private static $modelCache = array();
+	
 
 	/**
 	 * Connects OODB to a model if a model exists for that
@@ -6395,12 +6831,15 @@ class RedBean_ModelHelper implements RedBean_Observer {
 	 * @return string $fullname
 	 */
 	public static function getModelName( $model, $bean = null ) {
+		if (isset(self::$modelCache[$model])) return self::$modelCache[$model];
 		if (self::$modelFormatter){
-			return self::$modelFormatter->formatModel($model,$bean);
+			$modelID = self::$modelFormatter->formatModel($model,$bean);
 		}
 		else {
-			return 'Model_'.ucfirst($model);
+			$modelID = 'Model_'.ucfirst($model);
 		}
+		self::$modelCache[$model] = $modelID;
+		return self::$modelCache[$model];
 	}
 
 	/**
@@ -6661,7 +7100,6 @@ class RedBean_TagManager {
 	 */
 	protected $redbean;
 	
-	
 	/**
 	 * Constructor,
 	 * creates a new instance of TagManager.
@@ -6683,7 +7121,8 @@ class RedBean_TagManager {
 	public function findTagByTitle($title) {
 		$beans = $this->redbean->find('tag',array('title'=>array($title)));
 		if ($beans) {
-			return reset($beans);
+			$bean = reset($beans);
+			return $bean;
 		}
 		return null;
 	}
@@ -6896,18 +7335,17 @@ class RedBean_Facade {
 	 */
 	public static $extAssocManager;
 
-
-	/**
-	 * Holds an instance of Bean Exporter
-	 * @var RedBean_Plugin_BeanExport
-	 */
-	public static $exporter;
-	
 	/**
 	 * Holds the tag manager
 	 * @var RedBean_TagManager
 	 */
 	public static $tagManager;
+	
+	/**
+	 * holds the duplication manager
+	 * @var RedBean_DuplicationManager 
+	 */
+	public static $duplicationManager;
 
 	/**
 	 * Holds the Key of the current database.
@@ -6920,13 +7358,16 @@ class RedBean_Facade {
 	 */
 	public static $f;
 
+	
+	private static $strictType = true;
+	
 
 	/**
 	 * Get version
 	 * @return string
 	 */
 	public static function getVersion() {
-		return '3.2';
+		return '3.3';
 	}
 
 	/**
@@ -6986,10 +7427,10 @@ class RedBean_Facade {
 	 * be printed to the screen or logged by provided logger.
 	 *
 	 * @param boolean $tf
-	 * @param RedBean_ILogger $logger
+	 * @param RedBean_Logger $logger
 	 */
 	public static function debug( $tf = true, $logger = NULL ) {
-		if (!$logger) $logger = new RedBean_Logger;
+		if (!$logger) $logger = new RedBean_Logger_Default;
 		self::$adapter->getDatabase()->setDebugMode( $tf, $logger );
 	}
 
@@ -7053,6 +7494,7 @@ class RedBean_Facade {
 	 *
 	 */
 	public static function dispense( $type, $num = 1 ) {
+		if (!preg_match('/^[a-z0-9]+$/',$type) && self::$strictType) throw new RedBean_Exception_Security('Invalid type: '.$type); 
 		if ($num==1) {
 			return self::$redbean->dispense( $type );
 		}
@@ -7061,6 +7503,11 @@ class RedBean_Facade {
 			for($v=0; $v<$num; $v++) $beans[] = self::$redbean->dispense( $type );
 			return $beans;
 		}
+	}
+	
+	
+	public static function setStrictTyping($trueFalse) {
+		self::$strictType = (boolean) $trueFalse;
 	}
 
 	/**
@@ -7095,10 +7542,10 @@ class RedBean_Facade {
 	 *
 	 * @return mixed
 	 */
-	public static function associate( RedBean_OODBBean $bean1, RedBean_OODBBean $bean2, $extra = null ) {
+	public static function associate( $beans1, $beans2, $extra = null ) {
 		//No extra? Just associate like always (default)
 		if (!$extra) {
-			return self::$associationManager->associate( $bean1, $bean2 );
+			return self::$associationManager->associate( $beans1, $beans2 );
 		}
 		else{
 			if (!is_array($extra)) {
@@ -7108,11 +7555,10 @@ class RedBean_Facade {
 			else {
 				$info = $extra;
 			}
-			$bean = RedBean_Facade::dispense('typeLess');
+			$bean = RedBean_Facade::dispense('xtypeless');
 			$bean->import($info);
-			return self::$extAssocManager->extAssociate($bean1, $bean2, $bean);
+			return self::$extAssocManager->extAssociate($beans1, $beans2, $bean);
 		}
-
 	}
 
 
@@ -7128,8 +7574,9 @@ class RedBean_Facade {
 	 *
 	 * @return mixed
 	 */
-	public static function unassociate( RedBean_OODBBean $bean1, RedBean_OODBBean $bean2 , $fast=false) {
-		return self::$associationManager->unassociate( $bean1, $bean2, $fast );
+	public static function unassociate( $beans1,  $beans2 , $fast=false) {
+		return self::$associationManager->unassociate( $beans1, $beans2, $fast );
+		
 	}
 
 	/**
@@ -7491,9 +7938,9 @@ class RedBean_Facade {
 	 *
 	 * @return array $copiedBean the duplicated bean
 	 */
-	public static function dup($bean,$trail=array(),$pid=false) {
-		$duplicationManager = new RedBean_DuplicationManager(self::$toolbox);
-		return $duplicationManager->dup($bean, $trail,$pid);
+	public static function dup($bean,$trail=array(),$pid=false,$filters=array()) {
+		self::$duplicationManager->setFilters($filters);
+		return self::$duplicationManager->dup($bean, $trail,$pid);
 	}
 
 	/**
@@ -7508,12 +7955,12 @@ class RedBean_Facade {
 	 *
 	 * @return	array $array exported structure
 	 */
-	public static function exportAll($beans) {
+	public static function exportAll($beans,$parents=false,$filters=array()) {
 		$array = array();
 		if (!is_array($beans)) $beans = array($beans);
 		foreach($beans as $bean) {
-			$f = self::dup($bean,array(),true);
-			$array[] = $f->export();
+			$f = self::dup($bean,array(),true,$filters);
+			$array[] = $f->export(false,$parents,false,$filters);
 		}
 		return $array;
 	}
@@ -7659,12 +8106,14 @@ class RedBean_Facade {
 	 * Counts beans
 	 *
 	 * @param string $beanType type of bean
+	 * @param string $addSQL   additional SQL snippet (for filtering, limiting)
+	 * @param array  $params   parameters to bind to SQL
 	 *
 	 * @return integer $numOfBeans
 	 */
 
-	public static function count( $beanType ) {
-		return RedBean_Facade::$redbean->count($beanType);
+	public static function count( $beanType, $addSQL = '', $params = array() ) {
+		return RedBean_Facade::$redbean->count($beanType,$addSQL,$params);
 	}
 
 	/**
@@ -7684,12 +8133,13 @@ class RedBean_Facade {
 		self::$redbean = self::$toolbox->getRedBean();
 		self::$associationManager = new RedBean_AssociationManager( self::$toolbox );
 		self::$redbean->setAssociationManager(self::$associationManager);
-		self::$extAssocManager = new RedBean_ExtAssociationManager( self::$toolbox );
+		self::$extAssocManager = new RedBean_AssociationManager_ExtAssociationManager( self::$toolbox );
 		$helper = new RedBean_ModelHelper();
 		self::$redbean->addEventListener('update', $helper );
 		self::$redbean->addEventListener('open', $helper );
 		self::$redbean->addEventListener('delete', $helper );
 		self::$associationManager->addEventListener('delete', $helper );
+		self::$duplicationManager = new RedBean_DuplicationManager(self::$toolbox);
 		self::$redbean->addEventListener('after_delete', $helper );
 		self::$redbean->addEventListener('after_update', $helper );
 		self::$redbean->addEventListener('dispense', $helper );
@@ -7697,24 +8147,6 @@ class RedBean_Facade {
 		self::$f = new RedBean_SQLHelper(self::$adapter);
 		return $oldTools;
 	}
-
-
-
-	/**
-	 * facade method for Cooker Graph.
-	 *
-	 * @param array   $array            array containing POST/GET fields or other data
-	 * @param boolean $filterEmptyBeans whether you want to exclude empty beans
-	 *
-	 * @return array $arrayOfBeans Beans
-	 */
-	public static function graph($array,$filterEmpty=false) {
-		$cooker = new RedBean_Cooker();
-		$cooker->setToolbox(self::$toolbox);
-		return $cooker->graph($array,$filterEmpty);
-	}
-
-
 
 	/**
 	 * Facade Convience method for adapter transaction system.
@@ -7874,7 +8306,7 @@ class RedBean_Facade {
 	 *
 	 * @return array $array list of names of beans
 	 */
-	public function gatherLabels($beans) {
+	public static function gatherLabels($beans) {
 		$labels = array();
 		foreach($beans as $bean) $labels[] = $bean->name;
 		sort($labels);
@@ -7891,16 +8323,7 @@ class RedBean_Facade {
 		}
 	}
 
-	/**
-	 * Activates TimeLine Schema Alteration monitoring and
-	 * Query logging.
-	 *
-	 * @param type $filename
-	 */
-	public static function log($filename) {
-		$tl = new RedBean_Plugin_TimeLine($filename);
-		self::$adapter->addEventListener('sql_exec',$tl);
-	}
+	
 
 
 	/**
@@ -7929,11 +8352,233 @@ class RedBean_Facade {
 		if (!$time) $time = time();
 		return @date('Y-m-d H:i:s',$time);
 	}
+	
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 * 
+	 * @param RedBean_Adapter $adapter 
+	 */
+	public static function setDatabaseAdapter(RedBean_Adapter $adapter) {
+		self::$adapter = $adapter;
+	}
 
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 *
+	 * @param RedBean_QueryWriter $writer 
+	 */
+	public static function setWriter(RedBean_QueryWriter $writer) {
+		self::$writer = $writer;
+	}
+	
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 *
+	 * @param RedBean_OODB $redbean 
+	 */
+	public static function setRedBean(RedBean_OODB $redbean) {
+		self::$redbean = $redbean;
+	}
+	
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 *
+	 * @return RedBean_DatabaseAdapter $adapter
+	 */
+	public static function getDatabaseAdapter() {
+		return self::$adapter;
+	}
+
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 *
+	 * @return RedBean_QueryWriter $writer
+	 */
+	public static function getWriter() {
+		return self::$writer;
+	}
+	
+	/**
+	 * Optional accessor for neat code.
+	 * Sets the database adapter you want to use.
+	 *
+	 * @return RedBean_RedBean $redbean
+	 */
+	public static function getRedBean() {
+		return self::$redbean;
+	}
+	
+	/**
+	 * Preloads certain properties for beans.
+	 * Understands aliases.
+	 * 
+	 * Usage: R::preload($books,array('coauthor'=>'author'));
+	 * 
+	 * @param array $beans beans
+	 * @param array $types types to load
+	 */
+	public static function preload($beans,$types) {
+		foreach($types as $key => $type) {
+			$field = (is_numeric($key)) ? $type : $key;
+			$ids = array();
+			foreach($beans as $bean) {
+				$id = $bean->{$field.'_id'};
+				$ids[] = $id;
+				$map[$id] = $bean;
+			}	
+			$parents = R::batch($type,$ids);
+			foreach($parents as $parent) {
+				$map[$parent->id]->setProperty($field,$parent);
+			}
+			
+		}
+	}
+	
 }
 
 //Compatibility with PHP 5.2 and earlier
 function __lcfirst( $str ){	return (string)(strtolower(substr($str,0,1)).substr($str,1)); }
+
+
+/**
+ * RedBean Plugin
+ * 
+ * @file			RedBean/Plugin.php
+ * @description		Marker interface for plugins.
+ * 		
+ * @author			Gabor de Mooij and the RedBeanPHP Community
+ * @license			BSD/GPLv2
+ *
+ * copyright (c) G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community
+ * This source file is subject to the BSD/GPLv2 License that is bundled
+ * with this source code in the file license.txt.
+ *
+ */
+interface RedBean_Plugin { }; 
+
+/**
+ * Sync
+ *
+ * @file                       RedBean/Plugin/Sync.php
+ * @description                Plugin for Synchronizing databases.
+ * 
+ * @plugin					   public static function syncSchema($from,$to) { return RedBean_Plugin_Sync::syncSchema($from,$to); }
+ *
+ * @author                     Gabor de Mooij
+ * @license                    BSD
+ *
+ *
+ * (c) G.J.G.T. (Gabor) de Mooij
+ * This source file is subject to the BSD/GPLv2 License that is bundled
+ * with this source code in the file license.txt.
+ */
+class RedBean_Plugin_Sync implements RedBean_Plugin {
+
+	/**
+	 * Captures the SQL required to adjust source database to match
+	 * schema of target database and feeds this sql code to the
+	 * adapter of the target database.
+	 *
+	 * @param RedBean_Toolbox $source toolbox of source database
+	 * @param RedBean_Toolbox $target toolbox of target database
+	 */
+	public function doSync(RedBean_Toolbox $source, RedBean_Toolbox $target) {
+
+		$sourceWriter = $source->getWriter();
+		$targetWriter = $target->getWriter();
+
+		$longText = str_repeat('lorem ipsum', 9000);
+		$testmap = array(
+			false, 1, 2.5, -10, 1000, 'abc', $longText, '2010-10-10', '2010-10-10 10:00:00', '10:00:00', 'POINT(1 2)'
+		);
+		$translations = array();
+		$defaultCode = $targetWriter->scanType('string');
+		foreach ($testmap as $v) {
+			$code = $sourceWriter->scanType($v, true);
+			$translation = $targetWriter->scanType($v, true);
+			if (!isset($translations[$code]))
+				$translations[$code] = $translation;
+			if ($translation > $translations[$code] && $translation < 50)
+				$translations[$code] = $translation;
+		}
+		
+		
+		//Fix narrow translations SQLiteT stores date as double. (double != really double)
+		if (get_class($sourceWriter)==='RedBean_QueryWriter_SQLiteT') {
+			$translations[1] = $defaultCode;  //use magic number in case writer not loaded.
+		}
+		
+		$sourceTables = $sourceWriter->getTables();
+		$targetTables = $targetWriter->getTables();
+		$missingTables = array_diff($sourceTables, $targetTables);
+		foreach ($missingTables as $missingTable) {
+			$targetWriter->createTable($missingTable);
+		}
+		//First run, create tables and columns
+		foreach ($sourceTables as $sourceTable) {
+			$sourceColumns = $sourceWriter->getColumns($sourceTable);
+			if (in_array($sourceTable, $missingTables)) {
+				$targetColumns = array();
+			} else {
+				$targetColumns = $targetWriter->getColumns($sourceTable);
+			}
+			unset($sourceColumns['id']);
+			foreach ($sourceColumns as $sourceColumn => $sourceType) {
+				if (substr($sourceColumn, -3) === '_id') {
+					$targetCode = $targetWriter->getTypeForID();
+				} else {
+					$sourceCode = $sourceWriter->code($sourceType, true);
+					$targetCode = (isset($translations[$sourceCode])) ? $translations[$sourceCode] : $defaultCode;
+				}
+				if (!isset($targetColumns[$sourceColumn])) {
+					$targetWriter->addColumn($sourceTable, $sourceColumn, $targetCode);
+				}
+			}
+		}
+
+		foreach ($sourceTables as $sourceTable) {
+			$sourceColumns = $sourceWriter->getColumns($sourceTable);
+			foreach ($sourceColumns as $sourceColumn => $sourceType) {
+				if (substr($sourceColumn, -3) === '_id') {
+					$fkTargetType = substr($sourceColumn, 0, strlen($sourceColumn) - 3);
+					$fkType = $sourceTable;
+					$fkField = $sourceColumn;
+					$fkTargetField = 'id';
+					$targetWriter->addFK($fkType, $fkTargetType, $fkField, $fkTargetField);
+				}
+			}
+			//Is it a link table? -- Add Unique constraint and FK constraint
+			if (strpos($sourceTable, '_') !== false) {
+				$targetWriter->addUniqueIndex($sourceTable, array_keys($sourceColumns));
+				$types = explode('_', $sourceTable);
+				$targetWriter->addConstraint(R::dispense($types[0]), R::dispense($types[1]));
+			}
+		}
+	}
+	
+
+	/**
+	 * Performs a database schema sync. For use with facade.
+	 * Instead of toolboxes this method accepts simply string keys and is static.
+	 * 
+	 * @param string $database1 the source database
+	 * @param string $database2 the target database
+	 */
+	public static function syncSchema($database1,$database2) {
+		if (!isset(RedBean_Facade::$toolboxes[$database1])) throw new RedBean_Exception_Security('No database for this key: '.$database1);
+		if (!isset(RedBean_Facade::$toolboxes[$database2])) throw new RedBean_Exception_Security('No database for this key: '.$database2);
+		$db1 = RedBean_Facade::$toolboxes[$database1];
+		$db2 = RedBean_Facade::$toolboxes[$database2];
+		$sync = new self;
+		$sync->doSync($db1, $db2);
+	}
+	
+}
 
 
 /**
@@ -7952,7 +8597,7 @@ function __lcfirst( $str ){	return (string)(strtolower(substr($str,0,1)).substr(
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_BeanCan {
+class RedBean_Plugin_BeanCan implements RedBean_Plugin {
 
 	/**
 	 * Holds a FUSE instance.
@@ -7979,7 +8624,7 @@ class RedBean_BeanCan {
 	 */
 	private function resp($result=null, $id=null, $errorCode='-32603',$errorMessage='Internal Error') {
 		$response = array('jsonrpc'=>'2.0');
-		if ($id) { $response['id'] = $id; }
+		 if (!is_null($id)) { $response['id'] = $id; }
 		if ($result) {
 			$response['result']=$result;
 		}
@@ -8046,6 +8691,11 @@ class RedBean_BeanCan {
 					$bean = RedBean_Facade::load($beanType,$data[0]);
 					RedBean_Facade::trash($bean);
 					return $this->resp('OK',$id);
+				case 'export':
+					if (!isset($data[0])) return $this->resp(null, $id, -32602,'First param needs to be Bean ID');
+					$bean = RedBean_Facade::load($beanType,$data[0]);
+					$array = RedBean_Facade::exportAll(array($bean),true);
+					return $this->resp($array,$id);
 				default:
 					$modelName = $this->modelHelper->getModelName( $beanType );
 					if (!class_exists($modelName)) return $this->resp(null, $id, -32601,'No such bean in the can!');
@@ -8090,8 +8740,179 @@ class RedBean_BeanCan {
 
 
 /**
+ * Query Logger
+ *
+ * @file 			RedBean/Plugin/QueryLogger.php
+ * @description		Query logger, can be attached to an observer that
+ * 					signals the sql_exec event.
+ * @author			Gabor de Mooij and the RedBeanPHP Community
+ * @license			BSD/GPLv2
+ *
+ *
+ * (c) copyright G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community.
+ * This source file is subject to the BSD/GPLv2 License that is bundled
+ * with this source code in the file license.txt.
+ */
+
+class RedBean_Plugin_QueryLogger implements RedBean_Observer, RedBean_Plugin {
+
+	/**
+	 * @var array
+	 * contains log messages
+	 */
+	protected $logs = array();
+
+	/**
+	 * Creates a new instance of the Query Logger and attaches
+	 * this logger to the adapter.
+	 *
+	 * @static
+	 * @param RedBean_Observable $adapter the adapter you want to attach to
+	 *
+	 * @return RedBean_Plugin_QueryLogger $querylogger instance of the Query Logger
+	 */
+	public static function getInstanceAndAttach( RedBean_Observable $adapter ) {
+		$queryLog = new RedBean_Plugin_QueryLogger;
+		$adapter->addEventListener( 'sql_exec', $queryLog );
+		return $queryLog;
+	}
+
+	/**
+	 * Singleton pattern
+	 * Constructor - private
+	 */
+	private function __construct(){}
+
+	/**
+	 * Implementation of the onEvent() method for Observer interface.
+	 * If a query gets executed this method gets invoked because the
+	 * adapter will send a signal to the attached logger.
+	 *
+	 * @param  string $eventName          ID of the event (name)
+	 * @param  RedBean_DBAdapter $adapter adapter that sends the signal
+	 *
+	 * @return void
+	 */
+	public function onEvent( $eventName, $adapter ) {
+		if ($eventName=='sql_exec') {
+			$this->logs[] = $adapter->getSQL();
+		}
+	}
+
+	/**
+	 * Searches the logs for the given word and returns the entries found in
+	 * the log container.
+	 *
+	 * @param  string $word word to look for
+	 *
+	 * @return array $entries entries that contain the keyword
+	 */
+	public function grep( $word ) {
+		$found = array();
+		foreach($this->logs as $log) {
+			if (strpos($log,$word)!==false) {
+				$found[] = $log;
+			}
+		}
+		return $found;
+	}
+
+	/**
+	 * Returns all the logs.
+	 *
+	 * @return array $logs logs
+	 */
+	public function getLogs() {
+		return $this->logs;
+	}
+
+	/**
+	 * Clears the logs.
+	 *
+	 * @return void
+	 */
+	public function clear() {
+		$this->logs = array();
+	}
+}
+
+
+/**
+ * TimeLine 
+ *
+ * @file 			RedBean/Plugin/TimeLine.php
+ * @description		Monitors schema changes to ease deployment.
+ * 
+ * @plugin			public static function log($filename) { $tl = new RedBean_Plugin_TimeLine($filename); self::$adapter->addEventListener('sql_exec',$tl);}
+ * 
+ * @author			Gabor de Mooij and the RedBeanPHP Community
+ * @license			BSD/GPLv2
+ *
+ * (c) copyright G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community.
+ * This source file is subject to the BSD/GPLv2 License that is bundled
+ * with this source code in the file license.txt.
+ */
+
+class RedBean_Plugin_TimeLine extends RedBean_Plugin_QueryLogger implements RedBean_Plugin {
+	
+	/**
+	 * Path to file to write SQL and comments to.
+	 * 
+	 * @var string 
+	 */
+	protected $file;
+	
+	/**
+	 * Constructor.
+	 * Requires a path to an existing and writable file.
+	 * 
+	 * @param string $outputPath path to file to write schema changes to. 
+	 */
+	public function __construct($outputPath) {
+		if (!file_exists($outputPath) || !is_writable($outputPath)) 
+			throw new RedBean_Exception_Security('Cannot write to file: '.$outputPath);
+		$this->file = $outputPath;
+	}
+	
+	/**
+	 * Implementation of the onEvent() method for Observer interface.
+	 * If a query gets executed this method gets invoked because the
+	 * adapter will send a signal to the attached logger.
+	 *
+	 * @param  string $eventName          ID of the event (name)
+	 * @param  RedBean_DBAdapter $adapter adapter that sends the signal
+	 *
+	 * @return void
+	 */
+	public function onEvent( $eventName, $adapter ) {
+		if ($eventName=='sql_exec') {
+			$sql = $adapter->getSQL();
+			$this->logs[] = $sql;
+			if (strpos($sql,'ALTER')===0) {
+				$write = "-- ".date('Y-m-d H:i')." | Altering table. \n";
+				$write .= $sql;
+				$write .= "\n\n";
+			}
+			if (strpos($sql,'CREATE')===0) {
+				$write = "-- ".date('Y-m-d H:i')." | Creating new table. \n";
+				$write .= $sql;
+				$write .= "\n\n";
+			}
+			if (isset($write)) {
+				file_put_contents($this->file,$write,FILE_APPEND);
+			}
+		}
+	}
+	
+	
+}
+
+/**
  * RedBean Cooker
  * @file			RedBean/Cooker.php
+ * 
+ * @plugin			public static function graph($array,$filterEmpty=false) { $c = new RedBean_Plugin_Cooker(); $c->setToolbox(self::$toolbox);return $c->graph($array,$filterEmpty);}
+ * 
  * @description		Turns arrays into bean collections for easy persistence.
  * @author			Gabor de Mooij and the RedBeanPHP Community
  * @license			BSD/GPLv2
@@ -8104,7 +8925,7 @@ class RedBean_BeanCan {
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
-class RedBean_Cooker {
+class RedBean_Plugin_Cooker implements RedBean_Plugin {
 	
 	/**
 	 * This flag indicates whether empty strings in beans will be
@@ -8224,167 +9045,174 @@ class RedBean_Cooker {
 
 
 /**
- * Query Logger
- *
- * @file 			RedBean/Plugin/QueryLogger.php
- * @description		Query logger, can be attached to an observer that
- * 					signals the sql_exec event.
- * @author			Gabor de Mooij and the RedBeanPHP Community
+ * RedBeanPHP Cache Plugin
+ * 
+ * @file			RedBean/Plugin/Cache.php
+ * @description 	Cache plugin, caches beans.
+ * 
+ * @author			Gabor de Mooij and the RedBeanPHP community
  * @license			BSD/GPLv2
  *
+ * Provides a means to cache beans after loading or batch loading.
  *
- * (c) copyright G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community.
+ * copyright (c) G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community
  * This source file is subject to the BSD/GPLv2 License that is bundled
  * with this source code in the file license.txt.
  */
 
-class RedBean_Plugin_QueryLogger implements RedBean_Observer {
-
-	/**
-	 * @var array
-	 * contains log messages
-	 */
-	protected $logs = array();
-
-	/**
-	 * Creates a new instance of the Query Logger and attaches
-	 * this logger to the adapter.
-	 *
-	 * @static
-	 * @param RedBean_Observable $adapter the adapter you want to attach to
-	 *
-	 * @return RedBean_Plugin_QueryLogger $querylogger instance of the Query Logger
-	 */
-	public static function getInstanceAndAttach( RedBean_Observable $adapter ) {
-		$queryLog = new RedBean_Plugin_QueryLogger;
-		$adapter->addEventListener( 'sql_exec', $queryLog );
-		return $queryLog;
-	}
-
-	/**
-	 * Singleton pattern
-	 * Constructor - private
-	 */
-	private function __construct(){}
-
-	/**
-	 * Implementation of the onEvent() method for Observer interface.
-	 * If a query gets executed this method gets invoked because the
-	 * adapter will send a signal to the attached logger.
-	 *
-	 * @param  string $eventName          ID of the event (name)
-	 * @param  RedBean_DBAdapter $adapter adapter that sends the signal
-	 *
-	 * @return void
-	 */
-	public function onEvent( $eventName, $adapter ) {
-		if ($eventName=='sql_exec') {
-			$this->logs[] = $adapter->getSQL();
-		}
-	}
-
-	/**
-	 * Searches the logs for the given word and returns the entries found in
-	 * the log container.
-	 *
-	 * @param  string $word word to look for
-	 *
-	 * @return array $entries entries that contain the keyword
-	 */
-	public function grep( $word ) {
-		$found = array();
-		foreach($this->logs as $log) {
-			if (strpos($log,$word)!==false) {
-				$found[] = $log;
-			}
-		}
-		return $found;
-	}
-
-	/**
-	 * Returns all the logs.
-	 *
-	 * @return array $logs logs
-	 */
-	public function getLogs() {
-		return $this->logs;
-	}
-
-	/**
-	 * Clears the logs.
-	 *
-	 * @return void
-	 */
-	public function clear() {
-		$this->logs = array();
-	}
-}
-
-
-/**
- * TimeLine 
- *
- * @file 			RedBean/Plugin/TimeLine.php
- * @description		Monitors schema changes to ease deployment.
- * @author			Gabor de Mooij and the RedBeanPHP Community
- * @license			BSD/GPLv2
- *
- * (c) copyright G.J.G.T. (Gabor) de Mooij and the RedBeanPHP Community.
- * This source file is subject to the BSD/GPLv2 License that is bundled
- * with this source code in the file license.txt.
- */
-
-class RedBean_Plugin_TimeLine extends RedBean_Plugin_QueryLogger {
+class RedBean_Plugin_Cache extends RedBean_OODB implements RedBean_Plugin {
 	
 	/**
-	 * Path to file to write SQL and comments to.
-	 * 
-	 * @var string 
+	 * Bean cache, contains the cached beans identified by
+	 * label keys containing the type id and the fetch method;
+	 * i.e. single load or batch load.
+	 *  
+	 * @var array 
 	 */
-	protected $file;
+	private $cache = array();
+	
+	
+	
+	/**
+	 * Number of hits (beans/calls being served from cache). 
+	 * Can be used to monitor cache performance.
+	 *  
+	 * @var integer 
+	 */
+	private $hits = 0;
+	
+	/**
+	 * Number of misses (beans not being served from cache), can be
+	 * used to monitor cache performance.
+	 * 
+	 * @var integer 
+	 */
+	private $misses = 0;
 	
 	/**
 	 * Constructor.
-	 * Requires a path to an existing and writable file.
+	 * Cache decorates RedBeanPHP OODB class, so needs a writer.
 	 * 
-	 * @param string $outputPath path to file to write schema changes to. 
+	 * @param RedBean_QueryWriter $writer 
 	 */
-	public function __construct($outputPath) {
-		if (!file_exists($outputPath) || !is_writable($outputPath)) 
-			throw new RedBean_Exception_Security('Cannot write to file: '.$outputPath);
-		$this->file = $outputPath;
+	public function __construct(RedBean_QueryWriter $writer) {
+		parent::__construct($writer);
+	}
+	
+	
+	
+	/**
+	 * Loads a bean by type and id. If the bean cannot be found an
+	 * empty bean will be returned instead. This is a cached version
+	 * of the loader, if the bean has been cached it will be served
+	 * from cache, otherwise the bean will be retrieved from the database
+	 * as usual an a new cache entry will be added..
+	 * 
+	 * @param string  $type type of bean you are looking for
+	 * @param integer $id   identifier of the bean
+	 * 
+	 * @return RedBean_OODBBean $bean the bean object found
+	 */
+	public function load($type,$id) {
+		if (isset($this->cache[$type][$id])) {
+			$this->hits ++;
+			$bean = $this->cache[$type][$id];
+		}
+		else {
+			$this->misses ++;
+			$bean = parent::load($type,$id);
+			if (!isset($this->cache[$type])) $this->cache[$type]=array();
+			$this->cache[$type][$id] = $bean;
+		}
+		return $bean;
 	}
 	
 	/**
-	 * Implementation of the onEvent() method for Observer interface.
-	 * If a query gets executed this method gets invoked because the
-	 * adapter will send a signal to the attached logger.
-	 *
-	 * @param  string $eventName          ID of the event (name)
-	 * @param  RedBean_DBAdapter $adapter adapter that sends the signal
-	 *
-	 * @return void
+	 * Stores a RedBean OODBBean and caches it.
+	 * 
+	 * @param RedBean_OODBBean $bean the bean you want to store
+	 * 
+	 * @return integer $id 
 	 */
-	public function onEvent( $eventName, $adapter ) {
-		if ($eventName=='sql_exec') {
-			$sql = $adapter->getSQL();
-			$this->logs[] = $sql;
-			if (strpos($sql,'ALTER')===0) {
-				$write = "-- ".date('Y-m-d H:i')." | Altering table. \n";
-				$write .= $sql;
-				$write .= "\n\n";
-			}
-			if (strpos($sql,'CREATE')===0) {
-				$write = "-- ".date('Y-m-d H:i')." | Creating new table. \n";
-				$write .= $sql;
-				$write .= "\n\n";
-			}
-			if (isset($write)) {
-				file_put_contents($this->file,$write,FILE_APPEND);
-			}
-		}
+	public function store( $bean ) {
+		$id = parent::store($bean);
+		$type = $bean->getMeta('type');
+		if (!isset($this->cache[$type])) $this->cache[$type]=array();
+		$this->cache[$type][$id] = $bean;
+		return $id;
 	}
 	
+	/**
+	 * Trashes a RedBean OODBBean and removes it from cache.
+	 * 
+	 * @param RedBean_OODBBean $bean bean
+	 * @return mixed 
+	 */
+	public function trash( $bean ) {
+		$type = $bean->getMeta('type');
+		$id = $bean->id;
+		if (isset($this->cache[$type][$id])) unset($this->cache[$type][$id]);
+		return parent::trash($bean);
+	}
+	
+	/**
+	 * Flushes the cache for a given type.
+	 * 
+	 * @param string $type
+	 * 
+	 * @return RedBean_Plugin_Cache 
+	 */
+	public function flush($type) {
+		if (isset($this->cache[$type])) $this->cache[$type]=array();
+		return $this;
+	}
+	
+	/**
+	 * Flushes the cache completely.
+	 * 
+	 * @return RedBean_Plugin_Cache 
+	 */
+	public function flushAll() {
+		$this->cache = array();
+		return $this;
+	}
+	
+	
+	/**
+	 * Returns the number of hits. If a call to load() or
+	 * batch() can use the cache this counts as a hit.
+	 * Otherwise it's a miss.
+	 * 
+	 * @return integer 
+	 */
+	public function getHits() {
+		return $this->hits;
+	}
+	
+	/**
+	 * Returns the number of hits. If a call to load() or
+	 * batch() can use the cache this counts as a hit.
+	 * Otherwise it's a miss.
+	 * 
+	 * @return integer 
+	 */
+	public function getMisses() {
+		return $this->misses;
+	}
+	
+	/**
+	 * Resets hits counter to 0.
+	 */
+	public function resetHits() {
+		$this->hits = 0;
+	}
+	
+	/**
+	 * Resets misses counter to 0.
+	 */
+	public function resetMisses() {
+		$this->misses = 0;
+	}
 	
 }
 
@@ -8485,7 +9313,9 @@ class RedBean_DuplicationManager {
 	 */
 	protected $redbean;
 	
-	
+	protected $tables = array();
+	protected $filters = array();
+	protected $cacheTables = false;
 	/**
 	 * Constructor,
 	 * creates a new instance of DupManager.
@@ -8496,6 +9326,44 @@ class RedBean_DuplicationManager {
 		$this->redbean = $toolbox->getRedBean();
 		$this->associationManager = $this->redbean->getAssociationManager();
 	}
+	
+	/**
+	 * For better performance you can pass the tables in an array to this method.
+	 * If the tables are available the duplication manager will not query them so
+	 * this might be beneficial for performance.
+	 * 
+	 * @param array $tables 
+	 */
+	public function setTables($tables) {
+		$this->tables = $tables;
+		$this->cacheTables = true;
+	}
+	
+	/**
+	 * Indicates whether you want the duplication manager to cache the database schema.
+	 * If this flag is set to TRUE the duplication manager will query the database schema
+	 * only once. Otherwise the duplicationmanager will, by default, query the schema
+	 * every time a duplication action is performed (dup()).
+	 * 
+	 * @param boolean $yesNo 
+	 */
+	public function setCacheTables($yesNo) {
+		$this->cacheTables = $yesNo;
+	}
+	
+	/**
+	 * A filter array is an array with table names.
+	 * By setting a table filter you can make the duplication manager only take into account
+	 * certain bean types. Other bean types will be ignored when exporting or making a
+	 * deep copy. If no filters are set all types will be taking into account, this is
+	 * the default behavior.
+	 * 
+	 * @param array $filters 
+	 */
+	public function setFilters($filters) {
+		$this->filters = $filters;
+	}
+	
 	
 	/**
 	 * Makes a copy of a bean. This method makes a deep copy
@@ -8523,8 +9391,11 @@ class RedBean_DuplicationManager {
 	 * @return array $copiedBean the duplicated bean
 	 */
 	public function dup($bean,$trail=array(),$pid=false) {
+		if (!count($this->tables))  $this->tables = $this->toolbox->getWriter()->getTables();
 		$beanCopy = clone($bean);
-		return $this->duplicate($beanCopy,$trail,$pid);
+		$rs = $this->duplicate($beanCopy,$trail,$pid);
+		if (!$this->cacheTables) $this->tables = array();
+		return $rs;
 	}
 	
 	/**
@@ -8548,6 +9419,7 @@ class RedBean_DuplicationManager {
 	 * @return array $copiedBean the duplicated bean
 	 */
 	protected function duplicate($bean,$trail=array(),$pid=false) {
+	
 	$type = $bean->getMeta('type');
 		$key = $type.$bean->getID();
 		if (isset($trail[$key])) return $bean;
@@ -8555,8 +9427,9 @@ class RedBean_DuplicationManager {
 		$copy =$this->redbean->dispense($type);
 		$copy->import( $bean->getProperties() );
 		$copy->id = 0;
-		$tables = $this->toolbox->getWriter()->getTables();
+		$tables = $this->tables;
 		foreach($tables as $table) {
+			if (count($this->filters) && !in_array($table,$this->filters)) continue;
 			if (strpos($table,'_')!==false || $table==$type) continue;
 			$owned = 'own'.ucfirst($table);
 			$shared = 'shared'.ucfirst($table);
@@ -8576,12 +9449,13 @@ class RedBean_DuplicationManager {
 			$copy->setMeta('sys.shadow.'.$shared,null);
 
 		}
-
 		if ($pid) $copy->id = $bean->id;
 		return $copy;
 	}
 }
 
-
 class R extends RedBean_Facade{
+  					   public static function syncSchema($from,$to) { return RedBean_Plugin_Sync::syncSchema($from,$to); }
+			public static function log($filename) { $tl = new RedBean_Plugin_TimeLine($filename); self::$adapter->addEventListener('sql_exec',$tl);}
+			public static function graph($array,$filterEmpty=false) { $c = new RedBean_Plugin_Cooker(); $c->setToolbox(self::$toolbox);return $c->graph($array,$filterEmpty);} 
 }

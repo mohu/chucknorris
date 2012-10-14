@@ -1,20 +1,30 @@
-        <style type="text/css">
-          .actions {
-            margin-right: 20px;
-          }
-          span[rel="tooltip"] {
-            border-bottom: 1px dotted #CCC;
-          }
-          .fk.well {
-            padding-left: 0px !important;
-          }
-        </style>
         <script type="text/javascript">
         $(document).ready(function() {
 
+          $.validator.setDefaults({ ignore: ''});
+          $(".select2").select2({
+            placeholder: "Click to select",
+            allowClear: true
+          });
+
           $("[rel=tooltip]").tooltip({title: 'Required',delay: { show: 100, hide: 500 }});
-          
-          $("form").validate({
+
+          $("form.add").validate({
+//            showErrors: function(errorMap, errorList) {
+//              $.each( this.successList , function(index, value) {
+//                $(value).popover('hide');
+//              });
+//              $.each( errorList , function(index, value) {
+//                var _popover = $(value.element).popover({
+//                  trigger: 'manual',
+//                  placement: 'right',
+//                  content: value.message,
+//                  template: '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>'
+//                });
+//                _popover.data('popover').options.content = value.message;
+//                $(value.element).popover('show');
+//              });
+//            },
             errorPlacement: function(error, element) {
               $(element).closest('.control-group').addClass('error');
 
@@ -25,7 +35,7 @@
               error.insertAfter(element.parent('label').parent('div'));
               error.insertAfter(element.parent('div').parent('div').parent('div'));
 
-              error.css('margin', '10px 0px 0px 160px');
+              error.css('margin', '10px 0px 0px 180px');
               error.css('clear', 'both');
             },
             success: function(element){
@@ -71,26 +81,9 @@
 
           updateColourpickers();
 
-          $.each($("select[multiple]"), function () {
-            var label = $(this).parent().parent().find('label').text();
-            SelectFilter.init(this.id, label);
-          });
-
-          var updateMultiselects = function () {
-            $('select[multiple]').filter('.chosen').find('option').each(function() {
-//              console.log(this);
-              $(this).attr('selected', 'selected');
-              $(this).parent('select[multiple]').filter('.chosen').valid();
-            });
-          };
-
-          $('div.form-actions button').click(function() {
-            updateMultiselects();
-          });
-          
           var regex = /\[\d+\]/g;
           var regex2 = /\d+(?!.*\d+)/i;
-          
+
           $(".own").each(function() {
             $(this).find("a.remove").eq(0).hide();
           });
@@ -98,7 +91,7 @@
           $("a.clone").live("click", function() {
             var id = $(this).parents(".own").attr('id');
             var dataid = $(this).parents(".own").data('id');
-              $(this).parents(".own").clone().insertAfter("#" + id + "[data-id='" + dataid +"']").attr("id", (id)).attr("data-id", (dataid + 1)).find("input, select").each(function() {
+              $(this).parents(".own").clone().insertAfter("#" + id + "[data-id='" + dataid +"']").attr("id", (id)).attr("data-id", (dataid + 1)).find("input, select, textarea").each(function() {
                 $(this).parents(".own").find("a.remove").show();
                   var name = this.name || "";
                   var match = name.match(regex) || [];
@@ -121,6 +114,9 @@
                     }
                     if ($(this).filter(":radio").length > 0) {
                       $(this).prop('checked', false);
+                    }
+                    if ($(this).filter("textarea").length > 0) {
+                      $(this).val('');
                     }
                   }
               });
@@ -179,8 +175,10 @@
           <form class="form-horizontal add" method="post" enctype="multipart/form-data">
 
             <div class="page-header">
-              <a class="btn btn-small pull-right" href="/admin/{{ module }}">Cancel</a>
-              <button type="submit" name="save" class="btn btn-primary btn-small pull-right" style="margin-right:5px;"><i class="icon-pencil icon-white"></i> Save</button>
+              <div class="btn-group pull-right">
+                <button type="submit" name="save" class="btn btn-primary btn-small"><i class="icon-check icon-white"></i> Save</button>
+                <a class="btn btn-small" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
+              </div>
               <h1>
                 Add
                 <small>{{ module|title }}</small>
@@ -194,12 +192,12 @@
             {% if field.type == 'text' %}
               <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
-                <div class="controls">
+                <div class="controls controls-row">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
                   {% if field.prepend or field.append %}
                   <div class="{% if field.prepend %}input-prepend {% endif %}{% if field.append %}input-append{% endif %}">
                   {% endif %}
-                  {% if field.prepend %}<span class="add-on">{{ field.prepend }}</span>{% endif %}<input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>{% if field.append %}<span class="add-on">{{ field.append }}</span>{% endif %}
+                  {% if field.prepend %}<span class="add-on">{{ field.prepend }}</span>{% endif %}<input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %}{% if field.maxlength %} maxlength="[{{ field.maxlength }}]"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>{% if field.append %}<span class="add-on">{{ field.append }}</span>{% endif %}
                   {% if field.prepend or field.append %}
                   </div>
                   {% endif %}
@@ -237,7 +235,7 @@
                   <input type="hidden" id="{{ key }}" name="{{ module }}[type]" value="{{ module }}">
                   <input type="file" class="input-file input-xlarge{% if field.required %} required{% endif %}" accept="{{ field.validate }}" id="{{ key }}" name="{{ module }}[{{ key }}|{{ field.path }}|{{ field.accept }}]">
                   {% if field.help %}
-                  <span class="help-inline" style="margin-left:42px;">{{ field.help|raw }}</span>
+                  <span class="help-inline" style="margin-left:12px;">{{ field.help|raw }}</span>
                   {% endif %}
                   <br /><span class="label">Allowed file types: {{ field.accept }}</span>
                 </div>
@@ -247,7 +245,9 @@
               <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
               <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
               <div class="controls" id="colour{{ loop.index }}">
-                <input type="text" class="input-small colourpick{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]" value="#0088cc"><span class="add-on"><i style="background-color: #0088CC;"></i></span>
+                <div class="input-append">
+                  <input type="text" class="input-small colourpick{% if field.required %} required{% endif %}" id="{{ key }}" name="{{ module }}[{{ key }}]" value="#0088cc"><span class="add-on color"><i style="background-color: #0088CC;"></i></span>
+                </div>
                 {% if field.help %}
                 <span class="help-inline">{{ field.help|raw }}</span>
                 {% endif %}
@@ -255,7 +255,7 @@
             </div>
             {% elseif field.type == 'select' %}
               <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
-                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>                
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
                   <select id="{{ key }}" class="input-xlarge{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}]">
@@ -285,7 +285,7 @@
                   {% endif %}
                 </div>
               </div>
-            {% elseif field.type == 'order' %}
+              {% elseif field.type == 'order' %}
               <div class="control-group">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
@@ -301,6 +301,16 @@
                   {% endif %}
                 </div>
               </div>
+              {% elseif field.type == 'separator' %}
+              <div class="control-group">
+                <hr>
+                <div class="controls">
+                  <blockquote>
+                    {% if field.label %}<p>{{ field.label|raw }}</p>{% endif %}
+                    {% if field.text %}<small>{{ field.text|raw }}</small>{% endif %}
+                  </blockquote>
+                </div>
+              </div>
             {% endif %}
 
             {% endif %}
@@ -311,15 +321,11 @@
             {% for key, field in fields %}
             {% if field.type == 'foreignkey' %}
             {% if field.relation == 'own' %}
-              <div class="page-header">
-                <h1>
-                  <small>{{ key|slice(3, 100)|capitalize }}{% if field.required %} *{% endif %}</small>
-                </h1>
-              </div>
+              <legend>{{ field.label|capitalize }} <small class="pull-right" style="margin-right: 28px;">[{{ key|slice(3, 100)|capitalize }}]</small></legend>
               <div id="own{{ loop.index }}" class="own" data-id="{{ loop.index }}">
                 <div class="actions pull-right">
-                  <a class="btn btn-mini btn-primary clone"><i class="icon-plus-sign icon-white"></i> Add</a>
-                  <a class="btn btn-mini btn-primary remove"><i class="icon-remove-sign icon-white"></i> Remove</a>
+                  <a class="btn btn-small btn-link clone"><i class="icon-plus"></i> Add</a>
+                  <a class="btn btn-small btn-link remove"><i class="icon-minus"></i> Remove</a>
                 </div>
               {% for fkkey, fkfield in field.fields %}
                 {% if fkfield.type == 'text' %}
@@ -339,7 +345,7 @@
                     <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
                     <div class="controls">
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
-                      <textarea class="input-xlarge {% if fkfield.rich_editor %} textarea{% endif %}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if fkfield.readonly %} readonly{% endif %}></textarea>
+                      <textarea class="input-xlarge span8{% if fkfield.rich_editor %} textarea{% endif %}{% if fkfield.required %} required{% endif %}" rows="8" name="{{ module }}[{{ key }}][0][{{ fkkey }}]"{% if fkfield.readonly %} readonly{% endif %}></textarea>
                       {% if fkfield.help %}
                       <p class="help-block">{{ fkfield.help|raw }}</p>
                       {% endif %}
@@ -365,14 +371,14 @@
                       {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
                       <input type="file" class="input-file{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ key|slice(3, 100)|lower }}|{{ fkfield.path }}|{{ fkfield.accept }}|{{ fkkey|lower }}]">
                       {% if fkfield.help %}
-                      <span class="help-inline" style="margin-left:42px;">{{ fkfield.help|raw }}</span>
+                      <span class="help-inline" style="margin-left:12px;">{{ fkfield.help|raw }}</span>
                       {% endif %}
                       <br /><span class="label">Allowed file types: {{ fkfield.accept }}</span>
                     </div>
                   </div>
                 {% elseif fkfield.type == 'select' %}
                 <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
-                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>                
+                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
                   <div class="controls">
                     <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
                     {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
@@ -389,7 +395,7 @@
                 </div>
                 {% elseif fkfield.type == 'radio' %}
                 <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
-                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>                
+                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
                   <div class="controls">
                     <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
                     {% for item, key2 in fkfield.values %}
@@ -409,10 +415,8 @@
                   <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
                   <input type="hidden" name="{{ module }}[{{ key }}][0][{{ fkkey }}][0][type]" value="{{ fkkey|slice(6, 100)|lower }}">
                   <div class="controls" >
-                    <select{% if not fkfield.one %} multiple="multiple"{% endif %} name="{{ module }}[{{ key }}][0][{{ fkkey }}][0][id]" id="{{ key }}" class="input-xlarge{% if fkfield.required %} required{% endif %}">
-                    {% if fkfield.one %}
-                    <option value="">-- Select --</option>
-                    {% endif %}
+                    <select{% if not fkfield.one %} multiple="multiple"{% endif %} name="{{ module }}[{{ key }}][0][{{ fkkey }}][0][id]" id="{{ key }}" class="input-xlarge select2{% if fkfield.required %} required{% endif %}">
+                    <option></option>
                     {% for fkfield in fkfield.fields %}
                     <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                     {% endfor %}
@@ -428,21 +432,12 @@
               <hr>
               </div>
               {% elseif field.relation == 'shared' %}
-              <div class="page-header" data-type="{{ key }}">
-                <h1>
-                  <small>{{ field.label|capitalize }}</small>
-                </h1>
-              </div>
-              <div class="actions pull-right" data-type="{{ key }}">
-                  <a href="/admin/{{ key|slice(6, 100)|lower }}" class="btn btn-mini btn-primary" target="_blank"><i class="icon-plus-sign icon-white"></i> Add</a> 
-              </div>
+              <legend>{{ field.label|capitalize }}{% if field.required %} <small>*</small>{% endif %} <small class="pull-right" style="margin-right: 28px;"><a href="/admin/{{ key|slice(6, 100)|lower }}" target="_blank">[{{ key|slice(6, 100)|capitalize }}]</a></small></legend>
               <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}" class="input-xlarge{% if field.required %} required{% endif %}">
-                  {% if field.one %}
-                    <option value="">-- Select --</option>
-                  {% endif %}
+                  <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}" class="input-xlarge select2{% if field.required %} required{% endif %}">
+                    <option></option>
                   {% for fkfield in field.fields %}
                     <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                   {% endfor %}
@@ -457,10 +452,11 @@
               {% endfor %}
               <div class="form-actions">
                 {% if session.region %}<input type="hidden" id="region" name="{{ module }}[region]" value="{{ session.region }}">{% endif %}
-                
                 <input type="hidden" id="modulename" name="modulename" value="{{ module }}">
-                <button type="submit" name="save" class="btn btn-primary"><i class="icon-pencil icon-white"></i> Save</button>
-                <a class="btn" href="/admin/{{ module }}">Cancel</a>
+                <div class="btn-group">
+                  <button type="submit" name="save" class="btn btn-primary"><i class="icon-check icon-white"></i> Save</button>
+                  <a class="btn" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
+                </div>
               </div>
             </fieldset>
           </form>
