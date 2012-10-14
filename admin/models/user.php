@@ -21,15 +21,16 @@ class Model_User extends RedBean_SimpleModel {
 
 		  $fields['group']   = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'usergroup', 'one'=>true, 'selecttitle'=>'%title% (%area%)', 'label'=>'group', 'help'=>'', 'required'=>true);
 
-    // Settings
-    $fields['add']        = true;
-    $fields['edit']       = true;
-    $fields['delete']     = true;
     return $fields;
   }
 
   function settings() {
-    $dict = App::getSettings($this->fields());
+    // Settings
+    $settings['add']        = true;
+    $settings['edit']       = true;
+    $settings['delete']     = true;
+
+    $dict = App::getSettings($settings);
     return $dict;
   }
 

@@ -4,7 +4,7 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Redirect all other requests to index.php apart from forms!
+# Redirect all other requests to index.php apart from forms and cronjobs!
 RewriteCond %{REQUEST_URI} !^/cron/(.+)$
 RewriteCond %{REQUEST_URI} !^/download/(.+)$
 RewriteCond %{REQUEST_URI} !^/forms/(.+)$
@@ -26,7 +26,6 @@ RewriteRule !\.(js|css|gif|png|jpe?g|pdf|xml|oga|ogg|m4a|ogv|mp4|m4v|webm|svg|sv
 ### If you run a webserver other than apache, consider:
 ### github.com/paulirish/html5-boilerplate-server-configs
 ###
-
 
 
 # ----------------------------------------------------------------------

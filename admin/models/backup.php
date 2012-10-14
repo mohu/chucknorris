@@ -6,14 +6,6 @@ class Model_Backup extends RedBean_SimpleModel {
     // Add fields here
     $fields['file']       = array('type'=>'text', 'label'=>'file', 'max_length'=>'255', 'help'=>'');
     $fields['date']       = array('type'=>'text', 'label'=>'date', 'max_length'=>'255', 'help'=>'');
-    
-    // Settings
-    $fields['add']        = false;
-    $fields['edit']       = false;
-    $fields['delete']     = true;
-
-    // Cron
-    $fields['run']        = array('path'=>'/admin/core/backup.php', 'button'=>'Run backup', 'button_running'=>'Backing up...');
 
     return $fields;
   }
@@ -32,7 +24,15 @@ class Model_Backup extends RedBean_SimpleModel {
   }
 
   function settings() {
-    $dict = App::getSettings($this->fields());
+    // Settings
+    $settings['add']        = false;
+    $settings['edit']       = false;
+    $settings['delete']     = true;
+
+    // Cron
+    $settings['run']        = array('path'=>'/admin/core/backup.php', 'button'=>'Run backup', 'button_running'=>'Backing up...');
+
+    $dict = App::getSettings($settings);
     return $dict;
   }
 

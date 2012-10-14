@@ -10,18 +10,19 @@ class Model_Menuitem extends RedBean_SimpleModel {
     $fields['ordering']    = array('type'=>'order', 'label'=>'ordering', 'required'=>true);
     $fields['published']  = array('type'=>'radio', 'label'=>'publish?', 'max_length'=>'255', 'help'=>'', 'values'=>array('yes'=>1, 'no'=>0));
 
-    // Settings
-    $fields['add']        = false;
-    $fields['edit']       = true;
-    $fields['delete']     = true;
-
-    $fields['orderby']    = 'ordering';
-    $fields['order']      = 'asc';
     return $fields;
   }
 
   function settings() {
-    $dict = App::getSettings($this->fields());
+    // Settings
+    $settings['add']        = false;
+    $settings['edit']       = true;
+    $settings['delete']     = true;
+
+    $settings['orderby']    = 'ordering';
+    $settings['order']      = 'asc';
+
+    $dict = App::getSettings($settings);
     return $dict;
   }
 

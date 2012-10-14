@@ -6,16 +6,17 @@ class Model_Menu extends RedBean_SimpleModel {
     // Add fields here
     $fields['name']       = array('type'=>'text', 'label'=>'name', 'max_length'=>'255', 'help'=>'This is optional help text');
     $fields['menuitem']   = array('type'=>'foreignkey', 'label'=>'menu item', 'relation'=>'own', 'model'=>'menuitem', 'class'=>'Model_Menuitem');
-    
-    // Settings
-    $fields['add']        = true;
-    $fields['edit']       = true;
-    $fields['delete']     = false;
+
     return $fields;
   }
 
   function settings() {
-    $dict = App::getSettings($this->fields());
+    // Settings
+    $settings['add']        = true;
+    $settings['edit']       = true;
+    $settings['delete']     = false;
+
+    $dict = App::getSettings($settings);
     return $dict;
   }
 
