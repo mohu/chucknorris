@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-09-17 09:13:39 +0000
+# Generation Time: 2012-10-14 20:20:08 +0000
 # ************************************************************
 
 
@@ -118,18 +118,20 @@ CREATE TABLE `settings` (
   `twitter` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `facebook` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `pinterest` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `contact` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `sitename` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `analytics` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `debug` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 
-INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `contact`, `sitename`, `analytics`)
+INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `pinterest`, `contact`, `sitename`, `analytics`, `debug`)
 VALUES
-	(1,10,'',NULL,NULL,NULL,NULL,NULL);
+	(1,10,'','','','','',NULL,'',0);
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -176,7 +178,7 @@ LOCK TABLES `user` WRITE;
 
 INSERT INTO `user` (`id`, `username`, `name`, `email`, `password`, `salt`, `image`, `twitter`, `linkedin`, `position`)
 VALUES
-	(1,'admin','Rikki Pitt','rikki@studiomohu.com','2f666fa11a7b04199f462cbcbd98defc078cd171','r52vtrz6cgg8004080w84osww0scscs',NULL,'','','');
+	(1,'admin','Rikki Pitt','rikki@studiomohu.com','1338048162b39745c64bae53724a21e705b8fb88','95hefc22nl0k8g0s4wgwkcko4skgs0s',NULL,'','','');
 
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
