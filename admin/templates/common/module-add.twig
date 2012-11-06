@@ -2,10 +2,25 @@
         $(document).ready(function() {
 
           $.validator.setDefaults({ ignore: ''});
-          $(".select2").select2({
-            placeholder: "Click to select",
-            allowClear: true
-          });
+          function format(item) {
+            var image = $(item.element).data('image');
+            console.log(image);
+
+            if (image) {
+              return "<div class='clearfix'><img class='thumbnail pull-left' src='/" + image + "'>" + item.text + "</div>";
+            } else {
+              return item.text;
+            }
+          }
+          var initSelect2 = function () {
+            $(".select2").select2({
+              placeholder: "Click to select",
+              allowClear: true,
+              formatSelection: format,
+              formatResult: format
+            });
+          };
+          initSelect2();
 
           $("[rel=tooltip]").tooltip({title: 'Required',delay: { show: 100, hide: 500 }});
 
@@ -89,6 +104,8 @@
           });
 
           $("a.clone").live("click", function() {
+            // Destroy select2, re-initialise at end of clone
+            $(".select2").select2("destroy");
             var id = $(this).parents(".own").attr('id');
             var dataid = $(this).parents(".own").data('id');
               $(this).parents(".own").clone().insertAfter("#" + id + "[data-id='" + dataid +"']").attr("id", (id)).attr("data-id", (dataid + 1)).find("input, select, textarea").each(function() {
@@ -122,6 +139,7 @@
               });
               $(this).hide();
               updateDatepickers();
+              initSelect2();
           });
 
           $("a.remove").live("click", function() {
@@ -418,7 +436,7 @@
                     <select{% if not fkfield.one %} multiple="multiple"{% endif %} name="{{ module }}[{{ key }}][0][{{ fkkey }}][0][id]" id="{{ key }}" class="input-xlarge select2{% if fkfield.required %} required{% endif %}">
                     <option></option>
                     {% for fkfield in fkfield.fields %}
-                    <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
+                    <option class="bigdrop" value="{{ fkfield.id }}"{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                     {% endfor %}
                     </select>
                     {% if fkfield.help %}
@@ -439,7 +457,7 @@
                   <select{% if not field.one %} multiple="multiple"{% endif %} name="{{ key }}[]" id="{{ key }}" class="input-xlarge select2{% if field.required %} required{% endif %}">
                     <option></option>
                   {% for fkfield in field.fields %}
-                    <option value="{{ fkfield.id }}">{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
+                    <option class="bigdrop" value="{{ fkfield.id }}"{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                   {% endfor %}
                   </select>
                   {% if field.help %}

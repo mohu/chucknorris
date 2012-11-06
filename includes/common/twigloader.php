@@ -1,5 +1,5 @@
 <?php
-if (defined('ADMIN')) {
+if (defined('ADMIN') && !defined('FRONTEND')) {
 	$path = LOCAL_PATH . 'admin/templates';
 } else {
 	$path = 'templates';

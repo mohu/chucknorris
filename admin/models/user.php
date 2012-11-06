@@ -8,29 +8,21 @@ class Model_User extends RedBean_SimpleModel {
     $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true);
     $fields['name']       = array('type'=>'text', 'label'=>'name', 'help'=>'', 'required'=>true);
     $fields['email']      = array('type'=>'text', 'label'=>'email', 'help'=>'', 'required'=>true, 'validate'=>'email');
-    $fields['phone']      = array('type'=>'text', 'label'=>'phone', 'help'=>'');
     $fields['password']   = array('type'=>'text', 'label'=>'password', 'help'=>'', 'table_hide'=>true, 'required'=>true);
-    $fields['salt']       = array('type'=>'text', 'label'=>'salt', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
+    $fields['salt']       = array('type'=>'text', 'label'=>'salt', 'help'=>'', 'table_hide'=>true, 'readonly'=>true, 'onload'=>'hide');
+    $fields['signupdate']    = array('type'=>'text', 'label'=>'signup date', 'help'=>'', 'readonly'=>true);
 
-    $fields['separator2'] = array('type'=>'separator');
+    $fields['group']   = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'usergroup', 'one'=>true, 'selecttitle'=>'%title% (%area%)', 'label'=>'group', 'help'=>'', 'required'=>true);
 
-    $fields['oauth_uid']  = array('type'=>'text', 'label'=>'facebook', 'prepend'=>'OAuth uid', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
-    $fields['oauth_provider']  = array('type'=>'text', 'label'=>'facebook', 'prepend'=>'OAuth provider', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
-    $fields['twitter_oauth_token']  = array('type'=>'text', 'label'=>'twitter', 'prepend'=>'OAuth token', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
-    $fields['twitter_oauth_token_secret']  = array('type'=>'text', 'label'=>'twitter', 'prepend'=>'OAuth token secret', 'help'=>'', 'table_hide'=>true, 'readonly'=>true);
-
-		  $fields['group']   = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'usergroup', 'one'=>true, 'selecttitle'=>'%title% (%area%)', 'label'=>'group', 'help'=>'', 'required'=>true);
-
+    // Settings
+    $fields['add']        = true;
+    $fields['edit']       = true;
+    $fields['delete']     = true;
     return $fields;
   }
 
   function settings() {
-    // Settings
-    $settings['add']        = true;
-    $settings['edit']       = true;
-    $settings['delete']     = true;
-
-    $dict = App::getSettings($settings);
+    $dict = App::getSettings($this->fields());
     return $dict;
   }
 
@@ -77,10 +69,10 @@ class Model_User extends RedBean_SimpleModel {
         'password'    => $this->password,
       ));
     }
+
   }
 
   function after_update() {
-
     if (!$this->salt) {
       // Create unique salt if none exists
       $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
@@ -91,6 +83,13 @@ class Model_User extends RedBean_SimpleModel {
     if (!$sha1) {
       $user = R::load('user', $this->id);
       $user->password = sha1($this->password . $this->salt);
+      R::store($user);
+    }
+
+    if (!$this->signupdate) {
+      // Add signup date
+      $user = R::load('user', $this->id);
+      $user->signupdate = date("Y-m-d H:i:s");
       R::store($user);
     }
   }

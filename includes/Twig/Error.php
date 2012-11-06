@@ -108,8 +108,8 @@ class Twig_Error extends Exception
     /**
      * For PHP < 5.3.0, provides access to the getPrevious() method.
      *
-     * @param  string $method    The method name
-     * @param  array  $arguments The parameters to be passed to the method
+     * @param string $method    The method name
+     * @param array  $arguments The parameters to be passed to the method
      *
      * @return Exception The previous exception or null
      */
@@ -155,15 +155,15 @@ class Twig_Error extends Exception
         $template = null;
         foreach (debug_backtrace() as $trace) {
             if (isset($trace['object']) && $trace['object'] instanceof Twig_Template && 'Twig_Template' !== get_class($trace['object'])) {
-                $template = $trace['object'];
-
-                // update template filename
-                if (null === $this->filename) {
-                    $this->filename = $template->getTemplateName();
+                if (null === $this->filename || $this->filename == $trace['object']->getTemplateName()) {
+                    $template = $trace['object'];
                 }
-
-                break;
             }
+        }
+
+        // update template filename
+        if (null !== $template && null === $this->filename) {
+            $this->filename = $template->getTemplateName();
         }
 
         if (null === $template || $this->lineno > -1) {

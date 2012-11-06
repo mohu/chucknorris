@@ -1,2 +1,2 @@
 <?php
-echo $twig->render('404.twig', $dict);
+echo $twig->render('404.twig');

@@ -46,13 +46,13 @@ class App {
     $dict = array();
     $dict['session']  = App::loadSession();
     $dict['cms']      = array('name'=>'Chuck',
-                              'version'=>'0.5.0',
+                              'version'=>'0.6.0',
                               'dependencies'=>array('Bootstrap, from Twitter'=>'2.1.1',
                                                     'Glyphicons'=>'1.6',
-                                                    'RedBeanPHP'=>'3.3',
+                                                    'RedBeanPHP'=>R::getVersion(),
                                                     'Select2'=>'3.2',
                                                     'Swift Mailer'=>'4.2.1',
-                                                    'Twig'=>'1.8.3',)
+                                                    'Twig'=>'1.10.3',)
                               );
 
     $sitename         = R::getCell('SELECT sitename FROM settings');
@@ -257,16 +257,17 @@ class App {
    * Custom include function for view files
    * @static
    *
-   * @param      $view
+   * @param      $view_path
+   * @param      $function
    * @param bool $admin
    */
-  public static function includeView($view, $admin = false) {
-    global $dict, $module, $twig;
+  public static function includeView($view_path, $function, $admin = false) {
+    global $dict, $view, $twig;
 
-    if (!file_exists($view)) {
-      App::createView($view, $module, $admin);
+    if (!file_exists($view_path)) {
+      App::createView($view_path, $view, $admin);
     } else {
-      include_once($view);
+      include_once($view_path);
     }
   }
 
@@ -274,20 +275,20 @@ class App {
    * Creates basic views for admin and frontend if they do not exist
    * @static
    *
+   * @param $view_path
    * @param $view
-   * @param $module
    * @param $admin
    */
-  public static function createView($view, $module, $admin) {
+  public static function createView($view_path, $view, $admin) {
     // Strip all but letters and numbers and make lower case then upper case first letter in module name
-    $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $module));
+    $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $view));
     $module_upper = ucfirst($module_lower);
 
     if ($admin) {
 
       // Basic admin view file
       $file  = '<?php' . "\n";
-      $file .= 'App::requireModel(\'models/\' . $module . \'.php\', true);' . "\n";
+      $file .= 'App::includeModel(\'models/\' . $module . \'.php\', true);' . "\n";
       $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
       $file .= 'include_once \'common.php\';';
 
@@ -295,35 +296,43 @@ class App {
 
       // Basic frontend view file
       $file  = '<?php' . "\n";
-      $file .= 'App::requireModel(\'models/\' . $module . \'.php\', false);' . "\n";
-      $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
-      $file .= '$dict[$module] = $model->' . $module_lower . '();' . "\n\n";
-      $file .= 'echo $twig->render(\'' . $module_lower . '.twig\', $dict);';
+      $file  .= 'class View_' . $module_upper . ' {' . "\n\n";
+      $file  .= "\t\t" . 'function ' . $module_lower . '() {' . "\n";
+      $file  .= "\t\t\t\t" . 'global $twig, $dict;' . "\n";
+      $file  .= "\t\t\t\t" . '## Include models' . "\n";
+      $file  .= "\t\t\t\t" . 'App::includeModel(\'models/example.php\', \'example\');' . "\n\n";
+      $file  .= "\t\t\t\t" . '## Add to dictionary' . "\n";
+      $file  .= "\t\t\t\t" . '$dict[\'example\'] = App::initModel(\'example\');' . "\n\n";
+      $file  .= "\t\t\t\t" . '## Render template' . "\n";
+      $file  .= "\t\t\t\t" . 'echo $twig->render(\'home.twig\', $dict);' . "\n";
+      $file  .= "\t\t" . '}' . "\n\n";
+      $file  .= '}';
 
     }
 
-    $fp = fopen($view, 'w');
+    $fp = fopen($view_path, 'w');
     fwrite($fp, $file);
     fclose($fp);
-    chmod($view, 0664);
+    chmod($view_path, 0664);
 
-    App::includeView($view, $admin);
+    App::includeView('views/' . $view . '.php', $admin);
   }
 
   /**
    * Custom require_once function for model files
    * @static
    *
+   * @param      $model_path
    * @param      $model
    * @param bool $admin
    */
-  public static function requireModel($model, $admin = false) {
-    global $module;
+  public static function includeModel($model_path, $model, $admin = false) {
+    global $view;
 
-    if (!file_exists($model)) {
-      App::createModel($model, $module, $admin);
+    if (!file_exists($model_path)) {
+      App::createModel($model_path, $model, $view, $admin);
     } else {
-      require_once($model);
+      include_once($model_path);
     }
   }
 
@@ -331,20 +340,20 @@ class App {
    * Creates basic models for admin and frontend if they do not exist
    * @static
    *
+   * @param $model_path
    * @param $view
-   * @param $module
    * @param $admin
    */
-  public static function createModel($view, $module, $admin) {
+  public static function createModel($model_path, $model, $view, $admin) {
     // Strip all but letters and numbers and make lower case then upper case first letter in module name
-    $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $module));
-    $module_upper = ucfirst($module_lower);
+    $model_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $model));
+    $model_upper = ucfirst($model_lower);
 
     if ($admin) {
 
       // Basic admin view file
       $file  = '<?php' ."\n\n";
-      $file .= 'class Model_' . $module_upper . ' extends RedBean_SimpleModel {' . "\n\n";
+      $file .= 'class Model_' . $model_upper . ' extends RedBean_SimpleModel {' . "\n\n";
       $file .= "\t" . 'function fields() {' . "\n";
       $file .= "\t\t" . '// Add fields here' . "\n";
       $file .= "\t\t" . '$fields[\'title\']       = array(\'type\'=>\'text\', \'label\'=>\'title\', \'help\'=>\'This is optional help text\');' . "\n\n";
@@ -387,8 +396,8 @@ class App {
 
       // Basic frontend view file
       $file  = '<?php' . "\n";
-      $file .= 'class Model_' . $module_upper . ' extends RedBean_SimpleModel {' . "\n\n";
-      $file .= "\t" . 'function ' . $module_lower . '() {' . "\n";
+      $file .= 'class Model_' . $model_upper . ' {' . "\n\n";
+      $file .= "\t" . 'function ' . $model_lower . '() {' . "\n";
       $file .= "\t\t" . '$dict = array();' . "\n";
       $file .= "\t\t" . '// Add database calls here' . "\n";
       $file .= "\t\t" . 'return $dict;' . "\n";
@@ -397,12 +406,36 @@ class App {
 
     }
 
-    $fp = fopen($view, 'w');
+    $fp = fopen($model_path, 'w');
     fwrite($fp, $file);
     fclose($fp);
-    chmod($view, 0664);
+    chmod($model_path, 0664);
 
-    App::includeView($view, $admin);
+    App::includeView('views/' . $view . '.php', $admin);
+  }
+
+  /**
+   * Initialise models and return data
+   * @static
+   *
+   * @param $model
+   *
+   * @return mixed
+   */
+  public static function initModel($model) {
+    $class = 'Model_' . ucfirst($model);
+    if (class_exists($class)) {
+      $data = new $class;
+      return $data->$model;
+    }
+  }
+
+  public static function initView($view, $function) {
+    $class = 'View_' . ucfirst($view);
+    if (class_exists($class)) {
+      $data = new $class;
+      return $data->$function();
+    }
   }
 
   /**
@@ -418,7 +451,7 @@ class App {
   public static function view($module, $class, $region = null) {
     require_once realpath(dirname(__FILE__).'/..'). '/models/'.$module.'.php';
     $class = new $class;
-    $settings = App::getSettings($class->settings());
+    $settings = App::getSettings($class->fields());
 
     $orderby = $settings['orderby'];
     $order   = $settings['order'];
@@ -717,7 +750,7 @@ class App {
               $form[$name]['label']     = $field['label'];
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
-							       $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle'], $where);
+							       $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle'], $field['selectimage'], $where);
               $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
@@ -826,7 +859,7 @@ class App {
     $class = 'Model_' . ucfirst($module);
     $class = new $class;
 
-    $settings = App::getSettings($class->settings());
+    $settings = App::getSettings($class->fields());
     $orderby = $settings['orderby'];
 
     if ($orderby === 'ordering') {
@@ -878,7 +911,7 @@ class App {
  	 *
  	 * @return array|null
  	 */
-  public static function getShared($model, $select, $where = null) {
+  public static function getShared($model, $select, $image = null, $where = null) {
 
     $data = array();
 
@@ -893,6 +926,9 @@ class App {
       $i = 0;
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
+        if ($image) {
+          $data[$i]['selectimage'] = App::createSprintf($image, $row);
+        }
         $data[$i]['selecttitle'] = App::createSprintf($select, $row);
         $i++;
       }
@@ -947,7 +983,7 @@ class App {
               $form[$name]['label']     = $field['label'];
               $form[$name]['relation']  = $field['relation'];
               $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $where, $id);
+              $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $field['selectimage'], $where, $id);
               $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
               $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
               $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
@@ -1214,7 +1250,7 @@ class App {
             $array[$i][$key]['id']        = $data[$i]['id'];
             $array[$i][$key]['value']     = (isset($data[$i][$key])) ? $data[$i][$key] : null ;
             $array[$i][$key]['fields']    = array();
-            $array[$i][$key]['fields']    = App::getEditshared($model, $field['model'], $field['selecttitle'], $where, $data[$i]['id']);
+            $array[$i][$key]['fields']    = App::getEditshared($model, $field['model'], $field['selecttitle'], $field['selectimage'], $where, $data[$i]['id']);
             $array[$i][$key]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
             $array[$i][$key]['help']      = (isset($field['help'])) ? $field['help'] : null;
@@ -1239,7 +1275,7 @@ class App {
    *
    * @return array|null
    */
-  public static function getEditshared($parent, $model, $select, $where = null, $id) {
+  public static function getEditshared($parent, $model, $select, $image = null, $where = null, $id) {
 
     $data = null;
 
@@ -1265,6 +1301,9 @@ class App {
       foreach ($rows AS $row) {
         $data[$i]['id'] = $row['id'];
         $data[$i]['selecttitle'] = App::createSprintf($select, $row);
+        if ($image) {
+          $data[$i]['selectimage'] = App::createSprintf($image, $row);
+        }
         $data[$i]['selected'] = (in_array($row['id'], $selected)) ? true : false;
         $i++;
       }
@@ -1281,7 +1320,7 @@ class App {
    *
    * @return array
    */
-  public static function getSettings($settings) {
+  public static function getSettings($fields) {
       $dict = array();
 
       $dict['add']     = false;
@@ -1293,20 +1332,20 @@ class App {
 
       $dict['run']     = false;
 
-      if (isset($settings['add']) && $settings['add'] === true) {
+      if (isset($fields['add']) && $fields['add'] === true) {
         $dict['add']   = 'true';
-      } elseif (is_numeric($settings['add'])) {
-        $dict['add']   = $settings['add'];
+      } elseif (is_numeric($fields['add'])) {
+        $dict['add']   = $fields['add'];
       }
 
-      $dict['edit']    = (isset($settings['edit']) && $settings['edit'] == true) ? true : false;
-      $dict['delete']  = (isset($settings['delete']) && $settings['delete'] == true) ? true : false;
-      $dict['orderby'] = (isset($settings['orderby'])) ?  $settings['orderby'] : 'id';
-      $dict['order']   = (isset($settings['order'])) ?  strtolower($settings['order']) : 'asc';
-      $dict['run']['path'] = (isset($settings['run']['path'])) ?  $settings['run']['path'] : false;
+      $dict['edit']    = (isset($fields['edit']) && $fields['edit'] == true) ? true : false;
+      $dict['delete']  = (isset($fields['delete']) && $fields['delete'] == true) ? true : false;
+      $dict['orderby'] = (isset($fields['orderby'])) ?  $fields['orderby'] : 'id';
+      $dict['order']   = (isset($fields['order'])) ?  strtolower($fields['order']) : 'asc';
+      $dict['run']['path'] = (isset($fields['run']['path'])) ?  $fields['run']['path'] : false;
       if ($dict['run']['path']) {
-        $dict['run']['button']         = (isset($settings['run']['button'])) ?  $settings['run']['button'] : 'Run';
-        $dict['run']['button_running'] = (isset($settings['run']['button_running'])) ?  $settings['run']['button_running'] : 'Running...';
+        $dict['run']['button']         = (isset($fields['run']['button'])) ?  $fields['run']['button'] : 'Run';
+        $dict['run']['button_running'] = (isset($fields['run']['button_running'])) ?  $fields['run']['button_running'] : 'Running...';
       }
     return $dict;
   }
@@ -1428,7 +1467,7 @@ class App {
     $ownfields = null;
     $owninfo = null;
     // echo '<pre>' . print_r($_FILES, true) . '</pre>'; 
-		// echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+//		 echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
     require_once 'models/' . $module . '.php';
 
@@ -1526,7 +1565,6 @@ class App {
 
     foreach ($_POST as $key => $value) {
       if (strlen(strstr($key,'shared'))>0) {
-        unset($_POST[$key]);
         $key = strtolower(str_replace('shared', '', $key));
         $shared[$key] = $value;
       }
@@ -1667,7 +1705,6 @@ class App {
 
     foreach ($_POST as $key => $value) {
       if (strlen(strstr($key,'shared'))>0) {
-        unset($_POST[$key]);
         $key = strtolower(str_replace('shared', '', $key));
         $shared[$key] = $value;
       }

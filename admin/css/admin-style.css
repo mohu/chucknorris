@@ -51,7 +51,7 @@ i.move{opacity:.2;margin-top:2px}
 td[data-ordering]:hover i.move{opacity:.8;-webkit-transition:opacity .25s ease-in;-moz-transition:opacity .25s ease-in;-o-transition:opacity .25s ease-in;-webkit-transition:opacity .25s ease-in;-moz-transition:opacity .25s ease-in;-ms-transition:opacity .25s ease-in;-o-transition:opacity .25s ease-in;transition:opacity .25s ease-in}
 .lt-ie8 td[data-ordering]:hover i.move{filter:alpha(opacity=80)}
 .lt-ie9 td[data-ordering]:hover i.move{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80)}
-.input-append{display:block !important}
+.control-group.input-append{width:100%}
 .actions{margin-right:20px}
 span[rel="tooltip"]{border-bottom:1px dashed #ccc}
 .label-info.showmodal2{cursor:pointer}
@@ -63,3 +63,6 @@ span[rel="tooltip"]{border-bottom:1px dashed #ccc}
 i.help{opacity:.5;}
 .lt-ie8 i.help{filter:alpha(opacity=50)}
 .lt-ie9 i.help{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=50)}
+.bigdrop{max-height:80px;}
+.bigdrop img{width:40px;margin-right:5px}
+.select2-search-choice img{width:30px;margin-right:5px}

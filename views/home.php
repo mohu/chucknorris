@@ -1,9 +1,16 @@
 <?php
-App::requireModel('models/' . $module . '.php', false);
-$model  = new Model_Home();
+class View_Home {
 
-$dict[$module] = $model->home();
+		function home() {
+				global $twig, $dict;
+				## Include models
+				App::includeModel('models/example.php', 'example');
 
-echo $twig->render('home.twig', $dict);
+				## Add to dictionary
+				$dict['example'] = App::initModel('example');
 
-// echo '<pre style="color:#fff;">' . print_r($dict, true) . '</pre>';
+				## Render template
+				echo $twig->render('home.twig', $dict);
+		}
+
+}

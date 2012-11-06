@@ -10,7 +10,7 @@ if ($action == 'add') {
   $dict['fields']   = $model->add();
   $dict['groups']   = App::getGroups();
   App::renderTwig('module-add.twig', $dict);
- 
+
 /**
 * Edit view
 */

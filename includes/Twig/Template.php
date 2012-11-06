@@ -284,7 +284,7 @@ abstract class Twig_Template implements Twig_TemplateInterface
      * This method is for internal use only and should never be called
      * directly.
      *
-     * This method should not be overriden in a sub-class as this is an
+     * This method should not be overridden in a sub-class as this is an
      * implementation detail that has been introduced to optimize variable
      * access for versions of PHP before 5.4. This is not a way to override
      * the way to get a variable value.
@@ -304,7 +304,7 @@ abstract class Twig_Template implements Twig_TemplateInterface
                 return null;
             }
 
-            throw new Twig_Error_Runtime(sprintf('Variable "%s" does not exist', $item));
+            throw new Twig_Error_Runtime(sprintf('Variable "%s" does not exist', $item), -1, $this->getTemplateName());
         }
 
         return $context[$item];
@@ -326,7 +326,7 @@ abstract class Twig_Template implements Twig_TemplateInterface
      */
     protected function getAttribute($object, $item, array $arguments = array(), $type = Twig_TemplateInterface::ANY_CALL, $isDefinedTest = false, $ignoreStrictCheck = false)
     {
-        $item = (string) $item;
+        $item = ctype_digit((string) $item) ? (int) $item : (string) $item;
 
         // array
         if (Twig_TemplateInterface::METHOD_CALL !== $type) {
@@ -375,14 +375,6 @@ abstract class Twig_Template implements Twig_TemplateInterface
 
         // object property
         if (Twig_TemplateInterface::METHOD_CALL !== $type) {
-            /* apparently, this is not needed as this is already covered by the array_key_exists() call below
-            if (!isset(self::$cache[$class]['properties'])) {
-                foreach (get_object_vars($object) as $k => $v) {
-                    self::$cache[$class]['properties'][$k] = true;
-                }
-            }
-            */
-
             if (isset($object->$item) || array_key_exists($item, $object)) {
                 if ($isDefinedTest) {
                     return true;
@@ -432,7 +424,8 @@ abstract class Twig_Template implements Twig_TemplateInterface
 
         $ret = call_user_func_array(array($object, $method), $arguments);
 
-        // hack to be removed when macro calls are refactored
+        // useful when calling a template method from a template
+        // this is not supported but unfortunately heavily used in the Symfony profiler
         if ($object instanceof Twig_TemplateInterface) {
             return $ret === '' ? '' : new Twig_Markup($ret, $this->env->getCharset());
         }
