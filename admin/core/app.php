@@ -304,7 +304,7 @@ class App {
       $file  .= "\t\t\t\t" . '## Add to dictionary' . "\n";
       $file  .= "\t\t\t\t" . '$dict[\'example\'] = App::initModel(\'example\');' . "\n\n";
       $file  .= "\t\t\t\t" . '## Render template' . "\n";
-      $file  .= "\t\t\t\t" . 'echo $twig->render(\'home.twig\', $dict);' . "\n";
+      $file  .= "\t\t\t\t" . 'echo $twig->render(\'' . $view . '.twig\', $dict);' . "\n";
       $file  .= "\t\t" . '}' . "\n\n";
       $file  .= '}';
 

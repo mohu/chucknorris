@@ -5,6 +5,7 @@ foreach($valid_paths as $pattern => $callback) {
     ## Set global dictionary values
     $dict['view'] = $view = $callback[0];
     $dict['function'] = $function = $callback[1];
+    $dict['request'] = $request;
 
     ## Include view
     App::includeView('views/' . $view . '.php', $function);
