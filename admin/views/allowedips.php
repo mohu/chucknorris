@@ -1,5 +1,13 @@
 <?php
-require_once 'models/' . $module . '.php';
-$model  = new Model_Allowedips();
+class View_Allowedips {
 
-include_once 'common.php';
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/allowedips.php', 'allowedips', true);
+    $model = App::initAdminModel('allowedips');
+
+    include_once 'common.php';
+  }
+
+}

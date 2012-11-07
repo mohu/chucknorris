@@ -1,5 +1,13 @@
 <?php
-require_once 'models/' . $module . '.php';
-$model  = new Model_Tweets();
+class View_Tweets {
 
-include_once 'common.php';
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/tweets.php', 'tweets', true);
+    $model = App::initAdminModel('tweets');
+
+    include_once 'common.php';
+  }
+
+}

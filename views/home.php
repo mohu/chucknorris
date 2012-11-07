@@ -4,7 +4,7 @@ class View_Home {
 		function home() {
 				global $twig, $dict;
 				## Include models
-				App::includeModel('models/example.php', 'example');
+				$app->includeModel('models/example.php', 'example');
 
 				## Add to dictionary
 				$dict['example'] = App::initModel('example');

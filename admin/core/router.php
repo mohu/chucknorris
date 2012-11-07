@@ -7,15 +7,20 @@ if (!$app->checkSession()) {
 $current_path   = explode('/', $_SERVER["REQUEST_URI"]);
 
 if(!isset($current_path) || ($current_path[2] == 'index.php' || (isset($current_path[2]) && $current_path[2] == 'admin')) ) {
-  
+
   header("HTTP/1.0 301 Moved Permanently");
   header("Location: http://{$_SERVER["SERVER_NAME"]}/admin");
 
 } elseif(in_array($current_path[2], $valid_paths)) {
 
-  $module = $current_path[2];
-  $dict['module'] = $module;
-  $app->includeView('views/'.$current_path[2].'.php', true);
+  ## Set global dictionary values
+  $dict['module'] = $module = $view = $current_path[2];
+
+  ## Include view
+  $app->includeView('views/' . $view . '.php', 'admin', true);
+
+  ## Instantiate
+  $app->initView($view, 'admin'); exit;
 
 } elseif($current_path[2] == 'index.php' || ($current_path[2] == '') ) {
 

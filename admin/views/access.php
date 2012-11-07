@@ -1,5 +1,13 @@
 <?php
-App::requireModel('models/' . $module . '.php', true);
-$model  = new Model_Access();
+class View_Access {
 
-include_once 'common.php';
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/access.php', 'access', true);
+    $model = App::initAdminModel('access');
+
+    include_once 'common.php';
+  }
+
+}

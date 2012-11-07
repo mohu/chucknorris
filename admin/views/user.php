@@ -1,5 +1,13 @@
 <?php
-require_once 'models/' . $module . '.php';
-$model  = new Model_User();
+class View_User {
 
-include_once 'common.php';
+		function admin() {
+				global $dict;
+				## Include model
+				App::includeModel('models/user.php', 'user', true);
+				$model = App::initAdminModel('user');
+
+				include_once 'common.php';
+		}
+
+}

@@ -2,8 +2,6 @@
 class Model_User extends RedBean_SimpleModel {
 
   function fields() {
-    global $dict;
-    $usergroup = $dict['session']['grp'];
     // Add fields here
     $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true);
     $fields['name']       = array('type'=>'text', 'label'=>'name', 'help'=>'', 'required'=>true);

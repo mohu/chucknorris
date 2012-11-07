@@ -1,28 +1,36 @@
 <?php
-require_once 'models/backup.php';
-$model  = new Model_Backup();
+class View_Backup {
 
-$id     = (isset($_GET['id'])) ? $_GET['id'] : null;
-$action = (isset($_GET['action'])) ? $_GET['action'] : null;
+  function admin() {
+    global $twig, $dict;
+    ## Include model
+    App::includeModel('models/backup.php', 'backup', true);
+    $model = App::initAdminModel('backup');
 
-/**
-* Delete view
-*/
-if ($action == 'delete' && $id) {
+    $id     = (isset($_GET['id'])) ? $_GET['id'] : null;
+    $action = (isset($_GET['action'])) ? $_GET['action'] : null;
 
-  $dict['result']   = $model->trash($id);
-  $dict['data']     = $model->backup();
-  $dict['settings'] = $model->settings();
-  echo $twig->render( 'backup.twig', $dict);
+    /**
+     * Delete view
+     */
+    if ($action == 'delete' && $id) {
 
-/**
-* List view
-*/
-} else {
+      $dict['result']   = $model->trash($id);
+      $dict['data']     = $model->backup();
+      $dict['settings'] = $model->settings();
+      echo $twig->render( 'backup.twig', $dict);
 
-  $dict['data']       = $model->backup();
-  $dict['pagination'] = $model->count();
-  $dict['settings']   = $model->settings();
-  echo $twig->render( 'backup.twig', $dict);
+      /**
+       * List view
+       */
+    } else {
+
+      $dict['data']       = $model->backup();
+      $dict['pagination'] = $model->count();
+      $dict['settings']   = $model->settings();
+      echo $twig->render( 'backup.twig', $dict);
+
+    }
+  }
 
 }

@@ -288,9 +288,15 @@ class App {
 
       // Basic admin view file
       $file  = '<?php' . "\n";
-      $file .= 'App::includeModel(\'models/\' . $module . \'.php\', true);' . "\n";
-      $file .= '$model  = new Model_' . $module_upper . '();' . "\n\n";
-      $file .= 'include_once \'common.php\';';
+      $file .= 'class View_' . $module_upper . ' {' . "\n\n";
+      $file .= "\t\t" . 'function admin() {' . "\n";
+      $file .= "\t\t\t\t" . 'global $dict;' . "\n";
+      $file .= "\t\t\t\t" . '## Include model' . "\n";
+      $file .= "\t\t\t\t" . 'App::includeModel(\'models/' . $module_lower . '.php\', \'user\', true);' . "\n";
+      $file .= "\t\t\t\t" . '$model = App::initAdminModel(\'' . $module_lower . '\');' . "\n\n";
+      $file .= "\t\t\t\t" . 'include_once \'common.php\';' . "\n";
+      $file .= "\t\t" . '}' . "\n\n";
+      $file .= '}';
 
     } else {
 
@@ -351,7 +357,7 @@ class App {
 
     if ($admin) {
 
-      // Basic admin view file
+      // Basic admin model file
       $file  = '<?php' ."\n\n";
       $file .= 'class Model_' . $model_upper . ' extends RedBean_SimpleModel {' . "\n\n";
       $file .= "\t" . 'function fields() {' . "\n";
@@ -394,7 +400,7 @@ class App {
 
     } else {
 
-      // Basic frontend view file
+      // Basic frontend model file
       $file  = '<?php' . "\n";
       $file .= 'class Model_' . $model_upper . ' {' . "\n\n";
       $file .= "\t\t" . 'function ' . $model_lower . '() {' . "\n";
@@ -429,6 +435,21 @@ class App {
     if (class_exists($class)) {
       $data = new $class;
       return $data->$model();
+    }
+  }
+
+  /**
+   * Initialise admin models
+   * @static
+   *
+   * @param $model
+   *
+   * @return mixed
+   */
+  public static function initAdminModel($model) {
+    $class = 'Model_' . ucfirst($model);
+    if (class_exists($class)) {
+      return new $class;
     }
   }
 
