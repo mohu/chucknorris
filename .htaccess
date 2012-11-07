@@ -4,7 +4,7 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Redirect all other requests to index.php apart from forms and cronjobs!
+# Redirect all other requests to index.php apart from forms, download, and cronjobs!
 RewriteCond %{REQUEST_URI} !^/cron/(.+)$
 RewriteCond %{REQUEST_URI} !^/download/(.+)$
 RewriteCond %{REQUEST_URI} !^/forms/(.+)$

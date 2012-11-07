@@ -1,4 +1,5 @@
 <?php
+## Define valid URL paths here
 $valid_paths = array(
   // Home page
   '^/$' => array('home', 'home'),

@@ -1,7 +1,7 @@
 <?php
 ## Load core app
 require_once 'includes/apploader.php';
-## Get URLs
+## Get URL patterns
 require_once 'urls.php';
 ## Router
-include_once 'router.php';
+require_once 'router.php';

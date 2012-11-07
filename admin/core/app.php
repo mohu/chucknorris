@@ -397,11 +397,13 @@ class App {
       // Basic frontend view file
       $file  = '<?php' . "\n";
       $file .= 'class Model_' . $model_upper . ' {' . "\n\n";
-      $file .= "\t" . 'function ' . $model_lower . '() {' . "\n";
-      $file .= "\t\t" . '$dict = array();' . "\n";
-      $file .= "\t\t" . '// Add database calls here' . "\n";
-      $file .= "\t\t" . 'return $dict;' . "\n";
-      $file .= "\t" . '}' . "\n";
+      $file .= "\t\t" . 'function ' . $model_lower . '() {' . "\n";
+      $file .= "\t\t\t\t" . 'global $request;' . "\n";
+      $file .= "\t\t\t\t" . '## Start model dictionary' . "\n";
+      $file .= "\t\t\t\t" . '$dict = array();' . "\n";
+      $file .= "\t\t\t\t" . '## Add database calls here' . "\n";
+      $file .= "\t\t\t\t" . 'return $dict;' . "\n";
+      $file .= "\t\t" . '}' . "\n\n";
       $file .= '}';
 
     }
@@ -426,7 +428,7 @@ class App {
     $class = 'Model_' . ucfirst($model);
     if (class_exists($class)) {
       $data = new $class;
-      return $data->$model;
+      return $data->$model();
     }
   }
 
