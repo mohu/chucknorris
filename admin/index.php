@@ -2,22 +2,8 @@
 require_once 'core/app.php';
 $app = new App();
 
-$valid_paths  = array( // Core
-                       'access',
-                       'allowedips',
-                       'backup',
-                       'login',
-                       'logout',
-                       'menu',
-                       'menuitem',
-                       'search',
-                       'settings',
-                       'system-info',
-                       'tweets',
-                       'user',
-                       'usergroup',
-                       // Custom
-                      );
+## Get URL patterns
+require_once 'core/urls.php';
 
 $dict            = $app->beginDict();
 $dict['menu']    = $app->loadMenu(array('Menus'               => array( 'menu' => 'Menu', 'menuitem' => 'Menu item', ),

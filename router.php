@@ -8,10 +8,10 @@ foreach($valid_paths as $pattern => $callback) {
     $dict['request'] = $request;
 
     ## Include view
-    App::includeView('views/' . $view . '.php', $function);
+    $app->includeView('views/' . $view . '.php', $function);
 
     ## Instantiate
-    App::initView($view, $function); exit;
+    $app->initView($view, $function); exit;
   }
 }
 

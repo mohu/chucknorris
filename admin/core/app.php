@@ -265,7 +265,7 @@ class App {
     global $dict, $view, $twig;
 
     if (!file_exists($view_path)) {
-      App::createView($view_path, $view, $admin);
+      App::createView($view_path, $view, $function, $admin);
     } else {
       include_once($view_path);
     }
@@ -279,7 +279,7 @@ class App {
    * @param $view
    * @param $admin
    */
-  public static function createView($view_path, $view, $admin) {
+  public static function createView($view_path, $view, $function, $admin) {
     // Strip all but letters and numbers and make lower case then upper case first letter in module name
     $module_lower = strtolower(preg_replace('/[^a-z0-9]/i','', $view));
     $module_upper = ucfirst($module_lower);
@@ -297,7 +297,7 @@ class App {
       // Basic frontend view file
       $file  = '<?php' . "\n";
       $file  .= 'class View_' . $module_upper . ' {' . "\n\n";
-      $file  .= "\t\t" . 'function ' . $module_lower . '() {' . "\n";
+      $file  .= "\t\t" . 'function ' . $function . '() {' . "\n";
       $file  .= "\t\t\t\t" . 'global $twig, $dict;' . "\n";
       $file  .= "\t\t\t\t" . '## Include models' . "\n";
       $file  .= "\t\t\t\t" . 'App::includeModel(\'models/example.php\', \'example\');' . "\n\n";
@@ -315,7 +315,7 @@ class App {
     fclose($fp);
     chmod($view_path, 0664);
 
-    App::includeView('views/' . $view . '.php', $admin);
+    App::includeView('views/' . $view . '.php', $function, $admin);
   }
 
   /**
