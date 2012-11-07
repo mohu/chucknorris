@@ -1,5 +1,13 @@
 <?php
-App::requireModel('models/' . $module . '.php', true);
-$model  = new Model_Usergroup();
+  class View_Usergroup {
 
-include_once 'common.php';
+    function admin() {
+      global $dict;
+      ## Include model
+      App::includeModel('models/usergroup.php', 'usergroup', true);
+      $model = App::initAdminModel('usergroup');
+
+      include_once 'common.php';
+    }
+
+  }

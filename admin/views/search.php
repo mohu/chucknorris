@@ -1,9 +1,15 @@
 <?php
-App::requireModel('models/' . $module . '.php', true);
-$model  = new Model_Search();
+class View_Search {
 
-$dict['search'] = $model->globalSearch();
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/search.php', 'search', true);
+    $model = App::initAdminModel('search');
 
-App::renderTwig('search.twig', $dict);
+    $dict['search'] = $model->globalSearch();
 
-//echo '<pre>' . print_r($dict, true) . '</pre>';
+    App::renderTwig('search.twig', $dict);
+  }
+
+}

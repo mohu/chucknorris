@@ -1,5 +1,13 @@
 <?php
-App::requireModel('models/' . $module . '.php', true);
-$model  = new Model_Menu();
+class View_Menu {
 
-include_once 'common.php';
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/menu.php', 'menu', true);
+    $model = App::initAdminModel('menu');
+
+    include_once 'common.php';
+  }
+
+}

@@ -1,7 +1,15 @@
 <?php
-require_once 'models/settings.php';
-$model  = new Model_Settings();
+class View_Settings {
 
-$dict['settings'] = $model->globalSettings();
+  function admin() {
+    global $dict;
+    ## Include model
+    App::includeModel('models/settings.php', 'settings', true);
+    $model = App::initAdminModel('settings');
 
-App::renderTwig('settings.twig', $dict);
+    $dict['settings'] = $model->globalSettings();
+
+    App::renderTwig('settings.twig', $dict);
+  }
+
+}

@@ -11,7 +11,7 @@ $valid_paths  = array(
   'menuitem',
   'search',
   'settings',
-  'system-info',
+  'systeminfo',
   'tweets',
   'user',
   'usergroup',
