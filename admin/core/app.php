@@ -304,7 +304,7 @@ class App {
       $file  = '<?php' . "\n";
       $file  .= 'class View_' . $module_upper . ' {' . "\n\n";
       $file  .= "\t\t" . 'function ' . $function . '() {' . "\n";
-      $file  .= "\t\t\t\t" . 'global $twig, $dict;' . "\n";
+      $file  .= "\t\t\t\t" . 'global $twig, $dict, $request;' . "\n";
       $file  .= "\t\t\t\t" . '## Include models' . "\n";
       $file  .= "\t\t\t\t" . 'App::includeModel(\'models/example.php\', \'example\');' . "\n\n";
       $file  .= "\t\t\t\t" . '## Add to dictionary' . "\n";
@@ -403,8 +403,7 @@ class App {
       // Basic frontend model file
       $file  = '<?php' . "\n";
       $file .= 'class Model_' . $model_upper . ' {' . "\n\n";
-      $file .= "\t\t" . 'function ' . $model_lower . '() {' . "\n";
-      $file .= "\t\t\t\t" . 'global $request;' . "\n";
+      $file .= "\t\t" . 'function ' . $model_lower . '($request) {' . "\n";
       $file .= "\t\t\t\t" . '## Start model dictionary' . "\n";
       $file .= "\t\t\t\t" . '$dict = array();' . "\n";
       $file .= "\t\t\t\t" . '## Add database calls here' . "\n";
@@ -426,15 +425,16 @@ class App {
    * Initialise models and return data
    * @static
    *
-   * @param $model
+   * @param      $model
+   * @param null $args
    *
    * @return mixed
    */
-  public static function initModel($model) {
+  public static function initModel($model, $args = null) {
     $class = 'Model_' . ucfirst($model);
     if (class_exists($class)) {
       $data = new $class;
-      return $data->$model();
+      return $data->$model($args);
     }
   }
 
@@ -453,6 +453,15 @@ class App {
     }
   }
 
+  /**
+   * Initialise view
+   * @static
+   *
+   * @param $view
+   * @param $function
+   *
+   * @return mixed
+   */
   public static function initView($view, $function) {
     $class = 'View_' . ucfirst($view);
     if (class_exists($class)) {

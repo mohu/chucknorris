@@ -1,10 +1,36 @@
         <script type="text/javascript">
         $(document).ready(function() {
+          changes = false;
+
+          $('input').each(function() {
+            // Save current value of element
+            $(this).data('oldVal', $(this).val());
+
+            // Look for changes in the value
+            $(this).bind("propertychange keyup input paste", function(event){
+              // If value has changed...
+              if ($(this).data('oldVal') != $(this).val()) {
+                // Updated stored value
+                $(this).data('oldVal', $(this).val());
+
+                // Do action
+                changes = true;
+              }
+            });
+          });
+
+          $('.cancel-edit').click(function(e) {
+            console.log('cancel');
+            if (changes) {
+              console.log('You have unsaved changes!');
+              // Todo display a warning to the user notifying them of their unsaved changes
+              // e.preventDefault();
+            }
+          });
 
           $.validator.setDefaults({ ignore: ''});
           function format(item) {
             var image = $(item.element).data('image');
-            console.log(image);
 
             if (image) {
               return "<div class='clearfix'><img class='thumbnail pull-left' src='/" + image + "'>" + item.text + "</div>";
@@ -231,7 +257,7 @@
             <div class="page-header">
               <div class="btn-group pull-right">
                 <button type="submit" name="update" class="btn btn-primary btn-small"><i class="icon-check icon-white"></i> Save</button>
-                <a class="btn btn-small" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
+                <a class="btn btn-small cancel-edit" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
               </div>
               <h1>
                 Edit
@@ -721,7 +747,7 @@
                 <div class="btn-group pull-left">
                   <button type="submit" name="update" class="btn btn-primary"><i class="icon-check icon-white"></i> Save</button>
                   <button type="submit" name="apply" class="btn"><i class="icon-edit"></i> Save and continue editing</button>
-                  <a class="btn" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
+                  <a class="btn cancel-edit" href="/admin/{{ module }}"><i class="icon-ban-circle"></i> Cancel</a>
                 </div>
                 {% if settings.delete %}
                 <a class="btn pull-right btn-danger delete" href="#" id="{{ fields.id }}"><i class="icon-trash icon-white"></i> Delete</a>

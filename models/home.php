@@ -1,8 +1,7 @@
 <?php
 class Model_Home {
 
-  function home() {
-    global $request;
+  function home($args) {
     ## Start model dictionary
     $dict = array();
     ## Add database calls here
