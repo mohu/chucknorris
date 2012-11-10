@@ -6,10 +6,6 @@ class Model_Search extends RedBean_SimpleModel {
 		// Add fields here
 		$fields['title']       = array('type'=>'text', 'label'=>'title', 'help'=>'This is optional help text');
 
-		// Settings
-		$fields['add']        = true;
-		$fields['edit']       = true;
-		$fields['delete']     = true;
 		return $fields;
 	}
 

@@ -9,23 +9,22 @@ class Model_Tweets extends RedBean_SimpleModel {
     $fields['text']       = array('type'=>'text', 'label'=>'tweet', 'max_length'=>'255', 'help'=>'', 'readonly'=>true);
     $fields['published']  = array('type'=>'radio', 'label'=>'publish?', 'max_length'=>'255', 'help'=>'', 'values'=>array('yes'=>1, 'no'=>0));
 
-    // Settings
-    $fields['add']        = false;
-    $fields['edit']       = true;
-    $fields['delete']     = true;
-
-    $fields['orderby']    = 'id';
-    $fields['order']      = 'desc';
-
-    // Cron
-    $fields['run']        = array('path'=>'/cron/twitter-cron.php', 'button'=>'Fetch', 'button_running'=>'Fetching...');
-
     return $fields;
   }
 
   function settings() {
-    $dict = App::getSettings($this->fields());
-    return $dict;
+    // Settings
+    $settings['add']        = false;
+    $settings['edit']       = true;
+    $settings['delete']     = true;
+
+    $settings['orderby']    = 'id';
+    $settings['order']      = 'desc';
+
+    // Cron
+    $settings['run']        = array('path'=>'/cron/twitter-cron.php', 'button'=>'Fetch', 'button_running'=>'Fetching...');
+
+    return $settings;
   }
 
   function view() {

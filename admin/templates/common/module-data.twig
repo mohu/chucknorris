@@ -159,6 +159,12 @@
           });
           {% endif %}
 
+          $('a.settings').on('click', function(event) {
+            event.preventDefault();
+            $('#settings.modal').modal({show: true, backdrop: 'static'});
+            console.log('Settings');
+          });
+
           $(".thumbnail").live("click", function(e) {
             e.preventDefault();
             $(this).next('.modal').modal('show');
@@ -247,11 +253,12 @@
 
         <div class="span9">
           <div class="page-header">
+            <a class="btn btn-small pull-right settings"><i class="icon-cog"></i></a>
             {% if settings.add == 'true' or settings.add > pagination.total %}
-            <a class="btn btn-small pull-right" href="/admin/{{ module }}/add"><i class="icon-plus"></i> Add new</a>
+            <a class="btn btn-small pull-right" href="/admin/{{ module }}/add" style="margin-right:5px;"><i class="icon-plus"></i> Add new</a>
             {% endif %}
             {% if settings.run.path %}
-            <a class="btn btn-small pull-right run"{% if settings.add == 'true' or settings.add > pagination.total %} style="margin-right:5px;"{% endif %}><i class="icon-refresh"></i> {{ settings.run.button }}</a>
+            <a class="btn btn-small pull-right run" style="margin-right:5px;"><i class="icon-refresh"></i> {{ settings.run.button }}</a>
             {% endif %}
             <h1>
               View
@@ -353,5 +360,16 @@
           </div>
         </div>
         {% endif %}
+
+          <div class="modal fade hide" id="settings">
+            <div class="modal-header">
+              <a class="close" data-dismiss="modal">×</a>
+              <h3>Settings <small>{{ module|title }}</small></h3>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <a href="#" class="btn btn-primary" data-dismiss="modal">Close</a>
+            </div>
+          </div>
 
         </div>

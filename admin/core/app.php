@@ -483,7 +483,7 @@ class App {
   public static function view($module, $class, $region = null) {
     require_once realpath(dirname(__FILE__).'/..'). '/models/'.$module.'.php';
     $class = new $class;
-    $settings = App::getSettings($class->fields());
+    $settings = App::getSettings($class->settings());
 
     $orderby = $settings['orderby'];
     $order   = $settings['order'];
@@ -891,7 +891,7 @@ class App {
     $class = 'Model_' . ucfirst($module);
     $class = new $class;
 
-    $settings = App::getSettings($class->fields());
+    $settings = App::getSettings($class->settings());
     $orderby = $settings['orderby'];
 
     if ($orderby === 'ordering') {
@@ -1352,7 +1352,7 @@ class App {
    *
    * @return array
    */
-  public static function getSettings($fields) {
+  public static function getSettings($settings) {
       $dict = array();
 
       $dict['add']     = false;
@@ -1364,20 +1364,20 @@ class App {
 
       $dict['run']     = false;
 
-      if (isset($fields['add']) && $fields['add'] === true) {
+      if (isset($settings['add']) && $settings['add'] === true) {
         $dict['add']   = 'true';
-      } elseif (is_numeric($fields['add'])) {
-        $dict['add']   = $fields['add'];
+      } elseif (is_numeric($settings['add'])) {
+        $dict['add']   = $settings['add'];
       }
 
-      $dict['edit']    = (isset($fields['edit']) && $fields['edit'] == true) ? true : false;
-      $dict['delete']  = (isset($fields['delete']) && $fields['delete'] == true) ? true : false;
-      $dict['orderby'] = (isset($fields['orderby'])) ?  $fields['orderby'] : 'id';
-      $dict['order']   = (isset($fields['order'])) ?  strtolower($fields['order']) : 'asc';
-      $dict['run']['path'] = (isset($fields['run']['path'])) ?  $fields['run']['path'] : false;
+      $dict['edit']    = (isset($settings['edit']) && $settings['edit'] == true) ? true : false;
+      $dict['delete']  = (isset($settings['delete']) && $settings['delete'] == true) ? true : false;
+      $dict['orderby'] = (isset($settings['orderby'])) ?  $settings['orderby'] : 'id';
+      $dict['order']   = (isset($settings['order'])) ?  strtolower($settings['order']) : 'asc';
+      $dict['run']['path'] = (isset($settings['run']['path'])) ?  $settings['run']['path'] : false;
       if ($dict['run']['path']) {
-        $dict['run']['button']         = (isset($fields['run']['button'])) ?  $fields['run']['button'] : 'Run';
-        $dict['run']['button_running'] = (isset($fields['run']['button_running'])) ?  $fields['run']['button_running'] : 'Running...';
+        $dict['run']['button']         = (isset($settings['run']['button'])) ?  $settings['run']['button'] : 'Run';
+        $dict['run']['button_running'] = (isset($settings['run']['button_running'])) ?  $settings['run']['button_running'] : 'Running...';
       }
     return $dict;
   }

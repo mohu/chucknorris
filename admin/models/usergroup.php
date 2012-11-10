@@ -10,16 +10,16 @@ class Model_Usergroup extends RedBean_SimpleModel {
 
 		$fields['paths']       = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'access', 'selecttitle'=>'%path%', 'label'=>'paths', 'help'=>'<strong>Super administrators have full access to all areas by default</strong><br /><br />');
 
-		// Settings
-		$fields['add']        = false;
-		$fields['edit']       = true;
-		$fields['delete']     = false;
 		return $fields;
 	}
 
 	function settings() {
-		$dict = App::getSettings($this->fields());
-		return $dict;
+   // Settings
+   $settings['add']        = false;
+   $settings['edit']       = true;
+   $settings['delete']     = false;
+
+   return $settings;
 	}
 
 	function view() {
