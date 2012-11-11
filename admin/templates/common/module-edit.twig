@@ -171,7 +171,7 @@
 
           $('#delete-confirm a.delete-confirm').click(function() {
             var id = $(this).data('id');
-            window.location = '/admin/{{ module }}/delete/' + id;
+            window.location = '/admin/{{ module }}/delete/' + id + '?start={{ pagination.start }}';
           });
           {% endif %}
 

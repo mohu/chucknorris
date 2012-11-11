@@ -118,7 +118,7 @@
 
           $('#table > tbody > tr > td:not(:last-child)').filter(function(index){ return $('.thumbnail', this).length == 0; }).click(function() {
             var id = $(this).parent('tr').data('id');
-            $(location).attr("href", "/admin/{{ module }}/edit/"+id+"?start={{ pagination.start }}");
+            $(location).attr("href", "/admin/{{ module }}/edit/" + id + "?start={{ pagination.start }}");
           });
 
           $('a.delete').click(function() {
@@ -135,11 +135,11 @@
 
           $('#delete-confirm a.delete-confirm').click(function() {
             var id = $(this).data('id');
-            window.location = '/admin/{{ module }}/delete/' + id;
+            window.location = '/admin/{{ module }}/delete/' + id + '?start={{ pagination.start }}';
           });
 
           $('#delete-result').bind('closed', function () {
-            window.location = '/admin/{{ module }}';
+            window.location = '/admin/{{ module }}/?start={{ pagination.start }}';
           });
 
           {% if settings.run.path %}
@@ -364,11 +364,23 @@
           <div class="modal fade hide" id="settings">
             <div class="modal-header">
               <a class="close" data-dismiss="modal">×</a>
-              <h3>Settings <small>{{ module|title }}</small></h3>
+              <h3>Parameters <small>{{ module|title }}</small></h3>
             </div>
-            <div class="modal-body"></div>
+            <div class="modal-body">
+              <h4>Global parameters for this model</h4>
+              <p>Coming soon...</p>
+              {#<form>#}
+                {#<div class="control-group">#}
+                  {#<label class="control-label">Test</label>#}
+                  {#<div class="controls">#}
+                    {#<input type="text">#}
+                  {#</div>#}
+                {#</div>#}
+              {#</form>#}
+            </div>
             <div class="modal-footer">
-              <a href="#" class="btn btn-primary" data-dismiss="modal">Close</a>
+              <button type="submit" class="btn btn-primary">Save</button>
+              <a href="#" class="btn" data-dismiss="modal">Close</a>
             </div>
           </div>
 

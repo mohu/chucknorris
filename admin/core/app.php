@@ -221,7 +221,7 @@ class App {
   }
 
   /**
-   * Custom Twig template rendered
+   * Custom Twig template rendered for admin area
    * @static
    *
    * @param $template
@@ -229,13 +229,13 @@ class App {
    */
   public static function renderTwig($template, $dict) {
     global $twig;
-		if (App::checkAccess($dict['session']['userid'], $template)) {
-    	if (empty($GLOBALS['bufferederrors'])) {
-      	echo $twig->render($template, $dict);
-    	}
-		} else {
-			echo $twig->render('not-allowed.twig', $dict);
-		}
+    if (App::checkAccess($dict['session']['userid'], $template)) {
+       if (empty($GLOBALS['bufferederrors'])) {
+         echo $twig->render($template, $dict);
+       }
+    } else {
+     echo $twig->render('not-allowed.twig', $dict);
+    }
   }
 
 	public static function checkAccess($id, $template) {
@@ -754,131 +754,134 @@ class App {
   public static function buildForm($fields) {
     $form = array();
 
-    foreach($fields as $key => $field) {
+    if ($fields) {
 
-      if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
+      foreach($fields as $key => $field) {
 
-        if ($field['type'] == 'foreignkey') {
+        if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
 
-            if ($field['relation'] == 'own') { // One to many
+          if ($field['type'] == 'foreignkey') {
 
-              $name = $field['relation'].ucfirst($field['model']);
+              if ($field['relation'] == 'own') { // One to many
 
-              $form[$name]              = array();
-              $form[$name]['type']      = $field['type'];
-              $form[$name]['label']     = $field['label'];
-              $form[$name]['relation']  = $field['relation'];
-              $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getFields($field['model'], $field['class']);
+                $name = $field['relation'].ucfirst($field['model']);
 
-            } elseif ($field['relation'] == 'shared') { // Many to many
+                $form[$name]              = array();
+                $form[$name]['type']      = $field['type'];
+                $form[$name]['label']     = $field['label'];
+                $form[$name]['relation']  = $field['relation'];
+                $form[$name]['fields']    = array();
+                $form[$name]['fields']    = App::getFields($field['model'], $field['class']);
 
-              $name = $field['relation'].ucfirst($field['model']);
+              } elseif ($field['relation'] == 'shared') { // Many to many
 
-              $where = (isset($field['where'])) ? $field['where'] : null;
+                $name = $field['relation'].ucfirst($field['model']);
 
-              $form[$name]              = array();
-              $form[$name]['type']      = $field['type'];
-              $form[$name]['label']     = $field['label'];
-              $form[$name]['relation']  = $field['relation'];
-              $form[$name]['fields']    = array();
-							       $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle'], $field['selectimage'], $where);
-              $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
-              $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
-              $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
-              $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
+                $where = (isset($field['where'])) ? $field['where'] : null;
 
+                $form[$name]              = array();
+                $form[$name]['type']      = $field['type'];
+                $form[$name]['label']     = $field['label'];
+                $form[$name]['relation']  = $field['relation'];
+                $form[$name]['fields']    = array();
+                $form[$name]['fields']    = App::getShared($field['model'], $field['selecttitle'], $field['selectimage'], $where);
+                $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
+                $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
+                $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
+                $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
+
+              }
+
+          } elseif ($field['type'] == 'file') { // File fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['path']       = $field['path'];
+            $form[$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'select') { // File fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'radio') { // Radio fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'order') { // Order field
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = App::orderValues();
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+
+          } elseif ($field['type'] == 'textarea') { // Textarea fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['rich_editor']= true;
+            if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
+              $form[$key]['rich_editor'] = true;
+            } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
+              $form[$key]['rich_editor'] = false;
             }
-        
-        } elseif ($field['type'] == 'file') { // File fields
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['path']       = $field['path'];
-          $form[$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+          } elseif ($field['type'] == 'separator') { // Separator field
 
-        } elseif ($field['type'] == 'select') { // File fields
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['text']       = $field['text'];
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+          } else { // Own fields
 
-        } elseif ($field['type'] == 'radio') { // Radio fields
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
+            $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
+            $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
+            $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
-         $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-
-        } elseif ($field['type'] == 'order') { // Order field
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = App::orderValues();
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-
-        } elseif ($field['type'] == 'textarea') { // Textarea fields
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['maxlength'] = (isset($field['maxlength'])) ? $field['maxlength'] : null;
-          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['rich_editor']= true;
-          if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
-            $form[$key]['rich_editor'] = true;
-          } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
-            $form[$key]['rich_editor'] = false;
           }
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-
-        } elseif ($field['type'] == 'separator') { // Separator field
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['text']       = $field['text'];
-
-        } else { // Own fields
-        
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
-          $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
-          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
-          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
-          $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-        
         }
       }
     }
@@ -982,137 +985,140 @@ class App {
     $data = R::load($module, $id);
     $data = R::exportAll($data, true);
 
-    $form = array();
-    $form['id'] = $id;
-    $form['start'] = (isset($_GET['start'])) ? $_GET['start'] : 0;
+    if ($fields) {
 
-    //echo '<pre>' . print_r ($fields, true ) . '</pre.'; exit;
+      $form = array();
+      $form['id'] = $id;
+      $form['start'] = (isset($_GET['start'])) ? $_GET['start'] : 0;
 
-    foreach($fields as $key => $field) {
+      //echo '<pre>' . print_r ($fields, true ) . '</pre.'; exit;
 
-      if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
+      foreach($fields as $key => $field) {
 
-        if ($field['type'] == 'foreignkey') {
+        if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
 
-            if ($field['relation'] == 'own') { // One to many
+          if ($field['type'] == 'foreignkey') {
 
-              $name = $field['relation'].ucfirst($field['model']);
+              if ($field['relation'] == 'own') { // One to many
 
-              $form[$name]              = array();
-              $form[$name]['type']      = $field['type'];
-              $form[$name]['label']     = $field['label'];
-              $form[$name]['relation']  = $field['relation'];
-              $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getEditfields($module, $field['model'], $field['class'], $id);
+                $name = $field['relation'].ucfirst($field['model']);
 
-            } elseif ($field['relation'] == 'shared') { // Many to many
+                $form[$name]              = array();
+                $form[$name]['type']      = $field['type'];
+                $form[$name]['label']     = $field['label'];
+                $form[$name]['relation']  = $field['relation'];
+                $form[$name]['fields']    = array();
+                $form[$name]['fields']    = App::getEditfields($module, $field['model'], $field['class'], $id);
 
-              $name = $field['relation'].ucfirst($field['model']);
-              $where = (isset($field['where'])) ? $field['where'] : null;
+              } elseif ($field['relation'] == 'shared') { // Many to many
 
-              $form[$name]              = array();
-              $form[$name]['type']      = $field['type'];
-              $form[$name]['label']     = $field['label'];
-              $form[$name]['relation']  = $field['relation'];
-              $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $field['selectimage'], $where, $id);
-              $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
-              $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
-              $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
-              $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
+                $name = $field['relation'].ucfirst($field['model']);
+                $where = (isset($field['where'])) ? $field['where'] : null;
 
+                $form[$name]              = array();
+                $form[$name]['type']      = $field['type'];
+                $form[$name]['label']     = $field['label'];
+                $form[$name]['relation']  = $field['relation'];
+                $form[$name]['fields']    = array();
+                $form[$name]['fields']    = App::getEditshared($module, $field['model'], $field['selecttitle'], $field['selectimage'], $where, $id);
+                $form[$name]['required']  = (isset($field['required']) && $field['required'] === true) ? true : false;
+                $form[$name]['one']       = (isset($field['one']) && $field['one'] === true) ? true : false;
+                $form[$name]['help']      = (isset($field['help'])) ? $field['help'] : null;
+                $form[$name]['onload']    = (isset($field['onload'])) ? $field['onload'] : null;
+
+              }
+
+          } elseif ($field['type'] == 'file') { // File fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['path']       = (isset($field['path'])) ? $field['path'] : false;
+            $form[$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['isimage']    = (isset($data[0][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[0][$key]))) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'select') { // File fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'radio') { // Radio fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'order') { // Order field
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = App::orderValues();
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+
+          } elseif ($field['type'] == 'textarea') { // Textarea fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['rich_editor']= true;
+            if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
+              $form[$key]['rich_editor'] = true;
+            } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
+              $form[$key]['rich_editor'] = false;
             }
-        
-        } elseif ($field['type'] == 'file') { // File fields
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['path']       = (isset($field['path'])) ? $field['path'] : false;
-          $form[$key]['accept']     = (isset($field['accept'])) ? $field['accept'] : 'gif, jpg, jpeg, png';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['validate']   = (isset($field['accept'])) ? $field['accept'] : 'gif,jpg,jpeg,png';
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['isimage']    = (isset($data[0][$key]) && is_array(@getimagesize(LOCAL_PATH . $data[0][$key]))) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+          } elseif ($field['type'] == 'separator') { // Separator field
 
-        } elseif ($field['type'] == 'select') { // File fields
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['text']       = $field['text'];
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+          } else { // Own fields
 
-        } elseif ($field['type'] == 'radio') { // Radio fields
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
+            $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
+            $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
+            $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-					     $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
-          $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-
-        } elseif ($field['type'] == 'order') { // Order field
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['values']     = App::orderValues();
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-
-        } elseif ($field['type'] == 'textarea') { // Textarea fields
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
-          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['rich_editor']= true;
-          if (isset($field['rich_editor']) && $field['rich_editor'] === true) {
-            $form[$key]['rich_editor'] = true;
-          } elseif (isset($field['rich_editor']) && $field['rich_editor'] === false) {
-            $form[$key]['rich_editor'] = false;
           }
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-
-        } elseif ($field['type'] == 'separator') { // Separator field
-
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['text']       = $field['text'];
-
-        } else { // Own fields
-        
-          $form[$key] = array();
-          $form[$key]['type']       = $field['type'];
-          $form[$key]['label']      = $field['label'];
-          $form[$key]['append']     = (isset($field['append'])) ? $field['append'] : null;
-          $form[$key]['prepend']    = (isset($field['prepend'])) ? $field['prepend'] : null;
-          $form[$key]['maxlength']  = (isset($field['maxlength'])) ? $field['maxlength'] : null;
-          $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
-          $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
-          $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
-          $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
-          $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
-          $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-          $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
-
         }
       }
     }
@@ -1128,25 +1134,28 @@ class App {
   public static function buildEditformownfields($fields) {
     $form = array();
 
-    foreach($fields as $key => $field) {
+    if ($fields) {
 
-      if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
+      foreach($fields as $key => $field) {
 
-        if ($field['type'] == 'foreignkey') {
+        if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run') {
 
-            if ($field['relation'] == 'own') { // One to many
+          if ($field['type'] == 'foreignkey') {
 
-              $name = $field['relation'].ucfirst($field['model']);
+              if ($field['relation'] == 'own') { // One to many
 
-              $form[$name]              = array();
-              $form[$name]['type']      = $field['type'];
-              $form[$name]['label']     = $field['label'];
-              $form[$name]['relation']  = $field['relation'];
-              $form[$name]['fields']    = array();
-              $form[$name]['fields']    = App::getFields($field['model'], $field['class']);
+                $name = $field['relation'].ucfirst($field['model']);
 
-            }
-        
+                $form[$name]              = array();
+                $form[$name]['type']      = $field['type'];
+                $form[$name]['label']     = $field['label'];
+                $form[$name]['relation']  = $field['relation'];
+                $form[$name]['fields']    = array();
+                $form[$name]['fields']    = App::getFields($field['model'], $field['class']);
+
+              }
+
+          }
         }
       }
     }
