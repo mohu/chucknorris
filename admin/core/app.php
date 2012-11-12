@@ -133,6 +133,10 @@ class App {
    * @return array
    */
   public static function globalSearch() {
+    $session = App::loadSession();
+
+    $id = $session['userid'];
+
     $dict = array();
     if (isset($_POST["search"]) && ($_POST["search"] != "")) {
       $query = $_POST["search"];
@@ -141,24 +145,30 @@ class App {
 
       $tables = R::$writer->getTables();
 
+      $usergroup = R::getCell('SELECT usergroup_id FROM user_usergroup WHERE user_id = ' . $id);
+      $access_paths = json_decode(R::getCell('SELECT paths FROM usergroup WHERE id = ' . $usergroup));
+
       $i = 0;
       foreach ($tables as $table) {
-        $columns = R::$writer->getColumns($table);
-        if($columns) {
-          $sql = 'SELECT * FROM `' . $table . '` WHERE ';
-          $j = 0;
-          foreach ($columns as $column => $type) {
-            $sql .= '`' . $column . '` LIKE :query';
-            if ($j + 1 != count($columns)) {
-              $sql .= ' OR ';
-            } else {
-              $sql .= '';
+        ## Check if usergroup has access to view this table, grant super administrators access by default
+        if (in_array($table, $access_paths) || $usergroup == 1) {
+          $columns = R::$writer->getColumns($table);
+          if($columns) {
+            $sql = 'SELECT * FROM `' . $table . '` WHERE ';
+            $j = 0;
+            foreach ($columns as $column => $type) {
+              $sql .= '`' . $column . '` LIKE :query';
+              if ($j + 1 != count($columns)) {
+                $sql .= ' OR ';
+              } else {
+                $sql .= '';
+              }
+              $j++;
             }
-            $j++;
-          }
-          $results = R::getAll($sql, array(':query'=>"%$query%"));
-          if ($results) {
-            $dict['results'][$table] = $results;
+            $results = R::getAll($sql, array(':query'=>"%$query%"));
+            if ($results) {
+              $dict['results'][$table] = $results;
+            }
           }
         }
         $i++;
