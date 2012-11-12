@@ -5,7 +5,9 @@ class View_Backup {
     global $twig, $dict;
     ## Include model
     App::includeModel('models/backup.php', 'backup', true);
+    ## Initialise model
     $model = App::initAdminModel('backup');
+    ## Initialise custom model function - view/delete
 
     $id     = (isset($_GET['id'])) ? $_GET['id'] : null;
     $action = (isset($_GET['action'])) ? $_GET['action'] : null;

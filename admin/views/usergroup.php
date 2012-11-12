@@ -5,9 +5,10 @@
       global $dict;
       ## Include model
       App::includeModel('models/usergroup.php', 'usergroup', true);
+      ## Initialise model
       $model = App::initAdminModel('usergroup');
-
-      include_once 'common.php';
+      ## Initialise default model function - view/add/edit/delete
+      App::initAdminCommon($model);
     }
 
   }

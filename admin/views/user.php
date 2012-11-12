@@ -5,9 +5,10 @@ class View_User {
 				global $dict;
 				## Include model
 				App::includeModel('models/user.php', 'user', true);
+    ## Initialise model
 				$model = App::initAdminModel('user');
-
-				include_once 'common.php';
+    ## Initialise default model function - view/add/edit/delete
+				App::initAdminCommon($model);
 		}
 
 }

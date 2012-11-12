@@ -262,7 +262,7 @@ class App {
    * @param bool $admin
    */
   public static function includeView($view_path, $function, $admin = false) {
-    global $dict, $view, $twig;
+    global $view;
 
     if (!file_exists($view_path)) {
       App::createView($view_path, $view, $function, $admin);
@@ -292,9 +292,11 @@ class App {
       $file .= "\t\t" . 'function admin() {' . "\n";
       $file .= "\t\t\t\t" . 'global $dict;' . "\n";
       $file .= "\t\t\t\t" . '## Include model' . "\n";
-      $file .= "\t\t\t\t" . 'App::includeModel(\'models/' . $module_lower . '.php\', \'user\', true);' . "\n";
-      $file .= "\t\t\t\t" . '$model = App::initAdminModel(\'' . $module_lower . '\');' . "\n\n";
-      $file .= "\t\t\t\t" . 'include_once \'common.php\';' . "\n";
+      $file .= "\t\t\t\t" . 'App::includeModel(\'models/' . $module_lower . '.php\', \'' . $module_lower . '\', true);' . "\n";
+      $file .= "\t\t\t\t" . '## Initialise model' . "\n";
+      $file .= "\t\t\t\t" . '$model = App::initAdminModel(\'' . $module_lower . '\');' . "\n";
+      $file .= "\t\t\t\t" . '## Initialise default model function - view/add/edit/delete' . "\n";
+      $file .= "\t\t\t\t" . 'App::initAdminCommon($model);' . "\n";
       $file .= "\t\t" . '}' . "\n\n";
       $file .= '}';
 
@@ -358,44 +360,45 @@ class App {
     if ($admin) {
 
       // Basic admin model file
-      $file  = '<?php' ."\n\n";
+      $file  = '<?php' ."\n";
       $file .= 'class Model_' . $model_upper . ' extends RedBean_SimpleModel {' . "\n\n";
-      $file .= "\t" . 'function fields() {' . "\n";
-      $file .= "\t\t" . '// Add fields here' . "\n";
-      $file .= "\t\t" . '$fields[\'title\']       = array(\'type\'=>\'text\', \'label\'=>\'title\', \'help\'=>\'This is optional help text\');' . "\n\n";
-      $file .= "\t\t" . '// Settings' . "\n";
-      $file .= "\t\t" . '$fields[\'add\']        = true;' . "\n";
-      $file .= "\t\t" . '$fields[\'edit\']       = true;' . "\n";
-      $file .= "\t\t" . '$fields[\'delete\']     = true;' . "\n";
-      $file .= "\t\t" . 'return $fields;' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" .'function settings() {' . "\n";
-      $file .= "\t\t" . '$dict = App::getSettings($this->fields());' . "\n";
-      $file .= "\t\t" . 'return $dict;' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" .'function view() {' . "\n";
-      $file .= "\t\t" . 'global $module;' . "\n";
-      $file .= "\t\t" . '$dict = App::view($module, __CLASS__); // Region optional' . "\n";
-      $file .= "\t\t" . 'return $dict;' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" .'function count() {' . "\n";
-      $file .= "\t\t" . 'global $module;' . "\n";
-      $file .= "\t\t" . '$dict = App::count($module); // Region optional' . "\n";
-      $file .= "\t\t" . 'return $dict;' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" .'function add() {' . "\n";
-      $file .= "\t\t" . 'return App::buildForm($this->fields());' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" .'function edit($id) {' . "\n";
-      $file .= "\t\t" . 'global $module;' . "\n";
-      $file .= "\t\t" . 'sanitize($id);' . "\n";
-      $file .= "\t\t" . 'return App::buildEditform($this->fields(), $module, $id);' . "\n";
-      $file .= "\t" .'}' . "\n\n";
-      $file .= "\t" . 'function trash($id) {' . "\n";
-      $file .= "\t\t" . 'global $module;' . "\n";
-      $file .= "\t\t" . 'sanitize($id);' . "\n";
-      $file .= "\t\t" . 'return App::trash($id, $module);' . "\n";
-      $file .= "\t" . '}' . "\n";
+      $file .= "\t\t"     . 'function fields() {' . "\n";
+      $file .= "\t\t\t\t" . '// Add fields here' . "\n";
+      $file .= "\t\t\t\t" . '$fields[\'title\']       = array(\'type\'=>\'text\', \'label\'=>\'title\', \'help\'=>\'This is optional help text\');' . "\n\n";
+      $file .= "\t\t\t\t" . 'return $fields;' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     .'function settings() {' . "\n";
+      $file .= "\t\t\t\t" . '// Settings' . "\n";
+      $file .= "\t\t\t\t" . '$settings[\'add\']        = true;' . "\n";
+      $file .= "\t\t\t\t" . '$settings[\'edit\']       = true;' . "\n";
+      $file .= "\t\t\t\t" . '$settings[\'delete\']     = true;' . "\n\n";
+      $file .= "\t\t\t\t" . '$settings[\'orderby\']    = \'id\';' . "\n";
+      $file .= "\t\t\t\t" . '$settings[\'order\']      = \'desc\';' . "\n";
+      $file .= "\t\t\t\t" . 'return $settings;' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     .'function view() {' . "\n";
+      $file .= "\t\t\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t\t\t" . '$dict = App::view($module, __CLASS__); // Region optional' . "\n";
+      $file .= "\t\t\t\t" . 'return $dict;' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     .'function count() {' . "\n";
+      $file .= "\t\t\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t\t\t" . '$dict = App::count($module); // Region optional' . "\n";
+      $file .= "\t\t\t\t" . 'return $dict;' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     .'function add() {' . "\n";
+      $file .= "\t\t\t\t" . 'return App::buildForm($this->fields());' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     .'function edit($id) {' . "\n";
+      $file .= "\t\t\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t\t\t" . 'sanitize($id);' . "\n";
+      $file .= "\t\t\t\t" . 'return App::buildEditform($this->fields(), $module, $id);' . "\n";
+      $file .= "\t\t"     .'}' . "\n\n";
+      $file .= "\t\t"     . 'function trash($id) {' . "\n";
+      $file .= "\t\t\t\t" . 'global $module;' . "\n";
+      $file .= "\t\t\t\t" . 'sanitize($id);' . "\n";
+      $file .= "\t\t\t\t" . 'return App::trash($id, $module);' . "\n";
+      $file .= "\t\t"     . '}' . "\n";
       $file .= '}';
 
     } else {
@@ -418,7 +421,7 @@ class App {
     fclose($fp);
     chmod($model_path, 0664);
 
-    App::includeView('views/' . $view . '.php', $admin);
+    App::includeView('views/' . $view . '.php', $view, $admin);
   }
 
   /**
@@ -451,6 +454,68 @@ class App {
     if (class_exists($class)) {
       return new $class;
     }
+  }
+
+  public static function initAdminCommon($model) {
+    global $dict, $view;
+    ## Re-include and initialise if just auto-generated
+    if (empty($model)) App::includeModel('models/' . $view . '.php', $view, true); $model = App::initAdminModel($view);
+
+    $id     = (isset($_GET['id'])) ? $_GET['id'] : null;
+    $action = (isset($_GET['action'])) ? $_GET['action'] : null;
+
+    /**
+     * Add view
+     */
+    if ($action == 'add') {
+
+      $dict['fields']   = $model->add();
+      $dict['groups']   = App::getGroups();
+      if ($dict['fields']) {
+        App::renderTwig('module-add.twig', $dict);
+      } else {
+        // Render template to show that no fields added to model
+      }
+
+      /**
+       * Edit view
+       */
+    } elseif ($action == 'edit' && $id > 0) {
+
+      $dict['fields']       = $model->edit($id);
+      $dict['o2mstructure'] = App::buildEditformownfields($model->fields());
+      $dict['settings']     = App::getSettings($model->settings());
+      $dict['groups']       = App::getGroups();
+      $dict['pagination']   = $model->count();
+      if ($dict['fields']) {
+        App::renderTwig('module-edit.twig', $dict);
+      } else {
+        // Render template to show that no fields added to model
+      }
+
+      /**
+       * Delete view
+       */
+    } elseif ($action == 'delete' && $id) {
+
+      $dict['result']     = $model->trash($id);
+      $dict['data']       = $model->view();
+      $dict['pagination'] = $model->count();
+      $dict['settings']   = App::getSettings($model->settings());
+      App::renderTwig('module.twig', $dict);
+
+      /**
+       * List view
+       */
+    } else {
+
+      $dict['data']       = $model->view();
+      $dict['pagination'] = $model->count();
+      $dict['settings']   = App::getSettings($model->settings());
+      App::renderTwig('module.twig', $dict);
+
+    }
+    //echo '<pre>' . print_r($dict, true) . '</pre>';
   }
 
   /**
@@ -805,7 +870,18 @@ class App {
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          } elseif ($field['type'] == 'select') { // File fields
+          } elseif ($field['type'] == 'select') { // Select fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'multiselect') { // Multi-select fields
 
             $form[$key] = array();
             $form[$key]['type']       = $field['type'];
@@ -826,7 +902,7 @@ class App {
             $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
-           $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
           } elseif ($field['type'] == 'order') { // Order field
@@ -1042,7 +1118,7 @@ class App {
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          } elseif ($field['type'] == 'select') { // File fields
+          } elseif ($field['type'] == 'select') { // Select fields
 
             $form[$key] = array();
             $form[$key]['type']       = $field['type'];
@@ -1050,6 +1126,17 @@ class App {
             $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'multiselect') { // Multi-select fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? json_decode($data[0][$key]) : null;
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
@@ -1193,8 +1280,9 @@ class App {
         // echo '<pre>'.print_r($field, true) . '</pre>';
 
         if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
-          if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select'&&
-              $field['type'] != 'radio' && $field['type'] != 'textarea' && $field['type'] != 'separator') {
+          if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select' &&
+              $field['type'] != 'multiselect' && $field['type'] != 'radio' && $field['type'] != 'textarea' &&
+              $field['type'] != 'separator') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
@@ -1226,7 +1314,19 @@ class App {
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
-          } elseif ($field['type'] == 'select') { // File fields
+          } elseif ($field['type'] == 'select') { // Select fields
+
+            $array[$i][$key] = array();
+            $array[$i][$key]['type']       = $field['type'];
+            $array[$i][$key]['label']      = $field['label'];
+            $array[$i][$key]['id']         = $data[$i]['id'];
+            $array[$i][$key]['value']      = $data[$i][$key];
+            $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'multiselect') { // Multi-select fields
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
@@ -1507,10 +1607,23 @@ class App {
     $module = $_POST['modulename'];
     $ownfields = null;
     $owninfo = null;
-    // echo '<pre>' . print_r($_FILES, true) . '</pre>'; 
-//		 echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+    // echo '<pre>' . print_r($_FILES, true) . '</pre>';
+		  // echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
-    require_once 'models/' . $module . '.php';
+    $this->includeModel('models/' . $module . '.php', $module, true);
+    ## Initialise model
+    $model = $this->initAdminModel($module);
+    $fields = $model->fields();
+
+    ## Detect multiselects in order to json_encode
+    foreach ($fields as $field => $params) {
+      if (strcasecmp($params['type'], 'multiselect') == 0) {
+        ## Replace array with JSON encoded field for database
+        echo $_POST[$module][$field] = json_encode($_POST[$module][$field]);
+      }
+    }
+
+    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     if ($_FILES) {
       $_FILES = App::organiseFiles($_FILES, $module);
@@ -1633,6 +1746,7 @@ class App {
    * @param $_POST
    */
   public function update($POST) {
+    global $valid_paths;
     require_once realpath(dirname(__FILE__).'/../..'). '/includes/common/imageupload.php';
     $_POST = sanitize($POST);
     $_FILES = sanitize($_FILES);
@@ -1641,9 +1755,20 @@ class App {
     $ownfields = null;
     $owninfo = null;
 
-    require_once 'models/' . $module . '.php';
+    $this->includeModel('models/' . $module . '.php', $module, true);
+    ## Initialise model
+    $model = $this->initAdminModel($module);
+    $fields = $model->fields();
 
-//		 echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
+    ## Detect multiselects in order to json_encode
+    foreach ($fields as $field => $params) {
+      if (strcasecmp($params['type'], 'multiselect') == 0) {
+        ## Replace array with JSON encoded field for database
+        $_POST[$module][$field] = json_encode($_POST[$module][$field]);
+      }
+    }
+
+//		  echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     if (isset($_POST['removeimages'])) {
       App::removeImages($_POST['removeimages']);

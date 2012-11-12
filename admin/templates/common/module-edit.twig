@@ -350,6 +350,21 @@
                   {% endif %}
                 </div>
               </div>
+            {% elseif field.type == 'multiselect' %}
+              <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                  <select id="{{ key }}" class="input-xlarge select2{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}][]" multiple="multiple">
+                    {% for item, key in field.values %}
+                    <option value="{{ key }}"{% if key in field.value %} selected{% endif %}>{{ item|capitalize }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if field.help %}
+                  <span class="help-inline"><i class="icon-info-sign help"></i> {{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
             {% elseif field.type == 'radio' %}
               <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>

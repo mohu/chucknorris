@@ -5,9 +5,10 @@ class View_Allowedips {
     global $dict;
     ## Include model
     App::includeModel('models/allowedips.php', 'allowedips', true);
+    ## Initialise model
     $model = App::initAdminModel('allowedips');
-
-    include_once 'common.php';
+    ## Initialise default model function - view/add/edit/delete
+    App::initAdminCommon($model);
   }
 
 }
