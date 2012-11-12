@@ -238,20 +238,20 @@ class App {
     }
   }
 
-	public static function checkAccess($id, $template) {
-		global $module;
-		$usergroup = R::getCell('SELECT usergroup_id FROM user_usergroup WHERE user_id = ' . $id);
-		if ($usergroup == 1) return true; // Return true for super administrators
+  public static function checkAccess($id, $template) {
+    global $module;
+    $usergroup = R::getCell('SELECT usergroup_id FROM user_usergroup WHERE user_id = ' . $id);
+    if ($usergroup == 1) return true; // Return true for super administrators
 
-		$access_paths = R::getAll('SELECT a.path FROM access a INNER JOIN access_usergroup ug ON a.id = ug.access_id AND ug.usergroup_id = ' . $usergroup);
+    $access_paths = json_decode(R::getCell('SELECT paths FROM usergroup WHERE id = ' . $usergroup));
 
-		$paths = array();
-		foreach ($access_paths as $path) {
-			$paths[] = $path['path'];
-		}
-		if (in_array($module, $paths)) return true;
-		return false;
-	}
+    $paths = array();
+    foreach ($access_paths as $path) {
+      $paths[] = $path;
+    }
+    if (in_array($module, $paths)) return true;
+    return false;
+  }
 
   /**
    * Custom include function for view files
