@@ -369,11 +369,27 @@
               <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
                 <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
                 <div class="controls">
-                  <input type="hidden" name="{{ module }}[{{ key }}][type]" value="{{ key|slice(3, 100)|lower }}">
                   <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
                   {% for item, key2 in field.values %}
                   <label class="radio{% if field.inline %} inline{% endif %}">
                     <input type="radio" class="{{ key }}{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}]" value="{{ key2 }}"{% if key2 == field.value and field.value is not null %} checked{% endif %}{% if field.readonly %} disabled{% endif %}>
+                    {{ item|capitalize }}
+                  </label>
+                  {% endfor %}
+                  {% if field.readonly %}<input type="hidden" class="{{ key }}" name="{{ module }}[{{ key }}]" value="{{ field.value }}">{% endif %}
+                  {% if field.help %}
+                  <span class="help-{% if field.inline %}block{% else %}inline{% endif %}"><i class="icon-info-sign help"></i> {{ field.help|raw }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% elseif field.type == 'checkbox' %}
+              <div class="control-group{% if field.onload == 'hide' %} hide{% endif %}" data-type="{{ key }}">
+                <label class="control-label" for="{{ key }}">{% if field.required %}<span rel="tooltip">{% endif %}{{ field.label|capitalize }}{% if field.required %}</span>{% endif %}</label>
+                <div class="controls">
+                  <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                  {% for item, key2 in field.values %}
+                  <label class="checkbox{% if field.inline %} inline{% endif %}">
+                    <input type="checkbox" class="{{ key }}{% if field.required %} required{% endif %}" name="{{ module }}[{{ key }}][]" value="{{ key2 }}"{% if key2 in field.value and field.value is not null %} checked{% endif %}{% if field.readonly %} disabled{% endif %}>
                     {{ item|capitalize }}
                   </label>
                   {% endfor %}

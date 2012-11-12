@@ -475,6 +475,7 @@ class App {
         App::renderTwig('module-add.twig', $dict);
       } else {
         // Render template to show that no fields added to model
+        App::renderTwig('module-error.twig', $dict);
       }
 
       /**
@@ -491,6 +492,7 @@ class App {
         App::renderTwig('module-edit.twig', $dict);
       } else {
         // Render template to show that no fields added to model
+        App::renderTwig('module-error.twig', $dict);
       }
 
       /**
@@ -905,6 +907,19 @@ class App {
             $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
+          } elseif ($field['type'] == 'checkbox') { // Checkbox fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
           } elseif ($field['type'] == 'order') { // Order field
 
             $form[$key] = array();
@@ -1153,6 +1168,19 @@ class App {
             $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
             $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
+          } elseif ($field['type'] == 'checkbox') { // Checkbox fields
+
+            $form[$key] = array();
+            $form[$key]['type']       = $field['type'];
+            $form[$key]['label']      = $field['label'];
+            $form[$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $form[$key]['value']      = (isset($data[0][$key])) ? json_decode($data[0][$key]) : null;
+            $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $form[$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $form[$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
           } elseif ($field['type'] == 'order') { // Order field
 
             $form[$key] = array();
@@ -1281,8 +1309,8 @@ class App {
 
         if ($key != 'add' && $key != 'edit' && $key != 'delete' && $key != 'run' && $key != 'orderby' && $key != 'order') {
           if ($field['type'] != 'foreignkey' && $field['type'] != 'file' && $field['type'] != 'select' &&
-              $field['type'] != 'multiselect' && $field['type'] != 'radio' && $field['type'] != 'textarea' &&
-              $field['type'] != 'separator') {
+              $field['type'] != 'multiselect' && $field['type'] != 'radio' && $field['type'] != 'checkbox' &&
+              $field['type'] != 'textarea' && $field['type'] != 'separator') {
 
             $array[$i][$key] = array();
             $array[$i][$key]['type']       = $field['type'];
@@ -1608,20 +1636,22 @@ class App {
     $ownfields = null;
     $owninfo = null;
     // echo '<pre>' . print_r($_FILES, true) . '</pre>';
-		  // echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
+//		   echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
     $this->includeModel('models/' . $module . '.php', $module, true);
     ## Initialise model
     $model = $this->initAdminModel($module);
     $fields = $model->fields();
 
-    ## Detect multiselects in order to json_encode
+    ## Detect multiselects and checkboxes in order to json_encode
     foreach ($fields as $field => $params) {
-      if (strcasecmp($params['type'], 'multiselect') == 0) {
+      if (strcasecmp($params['type'], 'multiselect') == 0 or strcasecmp($params['type'], 'checkbox') == 0) {
         ## Replace array with JSON encoded field for database
         $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
       }
     }
+
+//    echo '<pre>' . print_r($_POST, true) . '</pre>';exit;
 
     if ($_FILES) {
       $_FILES = App::organiseFiles($_FILES, $module);
@@ -1758,9 +1788,9 @@ class App {
     $model = $this->initAdminModel($module);
     $fields = $model->fields();
 
-    ## Detect multiselects in order to json_encode
+    ## Detect multiselects and checkboxes in order to json_encode
     foreach ($fields as $field => $params) {
-      if (strcasecmp($params['type'], 'multiselect') == 0) {
+      if (strcasecmp($params['type'], 'multiselect') == 0 || strcasecmp($params['type'], 'checkbox') == 0) {
         ## Replace array with JSON encoded field for database
         $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
       }
