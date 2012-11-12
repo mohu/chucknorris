@@ -14,9 +14,7 @@ class Model_Usergroup extends RedBean_SimpleModel {
     $fields['title']       = array('type'=>'text', 'label'=>'title', 'help'=>'', 'readonly'=>true);
     $fields['group']       = array('type'=>'text', 'label'=>'group', 'help'=>'', 'readonly'=>true);
     $fields['area']        = array('type'=>'radio', 'label'=>'access area', 'help'=>'', 'values'=>array('Frontend'=>'frontend', 'Backend'=>'backend'), 'readonly'=>true);
-    $fields['paths']        = array('type'=>'multiselect', 'label'=>'access area - test', 'help'=>'', 'values'=>$paths, 'readonly'=>true, 'table_hide'=>true);
-
-//    $fields['paths']       = array('type'=>'foreignkey', 'relation'=>'shared', 'model'=>'access', 'selecttitle'=>'%path%', 'label'=>'paths', 'help'=>'<strong>Super administrators have full access to all areas by default</strong><br /><br />');
+    $fields['paths']        = array('type'=>'multiselect', 'label'=>'access area - test', 'help'=>'<strong>Super administrators have full access to all areas by default</strong>', 'values'=>$paths, 'readonly'=>true, 'table_hide'=>true);
 
     return $fields;
   }

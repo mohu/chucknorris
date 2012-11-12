@@ -1619,11 +1619,9 @@ class App {
     foreach ($fields as $field => $params) {
       if (strcasecmp($params['type'], 'multiselect') == 0) {
         ## Replace array with JSON encoded field for database
-        echo $_POST[$module][$field] = json_encode($_POST[$module][$field]);
+        $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
       }
     }
-
-    echo '<pre>' . print_r($_POST, true) . '</pre>'; exit;
 
     if ($_FILES) {
       $_FILES = App::organiseFiles($_FILES, $module);
@@ -1764,7 +1762,7 @@ class App {
     foreach ($fields as $field => $params) {
       if (strcasecmp($params['type'], 'multiselect') == 0) {
         ## Replace array with JSON encoded field for database
-        $_POST[$module][$field] = json_encode($_POST[$module][$field]);
+        $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
       }
     }
 
