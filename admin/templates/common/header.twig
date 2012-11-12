@@ -44,7 +44,14 @@
         if ({% if module %}true{% else %}false{% endif %}) {
           $('ul.nav-list li.menu_{{ module }}').addClass('active');
           var id = $('ul.nav-list li.menu_{{ module }}').parents('.collapse').attr('id');
-          $('#'+id).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-down').addClass('icon-circle-arrow-right');
+          $('#'+id).prev('.accordion-heading').find('.accordion-toggle i').animate({  borderSpacing: 45 }, {
+            step: function(now, fx) {
+              $(this).css('-webkit-transform', 'rotate(' + now + 'deg)');
+              $(this).css('-moz-transform', 'rotate(' + now + 'deg)');
+              $(this).css('transform', 'rotate(' + now + 'deg)');
+            },
+            duration:'fast'
+          },'linear');
         }
 
         var links = [{% for menugroup in menu %}{% for key, item in menugroup %}

@@ -75,11 +75,25 @@ $(document).ready(function() {
     });
 
     $('.accordion').on('show', function (e) {
-        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-down').addClass('icon-circle-arrow-right');
+        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').animate({  borderSpacing: 45 }, {
+            step: function(now, fx) {
+                $(this).css('-webkit-transform', 'rotate(' + now + 'deg)');
+                $(this).css('-moz-transform', 'rotate(' + now + 'deg)');
+                $(this).css('transform', 'rotate(' + now + 'deg)');
+            },
+            duration:'slow'
+        },'linear');
     });
 
     $('.accordion').on('hide', function (e) {
-        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').removeClass('icon-circle-arrow-right').addClass('icon-circle-arrow-down');
+        $(e.target).prev('.accordion-heading').find('.accordion-toggle i').animate({  borderSpacing: 0 }, {
+            step: function(now, fx) {
+                $(this).css('-webkit-transform', 'rotate(' + now + 'deg)');
+                $(this).css('-moz-transform', 'rotate(' + now + 'deg)');
+                $(this).css('transform', 'rotate(' + now + 'deg)');
+            },
+            duration:'slow'
+        },'linear');
     });
 
     }

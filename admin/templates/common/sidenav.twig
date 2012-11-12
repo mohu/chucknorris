@@ -6,7 +6,7 @@
             <div class="accordion-group">
               <div class="accordion-heading">
                 <a class="accordion-toggle{% if loop.first %} active{% endif %}" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ loop.index }}">
-                  <i class="icon-circle-arrow-down pull-right"></i>{{ key }}
+                  <i class="icon-plus pull-right"></i>{{ key }}
                 </a>
               </div>
               <div id="collapse{{ loop.index }}" class="accordion-body collapse{% if module and module in menugroup|keys %} in{% endif %}">
