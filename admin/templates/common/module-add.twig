@@ -426,38 +426,54 @@
                     </div>
                   </div>
                 {% elseif fkfield.type == 'select' %}
-                <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
-                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
-                  <div class="controls">
-                    <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
-                    {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
-                    <select id="{{ key }}" class="input-xlarge{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]">
-                      <option value="">-- Select --</option>
-                      {% for item, key in fkfield.values %}
-                      <option value="{{ key }}">{{ item|capitalize }}</option>
-                      {% endfor %}
-                    </select>
-                    {% if field.help %}
-                    <span class="help-inline">{{ field.help|raw }}</span>
-                    {% endif %}
+                  <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                      <select id="{{ key }}" class="input-xlarge{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]">
+                        <option value="">-- Select --</option>
+                        {% for item, key in fkfield.values %}
+                        <option value="{{ key }}">{{ item|capitalize }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if field.help %}
+                      <span class="help-inline">{{ field.help|raw }}</span>
+                      {% endif %}
+                    </div>
                   </div>
-                </div>
+                {% elseif fkfield.type == 'multiselect' %}
+                  <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[{{ key }}][0][type]" value="{{ key|slice(3, 100)|lower }}">
+                      {% if session.region %}<input type="hidden" name="{{ module }}[{{ key }}][0][region]" value="{{ session.region }}">{% endif %}
+                      <select id="{{ key }}" class="input-xlarge select2{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}][]" multiple="multiple">
+                        {% for item, key in fkfield.values %}
+                        <option value="{{ key }}">{{ item|capitalize }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if field.help %}
+                      <span class="help-inline">{{ field.help|raw }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
                 {% elseif fkfield.type == 'radio' %}
-                <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
-                  <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
-                  <div class="controls">
-                    <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
-                    {% for item, key2 in fkfield.values %}
-                    <label class="radio{% if fkfield.inline %} inline{% endif %}">
-                      <input type="radio" class="{{ fkkey }}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]" value="{{ key2 }}">
-                      {{ item|capitalize }}
-                    </label>
-                    {% endfor %}
-                    {% if fkfield.help %}
-                    <span class="help-{% if fkfield.inline %}block{% else %}inline{% endif %}">{{ fkfield.help|raw }}</span>
-                    {% endif %}
+                  <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                      {% for item, key2 in fkfield.values %}
+                      <label class="radio{% if fkfield.inline %} inline{% endif %}">
+                        <input type="radio" class="{{ fkkey }}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}]" value="{{ key2 }}">
+                        {{ item|capitalize }}
+                      </label>
+                      {% endfor %}
+                      {% if fkfield.help %}
+                      <span class="help-{% if fkfield.inline %}block{% else %}inline{% endif %}">{{ fkfield.help|raw }}</span>
+                      {% endif %}
+                    </div>
                   </div>
-                </div>
                 {% elseif fkfield.type == 'foreignkey' %}
                 <!--  -->
                 <div class="fk well control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">

@@ -107,6 +107,19 @@
                   {"bSearchable": false, "bSortable": false, "aTargets": ["dataTable-exclude"]},
                   {"bVisible":false, "aTargets" : ["dataTables_notVisible"]}
                 ],
+                "fnDrawCallback": function ( oSettings ) {
+                  if ( oSettings.oPreviousSearch.sSearch ) {
+                    console.log( 'Table has been filtered' );
+                    $("#table > tbody").sortable('disable');
+                    $('i.icon-move').hide();
+                    $('td[data-ordering]').css('cursor', 'pointer');
+                  } else {
+                    console.log( 'No filtering on this draw' );
+                    $("#table > tbody").sortable('enable');
+                    $('i.icon-move').show();
+                    $('td[data-ordering]').css('cursor', 'move');
+                  }
+                }
               } );
               oTable2.fnSearchHighlighting();
               out.push( oTable2 );
@@ -179,6 +192,7 @@
           $('#table > tbody > tr').on("mouseenter", "td[data-ordering]", function(){
             $('i.move').tooltip('hide');
           });
+          $('.tooltip').delay(1500).hide(0);
 
         });
 

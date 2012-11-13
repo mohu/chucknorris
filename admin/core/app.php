@@ -1382,11 +1382,25 @@ class App {
             $array[$i][$key]['type']       = $field['type'];
             $array[$i][$key]['label']      = $field['label'];
             $array[$i][$key]['id']         = $data[$i]['id'];
-            $array[$i][$key]['value']      = $data[$i][$key];
+            $array[$i][$key]['value']      = json_decode($data[$i][$key]);
             $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
-						      $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
+            $array[$i][$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
+            $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
+
+          } elseif ($field['type'] == 'checkbox') { // Checkbox fields
+
+            $array[$i][$key] = array();
+            $array[$i][$key]['type']       = $field['type'];
+            $array[$i][$key]['label']      = $field['label'];
+            $array[$i][$key]['id']         = $data[$i]['id'];
+            $array[$i][$key]['value']      = json_decode($data[$i][$key]);
+            $array[$i][$key]['values']     = (is_array($field['values'])) ? $field['values'] : '';
+            $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
+            $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
+            $array[$i][$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $array[$i][$key]['inline']     = (isset($field['inline']) && $field['inline'] === true) ? true : false;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
@@ -1653,11 +1667,31 @@ class App {
     $model = $this->initAdminModel($module);
     $fields = $model->fields();
 
-    ## Detect multiselects and checkboxes in order to json_encode
+    ## Detect multi-selects and checkboxes in order to json_encode
+    ## Also detects foreign key (own variety)  multiselects and checkboxes to convert too
     foreach ($fields as $field => $params) {
-      if (strcasecmp($params['type'], 'multiselect') == 0 or strcasecmp($params['type'], 'checkbox') == 0) {
-        ## Replace array with JSON encoded field for database
-        $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
+      if (strcasecmp($params['type'], 'multiselect') == 0 || strcasecmp($params['type'], 'checkbox') == 0 || strcasecmp($params['type'], 'foreignkey') == 0) {
+        if (strcasecmp($params['type'], 'foreignkey') != 0) {
+          ## Replace array with JSON encoded field for database
+          $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
+
+        } elseif (strcasecmp($params['type'], 'foreignkey') == 0) {
+          ## Foreign key - Own relationship
+          $this->includeModel('models/' . $params['model'] . '.php', $params['model'], true);
+          ## Initialise foreign key - own admin model and get fields
+          $ownmodel = $this->initAdminModel($params['model']);
+          $ownfields = $ownmodel->fields();
+
+          ## Loop through to see if any are multi-selects or checkboxes
+          foreach ($ownfields as $ownfield => $ownparams) {
+            if (strcasecmp($ownparams['type'], 'multiselect') == 0 || strcasecmp($ownparams['type'], 'checkbox') == 0) {
+              ## Established this is an own relationship and is a multi-select or checkbox, now find in $_POST and convert to JSON!
+              foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
+                $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -1798,11 +1832,31 @@ class App {
     $model = $this->initAdminModel($module);
     $fields = $model->fields();
 
-    ## Detect multiselects and checkboxes in order to json_encode
+    ## Detect multi-selects and checkboxes in order to json_encode
+    ## Also detects foreign key (own variety)  multiselects and checkboxes to convert too
     foreach ($fields as $field => $params) {
-      if (strcasecmp($params['type'], 'multiselect') == 0 || strcasecmp($params['type'], 'checkbox') == 0) {
-        ## Replace array with JSON encoded field for database
-        $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
+      if (strcasecmp($params['type'], 'multiselect') == 0 || strcasecmp($params['type'], 'checkbox') == 0 || strcasecmp($params['type'], 'foreignkey') == 0) {
+        if (strcasecmp($params['type'], 'foreignkey') != 0) {
+          ## Replace array with JSON encoded field for database
+          $_POST[$module][$field] = (!is_null($_POST[$module][$field])) ? json_encode($_POST[$module][$field]) : NULL;
+
+        } elseif (strcasecmp($params['type'], 'foreignkey') == 0) {
+          ## Foreign key - Own relationship
+          $this->includeModel('models/' . $params['model'] . '.php', $params['model'], true);
+          ## Initialise foreign key - own admin model and get fields
+          $ownmodel = $this->initAdminModel($params['model']);
+          $ownfields = $ownmodel->fields();
+
+          ## Loop through to see if any are multi-selects or checkboxes
+          foreach ($ownfields as $ownfield => $ownparams) {
+            if (strcasecmp($ownparams['type'], 'multiselect') == 0 || strcasecmp($ownparams['type'], 'checkbox') == 0) {
+              ## Established this is an own relationship and is a multi-select or checkbox, now find in $_POST and convert to JSON!
+              foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
+                $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
+              }
+            }
+          }
+        }
       }
     }
 
