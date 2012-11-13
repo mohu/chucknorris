@@ -1,12 +1,11 @@
 <?php
-class Model_Example {
+class Model_Example extends RedBean_SimpleModel {
 
-		function example() {
-				global $request;
+		function example($args) {
 				## Start model dictionary
 				$dict = array();
 				## Add database calls here
-				return $dict;
+    return $dict;
 		}
 
 }

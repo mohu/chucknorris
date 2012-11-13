@@ -415,8 +415,8 @@ class App {
 
       // Basic frontend model file
       $file  = '<?php' . "\n";
-      $file .= 'class Model_' . $model_upper . ' {' . "\n\n";
-      $file .= "\t\t" . 'function ' . $model_lower . '($request) {' . "\n";
+      $file .= 'class Model_' . $model_upper . ' extends RedBean_SimpleModel {' . "\n\n";
+      $file .= "\t\t" . 'function ' . $model_lower . '($args) {' . "\n";
       $file .= "\t\t\t\t" . '## Start model dictionary' . "\n";
       $file .= "\t\t\t\t" . '$dict = array();' . "\n";
       $file .= "\t\t\t\t" . '## Add database calls here' . "\n";
