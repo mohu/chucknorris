@@ -3,7 +3,7 @@ class Model_User extends RedBean_SimpleModel {
 
   function fields() {
     // Add fields here
-    $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true, 'verify'=>array('creditcardtypes'=>true) );
+    $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true, );
     $fields['name']       = array('type'=>'text', 'label'=>'name', 'help'=>'', 'required'=>true);
     $fields['email']      = array('type'=>'text', 'label'=>'email', 'help'=>'', 'required'=>true, 'validate'=>'email');
     $fields['password']   = array('type'=>'text', 'label'=>'password', 'help'=>'', 'table_hide'=>true, 'required'=>true);

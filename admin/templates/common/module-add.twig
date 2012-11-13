@@ -474,6 +474,22 @@
                       {% endif %}
                     </div>
                   </div>
+                {% elseif fkfield.type == 'checkbox' %}
+                  <div class="control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">
+                    <label class="control-label" for="{{ key }}">{% if fkfield.required %}<span rel="tooltip">{% endif %}{{ fkfield.label|capitalize }}{% if fkfield.required %}</span>{% endif %}</label>
+                    <div class="controls">
+                      <input type="hidden" name="{{ module }}[type]" value="{{ module }}">
+                      {% for item, key2 in fkfield.values %}
+                      <label class="checkbox{% if fkfield.inline %} inline{% endif %}">
+                        <input type="checkbox" class="{{ fkkey }}{% if fkfield.required %} required{% endif %}" name="{{ module }}[{{ key }}][0][{{ fkkey }}][]" value="{{ key2 }}">
+                        {{ item|capitalize }}
+                      </label>
+                      {% endfor %}
+                      {% if fkfield.help %}
+                      <span class="help-{% if fkfield.inline %}block{% else %}inline{% endif %}">{{ fkfield.help|raw }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
                 {% elseif fkfield.type == 'foreignkey' %}
                 <!--  -->
                 <div class="fk well control-group{% if fkfield.onload == 'hide' %} hide{% endif %}" data-type="{{ fkkey }}">

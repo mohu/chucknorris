@@ -3,10 +3,41 @@
 {% block content %}
 <body>
   <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+
+  <style type="text/css">
+    /* Override some defaults */
+    html, body {
+      background-color: #eee;
+    }
+    body {
+      padding-top: 40px;
+    }
+    /* The white background content wrapper */
+    .container > .content {
+      background-color: #fff;
+      padding: 20px;
+      margin: 0 auto 40px;
+      -webkit-border-radius: 10px 10px 10px 10px;
+      -moz-border-radius: 10px 10px 10px 10px;
+      border-radius: 10px 10px 10px 10px;
+      -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.15);
+      -moz-box-shadow: 0 1px 2px rgba(0,0,0,.15);
+      box-shadow: 0 1px 2px rgba(0,0,0,.15);
+      width: 300px;
+      text-align: center;
+    }
+
+  </style>
+
   <header>
 
   </header>
   <div role="main">
+
+    <div class="container">
+      <div class="content"><p>It worked... Chuck is ready!</p>
+      </div>
+    </div>
 
   </div>
 {% endblock %}

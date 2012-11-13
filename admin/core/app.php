@@ -1687,7 +1687,7 @@ class App {
 
           ## Loop through to see if any are multi-selects or checkboxes
           foreach ($ownfields as $ownfield => $ownparams) {
-            if (strcasecmp($ownparams['type'], 'multiselect') == 0 || strcasecmp($ownparams['type'], 'checkbox') == 0) {
+            if ((strcasecmp($ownparams['type'], 'multiselect') == 0) || (strcasecmp($ownparams['type'], 'checkbox') == 0)) {
               ## Established this is an own relationship and is a multi-select or checkbox, now find in $_POST and convert to JSON!
               foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
                 $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
@@ -1852,7 +1852,7 @@ class App {
 
           ## Loop through to see if any are multi-selects or checkboxes
           foreach ($ownfields as $ownfield => $ownparams) {
-            if (strcasecmp($ownparams['type'], 'multiselect') == 0 || strcasecmp($ownparams['type'], 'checkbox') == 0) {
+            if ((strcasecmp($ownparams['type'], 'multiselect') == 0) && (strcasecmp($ownparams['type'], 'checkbox') == 0)) {
               ## Established this is an own relationship and is a multi-select or checkbox, now find in $_POST and convert to JSON!
               foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
                 $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
