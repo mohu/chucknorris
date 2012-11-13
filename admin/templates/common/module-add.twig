@@ -215,7 +215,7 @@
                   {% if field.prepend or field.append %}
                   <div class="{% if field.prepend %}input-prepend {% endif %}{% if field.append %}input-append{% endif %}">
                   {% endif %}
-                  {% if field.prepend %}<span class="add-on">{{ field.prepend }}</span>{% endif %}<input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %}{% if field.maxlength %} maxlength="[{{ field.maxlength }}]"{% endif %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>{% if field.append %}<span class="add-on">{{ field.append }}</span>{% endif %}
+                  {% if field.prepend %}<span class="add-on">{{ field.prepend }}</span>{% endif %}<input type="text" class="input-xlarge{% if field.required %} required{% endif %}{% if field.validate %} {{ field.validate }}{% endif %}"{% if field.equalto %} equalto="#{{ module }}[{{ field.equalto }}]"{% endif %}{% for verifymethod, verifyvalue in field.verify %} {{ verifymethod }}="{{ verifyvalue }}"{% endfor %} id="{{ module }}[{{ key }}]" name="{{ module }}[{{ key }}]"{% if field.readonly %} readonly{% endif %}>{% if field.append %}<span class="add-on">{{ field.append }}</span>{% endif %}
                   {% if field.prepend or field.append %}
                   </div>
                   {% endif %}

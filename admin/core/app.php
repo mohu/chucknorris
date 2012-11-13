@@ -977,6 +977,7 @@ class App {
             $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] === true) ? true : false;
             $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
+            $form[$key]['verify']     = (isset($field['verify'])) ? $field['verify'] : false;
             $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
             $form[$key]['hide']       = (isset($field['table_hide']) && $field['table_hide'] === true) ? true : false;
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
@@ -1238,6 +1239,7 @@ class App {
             $form[$key]['readonly']   = (isset($field['readonly']) && $field['readonly'] == true) ? true : false;
             $form[$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $form[$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
+            $form[$key]['verify']     = (isset($field['verify'])) ? $field['verify'] : false;
             $form[$key]['equalto']    = (isset($field['equalto'])) ? $field['equalto'] : false;
             $form[$key]['value']      = (isset($data[0][$key])) ? $data[0][$key] : null;
             $form[$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
@@ -1333,6 +1335,7 @@ class App {
             $array[$i][$key]['value']      = $data[$i][$key];
             $array[$i][$key]['required']   = (isset($field['required']) && $field['required'] === true) ? true : false;
             $array[$i][$key]['validate']   = (isset($field['validate'])) ? $field['validate'] : false;
+            $array[$i][$key]['verify']     = (isset($field['verify'])) ? $field['verify'] : false;
             $array[$i][$key]['help']       = (isset($field['help'])) ? $field['help'] : null;
             $array[$i][$key]['onload']     = (isset($field['onload'])) ? $field['onload'] : null;
 
