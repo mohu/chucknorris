@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.1.44)
 # Database: chucknorris
-# Generation Time: 2012-10-14 20:20:08 +0000
+# Generation Time: 2012-11-13 16:09:06 +0000
 # ************************************************************
 
 
@@ -90,10 +90,12 @@ CREATE TABLE `menuitem` (
   `title` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `link` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `class` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `published` set('1') COLLATE utf8_unicode_ci DEFAULT NULL,
+  `published` tinyint(3) unsigned DEFAULT NULL,
   `menu_id` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `index_foreignkey_menu` (`menu_id`)
+  KEY `index_foreignkey_menu` (`menu_id`),
+  KEY `index_foreignkey_menuitem_menu` (`menu_id`),
+  CONSTRAINT `cons_fk_menuitem_menu_id_id` FOREIGN KEY (`menu_id`) REFERENCES `menu` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `menuitem` WRITE;
@@ -101,7 +103,7 @@ LOCK TABLES `menuitem` WRITE;
 
 INSERT INTO `menuitem` (`id`, `ordering`, `title`, `link`, `class`, `published`, `menu_id`)
 VALUES
-	(1,1,'Home','','home','1',1);
+	(1,1,'Home','','home',1,1);
 
 /*!40000 ALTER TABLE `menuitem` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -131,7 +133,7 @@ LOCK TABLES `settings` WRITE;
 
 INSERT INTO `settings` (`id`, `pagination`, `twitter`, `facebook`, `linkedin`, `pinterest`, `contact`, `sitename`, `analytics`, `debug`)
 VALUES
-	(1,10,'','','','','',NULL,'',0);
+	(1,10,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1);
 
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -166,19 +168,16 @@ CREATE TABLE `user` (
   `email` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `password` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `salt` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `image` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `twitter` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `linkedin` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `position` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `signupdate` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
 
-INSERT INTO `user` (`id`, `username`, `name`, `email`, `password`, `salt`, `image`, `twitter`, `linkedin`, `position`)
+INSERT INTO `user` (`id`, `username`, `name`, `email`, `password`, `salt`, `signupdate`)
 VALUES
-	(1,'admin','Rikki Pitt','rikki@studiomohu.com','1338048162b39745c64bae53724a21e705b8fb88','95hefc22nl0k8g0s4wgwkcko4skgs0s',NULL,'','','');
+	(1,'admin','Rikki Pitt','rikki@studiomohu.com','1338048162b39745c64bae53724a21e705b8fb88','95hefc22nl0k8g0s4wgwkcko4skgs0s','2012-11-06 11:13:02');
 
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -222,18 +221,19 @@ CREATE TABLE `usergroup` (
   `title` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `group` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `area` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `paths` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 LOCK TABLES `usergroup` WRITE;
 /*!40000 ALTER TABLE `usergroup` DISABLE KEYS */;
 
-INSERT INTO `usergroup` (`id`, `title`, `group`, `area`)
+INSERT INTO `usergroup` (`id`, `title`, `group`, `area`, `paths`)
 VALUES
-	(1,'Super administrator','superadmin','backend'),
-	(2,'Administrator','admin','backend'),
-	(3,'Public member','member','frontend'),
-	(4,'Public press','press','frontend');
+	(1,'Super administrator','superadmin','backend',NULL),
+	(2,'Administrator','admin','backend','[\"user\",\"backup\"]'),
+	(3,'Public member','member','frontend',NULL),
+	(4,'Public press','press','frontend',NULL);
 
 /*!40000 ALTER TABLE `usergroup` ENABLE KEYS */;
 UNLOCK TABLES;
