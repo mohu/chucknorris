@@ -1,0 +1,212 @@
+{% extends "public-base.twig" %}
+
+{% block content %}
+    <style type="text/css">
+      /* Override some defaults */
+      html, body {
+        background-color: #eee;
+      }
+      body {
+        padding-top: 40px;
+      }
+ 
+      /* The white background content wrapper */
+      .container > .content {
+        background-color: #fff;
+        padding: 20px;
+        margin: 0 auto 40px;
+        -webkit-border-radius: 10px 10px 10px 10px;
+        -moz-border-radius: 10px 10px 10px 10px;
+        border-radius: 10px 10px 10px 10px;
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.15);
+        -moz-box-shadow: 0 1px 2px rgba(0,0,0,.15);
+        box-shadow: 0 1px 2px rgba(0,0,0,.15);
+        width: 570px;
+      }
+
+      i {
+        opacity: 0.5;
+      }
+ 
+    </style>
+
+    <script>
+      $(document).ready(function() {
+        $('.container').fadeIn('slow');
+
+        $('#tabs a').click(function (e) {
+          e.preventDefault();
+          $(this).tab('show');
+        });
+
+        $('form.userdetails').validate({
+          errorPlacement: function(error, element) {
+            $(element).closest('.control-group').addClass('error');
+
+            error.insertAfter(element.parent('div'));
+
+            error.css('margin', '10px 0px 0px 180px');
+            error.css('clear', 'both');
+          },
+          success: function(element){
+            $(element).parent('div').removeClass('error');
+            $(element).remove();
+          },
+          rules: {
+            password: {
+              required: true
+            },
+            password_confirm: {
+              required: true,
+              equalTo: "#password"
+            }
+          }
+        });
+
+      });
+    </script>
+ 
+    <div class="container hide">
+        <div class="content">
+            <div class="row">
+              <div class="span6">
+                <p class="lead">Installer</p>
+
+                <ul class="nav nav-tabs" id="tabs">
+                  <li class="active"><a href="#step1">System</a></li>
+                  <li><a href="#step2">File permissions</a></li>
+                  <li><a href="#step3">Database settings</a></li>
+                </ul>
+
+                <div class="tab-content">
+                  <div class="tab-pane active" id="step1">
+                    <div class="row">
+                      <div class="span3">
+                        <p><strong>PHP requirements</strong></p>
+                        {% if system.php.ok != true and system %}
+                          <p>Installed: <span class="{% if system.php.ok != true %}text-error{% else %}text-success{% endif %}">{{ system.php.version }}</span> <i class="{% if system.php.ok == true %}icon-ok{% else %}icon-ban-circle{% endif %}"></i></p>
+                          <p>Minimum required: {{ system.php.required }}</p>
+                        {% else %}
+                          <p class="text-success">Your PHP version meets the minimum requirements. <i class="icon-ok"></i></p>
+                        {% endif %}
+                      </div>
+
+                      <div class="span3">
+                        <p><strong>MySQL requirements</strong></p>
+                        {% if system.mysql.ok != true and system %}
+                          <p>Installed: <span class="{% if system.mysql.ok != true %}text-error{% else %}text-success{% endif %}">{{ system.mysql.version }}</span> <i class="{% if system.mysql.ok == true %}icon-ok{% else %}icon-ban-circle{% endif %}"></i></p>
+                          <p>Minimum required: {{ system.mysql.required }}</p>
+                        {% else %}
+                          <p class="text-success">Your MySQL version meets the minimum requirements. <i class="icon-ok"></i></p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tab-pane" id="step2">
+                    {% if permissions %}
+                      <p>Please make the following folders/files <span class="text-error">highlighted in red</span> writable.</p>
+                      {% for folder, permission in permissions %}
+                      <p class="{% if permission != true %}text-error{% else %}text-success{% endif %}"><i class="{% if permission == true %}icon-ok{% else %}icon-ban-circle{% endif %}"></i> {{ folder }}</p>
+                      {% endfor %}
+                    {% else %}
+                      <p class="text-success">Your file permissions are correctly configured. <i class="icon-ok"></i></p>
+                    {% endif %}
+                  </div>
+
+                  <div class="tab-pane" id="step3">
+                    {% if database.error %}
+                      <p><strong>Current database error</strong></p>
+                      <p><code><small>{{ database.error.message }}</small></code></p><br />
+
+                      <p><strong>MySQL database connection</strong></p>
+
+                      <form class="form-horizontal pull-left" method="post">
+                        <div class="control-group{% if database.error.type == 'host' %} error{% endif %}">
+                          <label class="control-label" for="host">Host</label>
+                          <div class="controls">
+                            <input type="text" id="host" name="host" placeholder="Host" value="{{ database.parameters.host }}">
+                            {% if database.error.type == 'host' %}<span class="help-inline"><i class="icon-ban-circle"></i> Incorrect</span>{% endif %}
+                          </div>
+                        </div>
+                        <div class="control-group{% if database.error.type == 'db' %} error{% endif %}">
+                          <label class="control-label" for="db">Database name</label>
+                          <div class="controls">
+                            <input type="text" id="db" name="db" placeholder="Database" value="{{ database.parameters.db }}">
+                            {% if database.error.type == 'db' %}<span class="help-inline"><i class="icon-ban-circle"></i> Incorrect</span>{% endif %}
+                          </div>
+                        </div>
+                        <div class="control-group{% if database.error.type == 'user' %} error{% endif %}">
+                          <label class="control-label" for="username">Username</label>
+                          <div class="controls">
+                            <input type="text" id="username" name="username" placeholder="Username" value="{{ database.parameters.username }}">
+                            {% if database.error.type == 'user' %}<span class="help-inline"><i class="icon-ban-circle"></i> Incorrect</span>{% endif %}
+                          </div>
+                        </div>
+                        <div class="control-group{% if database.error.type == 'pass' %} error{% endif %}">
+                          <label class="control-label" for="password">Password</label>
+                          <div class="controls">
+                            <input type="text" id="password" name="password" placeholder="Password" value="{{ database.parameters.password }}">
+                            {% if database.error.type == 'pass' %}<span class="help-inline"><i class="icon-ban-circle"></i> Incorrect</span>{% endif %}
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <div class="controls">
+                            <input type="hidden" name="dbsettings" value="1">
+                            <button type="submit" class="btn">Update database settings</button>
+                          </div>
+                        </div>
+                      </form>
+                    {% elseif database.empty == true %}
+                      <p><strong>Current database error</strong></p>
+                      <p class="text-error">No database installed</p>
+                      <p><strong>Create your super administration account and install database</strong></p>
+
+                      <form class="form-horizontal userdetails pull-left" method="post" autocomplete="off">
+                        <div class="control-group">
+                          <label class="control-label" for="username">Username</label>
+                          <div class="controls">
+                            <input type="text" id="username" name="username" placeholder="Username" class="required">
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label class="control-label" for="name">Name</label>
+                          <div class="controls">
+                            <input type="text" id="name" name="name" placeholder="Name" class="required">
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label class="control-label" for="email">Email</label>
+                          <div class="controls">
+                            <input type="text" id="email" name="email" placeholder="Email" class="required email">
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label class="control-label" for="password">Password</label>
+                          <div class="controls">
+                            <input type="password" id="password" name="password" placeholder="Password" class="required">
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label class="control-label" for="password_confirm">Confirm password</label>
+                          <div class="controls">
+                            <input type="password" id="password_confirm" name="password_confirm" placeholder="Confirm password" class="required">
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <div class="controls">
+                            <input type="hidden" name="userdetails" value="1">
+                            <button type="submit" class="btn">Install</button>
+                          </div>
+                        </div>
+                      </form>
+                    {% else%}
+                      <p class="text-success">Your database is correctly configured and installed. <i class="icon-ok"></i></p>
+                    {% endif %}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+        </div>
+{% endblock %}

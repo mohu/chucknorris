@@ -134,7 +134,7 @@
             $(location).attr("href", "/admin/{{ module }}/edit/" + id + "?start={{ pagination.start }}");
           });
 
-          $('a.delete').click(function() {
+          $('a.delete').live('click', function() {
             var id = $(this).attr('id');
             if(id) {
               $('#delete-confirm.alert').show().animate({opacity: 1.0}, 3000);

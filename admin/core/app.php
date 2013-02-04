@@ -5,7 +5,6 @@ define ('ADMIN', 1 );
 define ('LOCAL_PATH', realpath(dirname(__FILE__).'/../..') . '/' );
 require_once LOCAL_PATH. 'includes/redbean/rb.php';
 require_once LOCAL_PATH. 'includes/Twig/Autoloader.php';
-require_once LOCAL_PATH. 'includes/common/dbconnector.php';
 require_once LOCAL_PATH. 'includes/common/twigloader.php';
 require_once LOCAL_PATH. 'includes/common/functions.php';
 
@@ -26,15 +25,218 @@ class App {
    */
   public function coreFunctions() {
 
+    $this->checkInstall();
+    $this->checkIP();
+    // $this->parseErrors();
+    // $this->log();
+
     if (isset($_POST['save'])) $this->save($_POST);
     if (isset($_POST['update']) || isset($_POST['apply'])) $this->update($_POST);
     if (isset($_POST['clearcache'])) $this->clearCache();
     if (isset($_POST['dragdropordering'])) $this->dragdropOrdering();
 
-    $this->checkIP();
-//    $this->parseErrors();
-//    $this->log();
     return;
+  }
+
+  public function checkInstall() {
+    global $twig;
+
+    $errors = array();
+
+    // Check PHP/MySQL
+    $system = $this->checkSystem();
+    if (($system['php']['ok'] === false) || ($system['mysql']['ok'] === false)) {
+      $errors['system'] = $this->checkSystem();
+    }
+
+    // Check file permissions on various folders
+    $permissions = $this->checkPermissions();
+    if (in_array(false, $permissions, true)) {
+      $errors['permissions'] = $this->checkPermissions();
+    }
+
+    // Check connection to database
+    $this->checkDatabase($errors);
+
+    // Check database has tables
+    if (count(R::$writer->getTables()) == 0) {
+      $errors['database']['empty'] = true;
+      if ($_POST['userdetails'] && $_POST['username'] && $_POST['name'] && $_POST['email'] && $_POST['password']) {
+        // Install skeleton database here only if no database tables and user details posted
+        include_once (LOCAL_PATH . 'admin/core/initial_db.php');
+
+        foreach ($database as $type => $table) {
+          if ($type == 'user') {
+            // Add super admin user details
+            $table['username'] = $_POST['username'];
+            $table['name'] = $_POST['name'];
+            $table['email'] = $_POST['email'];
+
+            // Password salting
+            $salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
+            $table['password'] = sha1($_POST['password'] . $salt);
+            $table['salt'] = $salt;
+
+            // Add signup date
+            $table['signupdate'] = date("Y-m-d H:i:s");
+
+          }
+          if ($type == 'settings') {
+            // Add admin email to site contact email address
+            $table['contact'] = $_POST['email'];
+          }
+          $store = R::graph($table);
+          R::store($store);
+        }
+
+        // Refresh the changes...
+        header("Pragma: no-cache");
+        header("cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+        header("Expires: Mon, 1 Jan 1970 05:00:00 GMT"); // Date in the past
+        header("Location: #");
+      }
+    }
+
+    if (!empty($errors)) {
+      $errors['ip'] = $this->getIP();
+      echo $twig->render('install.twig', $errors); exit;
+    }
+
+    // If all the above check are satisfied, return
+    return;
+  }
+
+  public function checkSystem() {
+    $system = array();
+
+    // Check PHP version
+    $system['php']['version'] = phpversion();
+    $system['php']['required'] = '5.3+';
+
+    if (strnatcmp(phpversion(),'5.3') >= 0) {
+      $system['php']['ok'] = true;
+    } else {
+      // PHP not sufficient
+      $system['php']['ok'] = false;
+    }
+
+    // Check MySQL version
+    $system['mysql']['version'] = mysql_get_server_info();
+    $system['mysql']['required'] = '5.0+';
+
+    if (strnatcmp(mysql_get_server_info(),'5') >= 0) {
+      $system['mysql']['ok'] = true;
+    } else {
+      // PHP not sufficient
+      $system['mysql']['ok'] = false;
+    }
+
+    return $system;
+  }
+
+  public function checkPermissions() {
+    // Folders that require write permissions
+    $folders = array(
+      'cache',
+      'models',
+      'views',
+      'img',
+      'includes/common',
+      'includes/common/dbsettings.ini',
+      'admin/backups',
+      'admin/cache',
+      'admin/timeline',
+      'admin/views',
+    );
+
+    $permissions = array();
+
+    foreach ($folders as $folder) {
+      if (is_writable(LOCAL_PATH . $folder)) {
+        // Folder is writable
+        $permissions[$folder] = true;
+      } else {
+        // Folder is not writable
+        $permissions[$folder] = false;
+      }
+    }
+
+    return $permissions;
+  }
+
+  public function checkDatabase($errors) {
+    global $twig;
+
+    // Check if dbsettings.ini exists, parse it if it does
+    if (!file_exists(LOCAL_PATH. 'includes/common/dbsettings.ini')) {
+      echo $twig->render('install.twig'); exit;
+    } else {
+      $dbsettings = parse_ini_file(LOCAL_PATH. 'includes/common/dbsettings.ini', true);
+    }
+
+    // Default local database settings
+    $host = $dbsettings['local']['host'];
+    $db = $dbsettings['local']['db'];
+    $username = $dbsettings['local']['username'];
+    $password = $dbsettings['local']['password'];
+
+    // Dev team member overrides, update username and password accordingly
+    if (array_key_exists(php_uname('n'), $dbsettings)) {
+      $username = $dbsettings[php_uname('n')]['username'];
+      $password = $dbsettings[php_uname('n')]['password'];
+    }
+
+    if (isset($host) && isset($db) && isset($username) && isset($password)) {
+      // Try to connect to the database
+      try {
+        R::setup('mysql:host=' . $host . ';dbname=' . $db, $username, $password);
+        R::$adapter->getDatabase()->connect();
+        return true;
+      } catch (PDOException $e) {
+        $error_type = (preg_match('/SQLSTATE\[HY000\] \[2005\] (.*)/', $e->getMessage(), $match) != false) ? 'host' : null;
+        $error_type = (preg_match('/SQLSTATE\[42000\] \[1049\] (.*)/', $e->getMessage(), $match) != false) ? 'db' : $error_type;
+        $error_type = (preg_match('/SQLSTATE\[42000\] \[1044\] (.*)/', $e->getMessage(), $match) != false) ? 'user' : $error_type;
+        $error_type = (preg_match('/SQLSTATE\[28000\] \[1045\] (.*)/', $e->getMessage(), $match) != false) ? 'pass' : $error_type;
+
+        $errors['ip'] = $this->getIP();
+        $errors['database']['error']['message'] = $e->getMessage();
+        $errors['database']['error']['type'] = $error_type;
+        $errors['database']['parameters'] = array('host' => $host, 'db' => $db, 'username' => $username, 'password' => $password );
+
+        // Allow dbsettings.ini update here and only here!
+        if ($_POST['dbsettings']) {
+          $this->updateDbsettings($_POST);
+        }
+
+        echo $twig->render('install.twig', $errors); exit;
+      }
+    }
+    // R::freeze( true );
+  }
+
+  public function updateDbsettings($settings) {
+    $dbsettings = parse_ini_file(LOCAL_PATH. 'includes/common/dbsettings.ini', true);
+
+    // Dev team member overrides, update username and password accordingly
+    if (array_key_exists(php_uname('n'), $dbsettings)) {
+      $dbsettings[php_uname('n')]['username'] = $settings['username'];
+      $dbsettings[php_uname('n')]['password'] = $settings['password'];
+    } else {
+      $dbsettings['local']['username'] = $settings['username'];
+      $dbsettings['local']['password'] = $settings['password'];
+    }
+
+    $dbsettings['local']['host'] = $settings['host'];
+    $dbsettings['local']['db'] = $settings['db'];
+
+    // Update the dbsettings.ini file with the POST'ed settings
+    INI::write(LOCAL_PATH . 'includes/common/dbsettings.ini', $dbsettings);
+
+    // Refresh the changes...
+    header("Pragma: no-cache");
+    header("cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+    header("Expires: Mon, 1 Jan 1970 05:00:00 GMT"); // Date in the past
+    header("Location: #");
   }
 
   /**
@@ -52,7 +254,8 @@ class App {
                                                     'RedBeanPHP'=>R::getVersion(),
                                                     'Select2'=>'3.2',
                                                     'Swift Mailer'=>'4.2.1',
-                                                    'Twig'=>'1.10.3',)
+                                                    'Twig'=>'1.10.3',
+                                                    'WYSIHTML5 editor for Bootstrap'=>'?',)
                               );
 
     $sitename         = R::getCell('SELECT sitename FROM settings');
@@ -79,16 +282,7 @@ class App {
     if (!defined('FRONTEND')) {
       $allowed_ips = R::getCol( 'SELECT ip FROM allowedips' );
 
-      $allowed = false;
-
-      if (isset($_SERVER['HTTP_CLIENT_IP']) && $_SERVER['HTTP_CLIENT_IP'] != '')
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-      elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] != '')
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-      elseif (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] != '')
-        $ip = $_SERVER['REMOTE_ADDR'];
-      if (($commapos = strpos($ip, ',')) > 0)
-        $ip = substr($Ip, 0, ($commapos - 1));
+      $ip = $this->getIP();
 
       if ($this->wildcardMatch($ip, $allowed_ips) != true) {
         // The banned display page
@@ -113,6 +307,19 @@ class App {
       }
     }
     return false;
+  }
+
+  function getIP() {
+    if (isset($_SERVER['HTTP_CLIENT_IP']) && $_SERVER['HTTP_CLIENT_IP'] != '')
+      $ip = $_SERVER['HTTP_CLIENT_IP'];
+    elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] != '')
+      $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    elseif (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] != '')
+      $ip = $_SERVER['REMOTE_ADDR'];
+    if (($commapos = strpos($ip, ',')) > 0)
+      $ip = substr($Ip, 0, ($commapos - 1));
+
+    return $ip;
   }
 
   /**
@@ -1689,8 +1896,10 @@ class App {
           foreach ($ownfields as $ownfield => $ownparams) {
             if ((strcasecmp($ownparams['type'], 'multiselect') == 0) || (strcasecmp($ownparams['type'], 'checkbox') == 0)) {
               ## Established this is an own relationship and is a multi-select or checkbox, now find in $_POST and convert to JSON!
-              foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
-                $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
+              if (isset($_POST[$module]['own'.ucfirst($field)])) {
+                foreach ($_POST[$module]['own'.ucfirst($field)] as $key => $own) {
+                  $_POST[$module]['own'.ucfirst($field)][$key][$ownfield] = (!is_null($_POST[$module]['own'.ucfirst($field)][$key][$ownfield])) ? json_encode($_POST[$module]['own'.ucfirst($field)][$key][$ownfield]) : NULL;
+                }
               }
             }
           }
@@ -2360,4 +2569,126 @@ class App {
     $mailer->send($message);
   }
 
+}
+
+
+
+class INI {
+  /**
+   *  WRITE
+   */
+  static function write($filename, $ini) {
+    $string = '';
+    foreach(array_keys($ini) as $key) {
+      $string .= '['.$key."]\n";
+      $string .= INI::write_get_string($ini[$key], '')."\n";
+    }
+    file_put_contents($filename, $string);
+  }
+  /**
+   *  write get string
+   */
+  static function write_get_string(& $ini, $prefix) {
+    $string = '';
+    foreach($ini as $key => $val) {
+      if (is_array($val)) {
+        $string .= INI::write_get_string($ini[$key], $prefix.$key.'.');
+      } else {
+        $string .= $prefix.$key.' = '.str_replace("\n", "\\\n", INI::set_value($val))."\n";
+      }
+    }
+    return $string;
+  }
+  /**
+   *  manage keys
+   */
+  static function set_value($val) {
+    if ($val === true) { return 'true'; }
+    else if ($val === false) { return 'false'; }
+    return $val;
+  }
+  /**
+   *  READ
+   */
+  static function read($filename) {
+    $ini = array();
+    $lines = file($filename);
+    $section = 'default';
+    $multi = '';
+    foreach($lines as $line) {
+      if (substr($line, 0, 1) !== ';') {
+        $line = str_replace("\r", "", str_replace("\n", "", $line));
+        if (preg_match('/^\[(.*)\]/', $line, $m)) {
+          $section = $m[1];
+        } else if ($multi === '' && preg_match('/^([a-z0-9_.\[\]-]+)\s*=\s*(.*)$/i', $line, $m)) {
+          $key = $m[1];
+          $val = $m[2];
+          if (substr($val, -1) !== "\\") {
+            $val = trim($val);
+            INI::manage_keys($ini[$section], $key, $val);
+            $multi = '';
+          } else {
+            $multi = substr($val, 0, -1)."\n";
+          }
+        } else if ($multi !== '') {
+          if (substr($line, -1) === "\\") {
+            $multi .= substr($line, 0, -1)."\n";
+          } else {
+            INI::manage_keys($ini[$section], $key, $multi.$line);
+            $multi = '';
+          }
+        }
+      }
+    }
+
+    $buf = get_defined_constants(true);
+    $consts = array();
+    foreach($buf['user'] as $key => $val) {
+      $consts['{'.$key.'}'] = $val;
+    }
+    array_walk_recursive($ini, array('INI', 'replace_consts'), $consts);
+    return $ini;
+  }
+  /**
+   *  manage keys
+   */
+  static function get_value($val) {
+    if (preg_match('/^-?[0-9]$/i', $val)) { return intval($val); }
+    else if (strtolower($val) === 'true') { return true; }
+    else if (strtolower($val) === 'false') { return false; }
+    else if (preg_match('/^"(.*)"$/i', $val, $m)) { return $m[1]; }
+    else if (preg_match('/^\'(.*)\'$/i', $val, $m)) { return $m[1]; }
+    return $val;
+  }
+  /**
+   *  manage keys
+   */
+  static function get_key($val) {
+    if (preg_match('/^[0-9]$/i', $val)) { return intval($val); }
+    return $val;
+  }
+  /**
+   *  manage keys
+   */
+  static function manage_keys(& $ini, $key, $val) {
+    if (preg_match('/^([a-z0-9_-]+)\.(.*)$/i', $key, $m)) {
+      INI::manage_keys($ini[$m[1]], $m[2], $val);
+    } else if (preg_match('/^([a-z0-9_-]+)\[(.*)\]$/i', $key, $m)) {
+      if ($m[2] !== '') {
+        $ini[$m[1]][INI::get_key($m[2])] = INI::get_value($val);
+      } else {
+        $ini[$m[1]][] = INI::get_value($val);
+      }
+    } else {
+      $ini[INI::get_key($key)] = INI::get_value($val);
+    }
+  }
+  /**
+   *  replace utility
+   */
+  static function replace_consts(& $item, $key, $consts) {
+    if (is_string($item)) {
+      $item = strtr($item, $consts);
+    }
+  }
 }
