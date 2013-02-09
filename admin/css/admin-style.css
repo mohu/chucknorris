@@ -68,3 +68,5 @@ i.help{opacity:.5;}
 .bigdrop img{width:40px;margin-right:5px}
 .select2-search-choice img{width:30px;margin-right:5px}
 ul.wysihtml5-toolbar .btn{font-size:13px !important;padding:2px 9px !important}
+footer i{color:#585858;text-decoration:none;}
+footer i:hover{text-decoration:none}

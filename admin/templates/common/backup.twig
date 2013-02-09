@@ -251,60 +251,58 @@
           </div>
           {% endif %}
           
-          {% if data %}
-              <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="table">
-                <colgroup>
-                  <col>
-                  <col>
-                  <col>
-                  <col style="width:90px;">
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Id
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      File
-                    </th>
-                    <th>
-                      <div class="sort">
-                        <div class="sort-up"></div>
-                        <div class="sort-down"></div>
-                      </div>
-                      Date
-                    </th>
-                    {% if settings.edit == 1 or settings.delete == 1 %}
-                      <th>Delete?</th>
-                    {% endif %}
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for data in data %}
-                  <tr>
-                    <td>{{ data.id }}</td>
-                    <td><a href="/admin/core/download-backup.php?id={{ data.id }}">{{ data.file }}</a></td>
-                    <td>{{ data.date|date("j M Y - H:i:s") }}</td>
-                    <td>
-                      {% if data %}
-                      {% if settings.delete == 1 %}
-                      <a class="btn btn-small delete" id="{{ data.id }}" href="#"><i class="icon-trash"></i> Delete</a>
-                      {% endif %}
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-          {% endif %}
+          <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="table">
+            <colgroup>
+              <col>
+              <col>
+              <col>
+              <col style="width:90px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>
+                  <div class="sort">
+                    <div class="sort-up"></div>
+                    <div class="sort-down"></div>
+                  </div>
+                  Id
+                </th>
+                <th>
+                  <div class="sort">
+                    <div class="sort-up"></div>
+                    <div class="sort-down"></div>
+                  </div>
+                  File
+                </th>
+                <th>
+                  <div class="sort">
+                    <div class="sort-up"></div>
+                    <div class="sort-down"></div>
+                  </div>
+                  Date
+                </th>
+                {% if settings.edit == 1 or settings.delete == 1 %}
+                  <th>Delete?</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for data in data %}
+              <tr>
+                <td>{{ data.id }}</td>
+                <td><a href="/admin/core/download-backup.php?id={{ data.id }}">{{ data.file }}</a></td>
+                <td>{{ data.date|date("j M Y - H:i:s") }}</td>
+                <td>
+                  {% if data %}
+                  {% if settings.delete == 1 %}
+                  <a class="btn btn-small delete" id="{{ data.id }}" href="#"><i class="icon-trash"></i> Delete</a>
+                  {% endif %}
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
 
           {% if pagination.total > pagination.limit %}
           <div class="pagination pagination-centered clearfix">
