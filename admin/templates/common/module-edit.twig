@@ -94,9 +94,6 @@
           $("a.remove, a.clone").hide();
           $(".own").each(function(index) {
             var id = $(this).attr('id');
-
-//            $("." + id).find("a.remove").last().show();
-//            $("." + id).find("a.remove").first().hide();
             $("." + id).find("a.clone").last().show();
           });
 
@@ -111,10 +108,6 @@
                 $(this).parents(".own").find("a.remove").show();
                   var name = this.name || "";
                   var match = name.match(regex) || [];
-//                  console.log(match);
-//                  var index = String(match).match(regex2) || [];
-//                  console.log(index);
-//                  index = parseInt(index) + 1;
                   if (match.length > 0) {
                     this.name = (this.name).replace(regex, function (val) { return parseInt(val) + 1; });
                     $(this).filter('.ownid').remove();
@@ -155,6 +148,23 @@
           $("a.remove").live("click", function() {
             $("a.clone:hidden:last").show();
               $(this).parents(".own").remove();
+          });
+
+          $(".select-all").live("click", function(e){
+            e.preventDefault();
+            var options = [];
+            $(this).parent('div').find('select').children('option').each(function() {
+              if ($(this).val()) {
+                options.push($(this).val());
+              }
+            });
+            $(this).prev('select').select2("val", options);
+          });
+
+          $(".deselect-all").live("click", function(e){
+            e.preventDefault();
+            var select = $(this).parent('div').find('select');
+            select.select2("val", null);
           });
 
           {% if settings.delete %}
@@ -622,6 +632,10 @@
                     <option class="bigdrop" value="{{ fkfield.id }}"{% if fkfield.selected %} selected{% endif %}{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                     {% endfor %}
                     </select>
+                    {% if not field.one %}
+                      <button class="btn select-all"><i class="icon-plus-sign help"></i> Select all</button>
+                      <button class="btn deselect-all"><i class="icon-minus-sign help"></i> Deselect all</button>
+                    {% endif %}
                     {% if fkfield.help %}
                     <span class="help-inline"><i class="icon-info-sign help"></i> {{ fkfield.help|raw }}</span>
                     {% endif %}
@@ -759,6 +773,10 @@
                     <option class="bigdrop" value="{{ fkfield.id }}"{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                     {% endfor %}
                     </select>
+                    {% if not field.one %}
+                      <button class="btn select-all"><i class="icon-plus-sign help"></i> Select all</button>
+                      <button class="btn deselect-all"><i class="icon-minus-sign help"></i> Deselect all</button>
+                    {% endif %}
                     {% if fkfield.help %}
                     <span class="help-inline"><i class="icon-info-sign help"></i> {{ fkfield.help|raw }}</span>
                     {% endif %}
@@ -781,6 +799,10 @@
                     <option class="bigdrop" value="{{ fkfield.id }}" {% if fkfield.selected == true %}selected{% endif %}{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle|raw }}</option>
                   {% endfor %}
                   </select>
+                  {% if not field.one %}
+                    <button class="btn select-all"><i class="icon-plus-sign help"></i> Select all</button>
+                    <button class="btn deselect-all"><i class="icon-minus-sign help"></i> Deselect all</button>
+                  {% endif %}
                   {% if field.help %}
                     <span class="help-inline"><i class="icon-info-sign help"></i> {{ field.help|raw }}</span>
                   {% endif %}

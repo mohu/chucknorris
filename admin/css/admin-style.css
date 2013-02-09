@@ -6,9 +6,10 @@ body{padding-top:60px;padding-bottom:40px}
 .padded{padding:8px 19px}
 .accordion-heading{background-color:#eee;}
 .accordion-heading.debug{background-color:#d9edf7}
-.accordion-heading i{margin:3px 0 0 0;opacity:.8;}
+.accordion-heading i{color:#585858;margin:3px 0 0 0;opacity:.8;text-decoration:none}
 .lt-ie8 .accordion-heading i{filter:alpha(opacity=80)}
 .lt-ie9 .accordion-heading i{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80)}
+.accordion-inner i{color:#585858}
 .nav-list > li > a{padding-left:5px}
 .navbar i{opacity:.5;}
 .lt-ie8 .navbar i{filter:alpha(opacity=50)}

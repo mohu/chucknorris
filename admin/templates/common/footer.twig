@@ -20,8 +20,14 @@
       {% endif %}
 
       <footer>
-        <p class="pull-right"><a href="#top"><i class="icon-arrow-up"></i></a></p>
-        <p>&copy; {{ cms.name }} {{ "now"|date("Y") }} | <a href="#" class="credits">Credits</a> | <a href="http://chuck.studiomohu.com/" target="_blank">Docs</a></p>
+        <div class="container-fluid">
+          <div class="row-fluid">
+            <div class="span12">
+              <p class="pull-right"><a href="#top"><i class="icon-arrow-up"></i></a></p>
+              <p>&copy; {{ cms.name }} {{ "now"|date("Y") }} <span class="muted">/</span> <a href="#" class="credits">Credits</a> <span class="muted">/</span> <a href="http://chuck.studiomohu.com/" target="_blank">Docs</a></p>
+            </div>
+          </div>
+        </div>
       </footer>
 
       <div class="modal fade hide" id="credits">

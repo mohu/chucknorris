@@ -6,7 +6,7 @@ class Model_User extends RedBean_SimpleModel {
     $fields['username']   = array('type'=>'text', 'label'=>'username', 'help'=>'', 'required'=>true, 'table_hide'=>true, );
     $fields['name']       = array('type'=>'text', 'label'=>'name', 'help'=>'', 'required'=>true);
     $fields['email']      = array('type'=>'text', 'label'=>'email', 'help'=>'', 'required'=>true, 'validate'=>'email');
-    $fields['password']   = array('type'=>'text', 'label'=>'password', 'help'=>'', 'table_hide'=>true, 'required'=>true);
+    $fields['password']   = array('type'=>'text', 'label'=>'password', 'help'=>'To change, completely delete current secure hash and replace with desired plain text password.', 'table_hide'=>true, 'required'=>true);
     $fields['salt']       = array('type'=>'text', 'label'=>'salt', 'help'=>'', 'table_hide'=>true, 'readonly'=>true, 'onload'=>'hide');
     $fields['signupdate'] = array('type'=>'text', 'label'=>'signup date', 'help'=>'', 'readonly'=>true);
 

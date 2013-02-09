@@ -25,21 +25,6 @@
           $("[rel=tooltip]").tooltip({title: 'Required',delay: { show: 100, hide: 500 }});
 
           $("form.add").validate({
-//            showErrors: function(errorMap, errorList) {
-//              $.each( this.successList , function(index, value) {
-//                $(value).popover('hide');
-//              });
-//              $.each( errorList , function(index, value) {
-//                var _popover = $(value.element).popover({
-//                  trigger: 'manual',
-//                  placement: 'right',
-//                  content: value.message,
-//                  template: '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>'
-//                });
-//                _popover.data('popover').options.content = value.message;
-//                $(value.element).popover('show');
-//              });
-//            },
             errorPlacement: function(error, element) {
               $(element).closest('.control-group').addClass('error');
 
@@ -145,6 +130,23 @@
           $("a.remove").live("click", function() {
             $("a.clone:hidden:last").show();
             $(this).parents(".own").remove();
+          });
+
+          $(".select-all").live("click", function(e){
+            e.preventDefault();
+            var options = [];
+            $(this).parent('div').find('select').children('option').each(function() {
+              if ($(this).val()) {
+                options.push($(this).val());
+              }
+            });
+            $(this).prev('select').select2("val", options);
+          });
+
+          $(".deselect-all").live("click", function(e){
+            e.preventDefault();
+            var select = $(this).parent('div').find('select');
+            select.select2("val", null);
           });
 
           {% if groups %}
@@ -523,6 +525,10 @@
                     <option class="bigdrop" value="{{ fkfield.id }}"{% if fkfield.selectimage %} data-image="{{ fkfield.selectimage }}"{% endif %}>{{ fkfield.id }}: {{ fkfield.selecttitle }}</option>
                   {% endfor %}
                   </select>
+                  {% if not field.one %}
+                    <button class="btn select-all"><i class="icon-plus-sign help"></i> Select all</button>
+                    <button class="btn deselect-all"><i class="icon-minus-sign help"></i> Deselect all</button>
+                  {% endif %}
                   {% if field.help %}
                     <span class="help-inline">{{ field.help|raw }}</span>
                   {% endif %}

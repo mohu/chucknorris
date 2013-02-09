@@ -248,9 +248,9 @@ class App {
     $dict = array();
     $dict['session']  = App::loadSession();
     $dict['cms']      = array('name'=>'Chuck',
-                              'version'=>'0.6.0',
-                              'dependencies'=>array('Bootstrap, from Twitter'=>'2.1.1',
-                                                    'Glyphicons'=>'1.6',
+                              'version'=>'0.6.2',
+                              'dependencies'=>array('Bootstrap, from Twitter'=>'2.3.0',
+                                                    'Font Awesome'=>'3.0.2',
                                                     'RedBeanPHP'=>R::getVersion(),
                                                     'Select2'=>'3.2',
                                                     'Swift Mailer'=>'4.2.1',
