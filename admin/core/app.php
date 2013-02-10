@@ -177,13 +177,17 @@ class App {
     // Default local database settings
     $host = $dbsettings['local']['host'];
     $db = $dbsettings['local']['db'];
-    $username = $dbsettings['local']['username'];
-    $password = $dbsettings['local']['password'];
 
-    // Dev team member overrides, update username and password accordingly
+    // Dev team member username and passwords override with live server fallback if not local
     if (array_key_exists(php_uname('n'), $dbsettings)) {
       $username = $dbsettings[php_uname('n')]['username'];
       $password = $dbsettings[php_uname('n')]['password'];
+    } else {
+      // If this isn't a local dev server, use live settings
+      $host = $dbsettings['live']['host'];
+      $db = $dbsettings['live']['db'];
+      $username = $dbsettings['live']['username'];
+      $password = $dbsettings['live']['password'];
     }
 
     if (isset($host) && isset($db) && isset($username) && isset($password)) {
@@ -217,17 +221,19 @@ class App {
   public function updateDbsettings($settings) {
     $dbsettings = parse_ini_file(LOCAL_PATH. 'includes/common/dbsettings.ini', true);
 
+    $dbsettings['local']['host'] = $settings['host'];
+    $dbsettings['local']['db'] = $settings['db'];
+
     // Dev team member overrides, update username and password accordingly
     if (array_key_exists(php_uname('n'), $dbsettings)) {
       $dbsettings[php_uname('n')]['username'] = $settings['username'];
       $dbsettings[php_uname('n')]['password'] = $settings['password'];
     } else {
-      $dbsettings['local']['username'] = $settings['username'];
-      $dbsettings['local']['password'] = $settings['password'];
+      $dbsettings['live']['host'] = $settings['host'];
+      $dbsettings['live']['db'] = $settings['db'];
+      $dbsettings['live']['username'] = $settings['username'];
+      $dbsettings['live']['password'] = $settings['password'];
     }
-
-    $dbsettings['local']['host'] = $settings['host'];
-    $dbsettings['local']['db'] = $settings['db'];
 
     // Update the dbsettings.ini file with the POST'ed settings
     INI::write(LOCAL_PATH . 'includes/common/dbsettings.ini', $dbsettings);
