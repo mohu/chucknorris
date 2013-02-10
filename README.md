@@ -1,71 +1,25 @@
-## Quick Start
+# Chuck
 
-Update the template folder files to reflect the latest html5boilerplate release (if required)
+Chuck is a PHP based open source content management system.
 
-Don't forget to move the __*404.html*__ file to /templates
+Developed by [Rikki Pitt](http://www.twitter.com/rikkipitt) at [Studio Mohu](http://www.studiomohu.com), London
 
-## Database
+## Overview
 
-Create a MySQL database for the project and add the name to the __*$db*__ variable in:
+*Chuck was intended to have a discrete structure that follows a compartmentalised layout with its own standardised conventions.*
 
-/includes/common/dbconnector.php
+####Basic flow
 
-```
-$db   = 'database_name';
-```
+* User initiates a HTTP request to the front end of Chuck
+* All requests are handled by .htaccess and ported to an index.php file
+* In a similar fashion to Django's urls.py, a urls.php file of valid URL paths is loaded
+* If the user request is matched in the urls.php, the corresponding view and sub-function is loaded by the router - if not, a 404 view is parsed
+* Models are loaded in and database data is passed to the view which is then rendered in a HTML5 Boilerplate template
 
-Install __*initial.sql*__ from /database
+Chuck can therefore be considered to be a "MVT" or Model-View-Template framework.
 
-## Folder permissions
+![Framework](http://chuck.studiomohu.com/img/mvt.png)
 
-Ensure /cache, admin/cache and /mobile/cache all have write permissions.
+## Documentation
 
-## Adding URLs
-
-By default __*"home"*__ is ready to use and edit.
-
-To add further URLs to the site you must add them to the __*index.php*__ file __*$valid_paths*__ array:
-
-```
-$valid_paths  = array('home',
-                      'blog',
-                      'news',
-                      );
-```
-
-Add corresponding template files for each new page to the /templates folder as __*.html*__ naming the file the same as the route.
-
-This template file should be structured as below:
-
-```
-{% extends "base.html" %}
-
-{% block content %}
-<body>
-  <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
-  <header>
-
-  </header>
-  <div role="main">
-
-  </div>
-{% endblock %}
-```
-
-Previously, you had to add frontend and backend model and view files when adding new URLs. Chuck Norris now auto-generates these files and installs the basic requirements to load the pages.
-
-Models need to be built to include data to send to the template files (documentation coming soon) but this should be enough to enable the creation of static templates ready to be made dynamic by the backend team.
-
-## Mobile
-
-The mobile site follows the same setup as above (but if the mobile site is hosted in the same directory as the main site, the database is shared).
-
-However, you still need to edit:
-
-/mobile/includes/common/dbconnector.php
-
-With your database name as below...
-
-```
-$db   = 'database_name';
-```
+[View the documentation](http://chuck.studiomohu.com)

@@ -6,9 +6,9 @@ body{padding-top:60px;padding-bottom:40px}
 .padded{padding:8px 19px}
 .accordion-heading{background-color:#eee;}
 .accordion-heading.debug{background-color:#d9edf7}
-.accordion-heading li i{color:#585858;margin:3px 0 0 0;opacity:.8;text-decoration:none}
-.lt-ie8 .accordion-heading li i{filter:alpha(opacity=80)}
-.lt-ie9 .accordion-heading li i{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80)}
+.accordion-heading i{color:#585858;margin:3px 0 0 0;opacity:.8;text-decoration:none}
+.lt-ie8 .accordion-heading i{filter:alpha(opacity=80)}
+.lt-ie9 .accordion-heading i{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=80)}
 .accordion-inner i{color:#585858}
 .accordion-inner li.active i{color:#fff}
 .nav-list > li > a{padding-left:5px}
