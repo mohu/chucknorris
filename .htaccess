@@ -4,6 +4,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
+# Append trailing slashes
+RewriteRule ^(.*[^/])$ /$1/ [L,R=301]
+
 # Redirect all other requests to index.php apart from forms, download, and cronjobs!
 RewriteCond %{REQUEST_URI} !^/cron/(.+)$
 RewriteCond %{REQUEST_URI} !^/download/(.+)$
