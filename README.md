@@ -4,6 +4,10 @@ Chuck is a PHP based open source content management system.
 
 Developed by [Rikki Pitt](http://www.twitter.com/rikkipitt) at [Studio Mohu](http://www.studiomohu.com), London
 
+## Documentation
+
+[View the documentation](http://chuck.studiomohu.com)
+
 ## Overview
 
 *Chuck was intended to have a discrete structure that follows a compartmentalised layout with its own standardised conventions.*
@@ -19,7 +23,3 @@ Developed by [Rikki Pitt](http://www.twitter.com/rikkipitt) at [Studio Mohu](htt
 Chuck can therefore be considered to be a "MVT" or Model-View-Template framework.
 
 ![Framework](http://chuck.studiomohu.com/img/mvt.png)
-
-## Documentation
-
-[View the documentation](http://chuck.studiomohu.com)
