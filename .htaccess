@@ -13,6 +13,12 @@ RewriteCond %{REQUEST_URI} !^/download/(.+)$
 RewriteCond %{REQUEST_URI} !^/forms/(.+)$
 RewriteRule !\.(js|css|gif|png|jpe?g|pdf|xml|oga|ogg|m4a|ogv|mp4|m4v|webm|svg|svgz|eot|ttf|otf|woff|ico|webp|appcache|manifest|htc|crx|xpi|safariextz|vcf)$ index.php [QSA,PT,L]
 
+# Prevent access to ini files for added security
+<Files ~ "\.ini$">
+  Order allow,deny
+  Deny from all
+</Files>
+
 # Apache configuration file
 # httpd.apache.org/docs/2.2/mod/quickreference.html
 
